@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Set up your profile — Forma{% endblock %}
+{% block site_nav %}{% endblock %}
+{% block content_shell_class %}min-h-screen{% endblock %}
+
+{% block body %}
+{{ areas_for_js|json_script:"onboarding-areas" }}
+
+<nav class="sticky top-0 z-[100] flex h-[60px] items-stretch border-b border-rule bg-paper">
+  <div class="flex items-center border-r border-rule px-8">
+    <a class="font-display text-[1.55rem] tracking-wide-4 text-blue no-underline" href="{% url 'home' %}">Forma</a>
+  </div>
+  <div class="flex flex-1 items-center px-8">
+    <span class="font-body text-meta font-medium uppercase tracking-wide-5 text-ink">Set up your profile</span>
+    <span class="ml-8 font-body text-[0.7rem] uppercase tracking-wide-4 text-muted" id="nav-step-counter">Step {{ step_display }} of {{ total_steps }}</span>
+  </div>
+  <div class="flex items-center border-l border-rule px-8">
+    <button type="submit" form="onboarding-step-form" name="save_draft" value="1" class="cursor-pointer border-0 bg-transparent font-body text-[0.68rem] font-medium uppercase tracking-wide-3 text-muted transition-colors hover:text-ink">
+      Save draft
+    </button>
+  </div>
+</nav>
+
+<div class="sticky top-[60px] z-[99] h-[3px] bg-rule">
+  <div class="h-full bg-blue transition-all duration-300" style="width: {% widthratio step_display total_steps 100 %}%"></div>
+</div>
+
+<div class="sticky top-[63px] z-[98] flex overflow-x-auto border-b border-rule bg-paper scrollbar-none [&::-webkit-scrollbar]:hidden" id="step-tabs">
+  {% for label in tab_labels %}
+  {% with n=forloop.counter %}
+  {% if n <= max_reachable_step %}
+  <a href="{% url 'pages:onboarding_step' step=n %}" class="flex h-12 shrink-0 items-center gap-2 border-0 border-b-2 bg-transparent px-8 font-body text-[0.68rem] font-medium uppercase tracking-wide-3 whitespace-nowrap no-underline transition-colors {% if n == step_display %}border-blue text-blue{% elif n <= profile.onboarding_step %}border-transparent text-slate hover:text-ink{% else %}border-transparent text-muted hover:text-ink{% endif %}">
+    <span class="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full font-body text-[0.6rem] font-semibold {% if n == step_display %}bg-blue text-white{% elif n <= profile.onboarding_step %}bg-ink text-white{% else %}bg-rule text-muted{% endif %}">{{ n }}</span>
+    {{ label }}
+  </a>
+  {% else %}
+  <span class="flex h-12 shrink-0 cursor-not-allowed items-center gap-2 border-b-2 border-transparent px-8 font-body text-[0.68rem] font-medium uppercase tracking-wide-3 whitespace-nowrap text-very-muted opacity-50">
+    <span class="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-rule font-body text-[0.6rem] font-semibold text-muted">{{ n }}</span>
+    {{ label }}
+  </span>
+  {% endif %}
+  {% endwith %}
+  {% endfor %}
+</div>
+
+<div class="grid min-h-[calc(100vh-111px)] grid-cols-1 lg:grid-cols-[1fr_320px]">
+  <div class="border-r-0 border-rule lg:border-r px-page py-section lg:py-16">
+    <form id="onboarding-step-form" method="post" action="" enctype="multipart/form-data" class="max-w-none" novalidate>
+      {% csrf_token %}
+
+      <div class="mb-10">
+        <p class="mb-3 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+          {{ step_meta.step_label }}
+        </p>
+        <h1 class="mb-3 font-display text-[clamp(2.5rem,4vw,3.8rem)] leading-heading tracking-[0.02em] text-ink">{{ step_meta.title }}</h1>
+        <p class="max-w-[52ch] font-serif text-[1rem] font-light italic leading-serif text-slate">{{ step_meta.description }}</p>
+      </div>
+
+      {% if step == 0 %}
+        {% if form.non_field_errors %}
+        <ul class="mb-6 list-none font-body text-[0.8rem] text-[#CC2A1A]">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        {% endif %}
+        <div class="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div class="flex flex-col gap-2">
+            <label for="{{ form.first_name.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">{{ form.first_name.label }}</label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.first_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="{{ form.last_name.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">{{ form.last_name.label }}</label>
+            {{ form.last_name }}
+            {% if form.last_name.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.last_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+        </div>
+        <div class="mb-10 flex flex-col gap-2">
+          <label for="{{ form.tagline.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+            {{ form.tagline.label }} <span class="ml-2 font-body text-[0.68rem] font-normal normal-case tracking-normal text-muted">One line — what you do and for whom</span>
+          </label>
+          {{ form.tagline }}
+          <p class="text-right font-body text-[0.62rem] text-very-muted" id="tagline-count" aria-live="polite">0 / 80</p>
+          {% if form.tagline.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.tagline.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="mb-10 flex flex-col gap-2">
+          <label for="{{ form.bio.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+            {{ form.bio.label }} <span class="ml-2 font-body text-[0.68rem] font-normal normal-case tracking-normal text-muted">2–3 paragraphs. Who you are, how you train, who you work with.</span>
+          </label>
+          {{ form.bio }}
+          {% if form.bio.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.bio.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <hr class="my-10 border-0 border-t border-rule">
+        <div class="flex flex-col gap-2">
+          <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Profile photo</span>
+          <div class="forma-portrait-upload relative flex cursor-pointer items-center gap-8 border border-dashed border-rule bg-surface p-6 transition-colors hover:border-blue">
+            {{ form.portrait }}
+            <div class="pointer-events-none flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-rule">
+              {% if form.portrait.value %}
+              <img src="{{ form.portrait.value.url }}" alt="" class="h-full w-full rounded-full object-cover">
+              {% else %}
+              <svg class="h-7 w-7 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              {% endif %}
+            </div>
+            <div class="pointer-events-none">
+              <div class="font-body text-[0.85rem] font-medium text-ink">Upload your profile photo</div>
+              <div class="font-serif text-[0.82rem] italic leading-relaxed text-muted">Square crop works best. Min 800×800px. JPG or PNG.</div>
+            </div>
+          </div>
+          {% if form.portrait.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.portrait.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+      {% elif step == 1 %}
+        {% if quick_form.non_field_errors %}<ul class="mb-6 list-none text-[#CC2A1A]">{% for e in quick_form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        <div class="mb-10">
+          <p class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+            {{ quick_form.quick_qualifications.label }} <span class="ml-2 font-normal normal-case tracking-normal text-muted">Check all that apply</span>
+          </p>
+          <div class="forma-check-group forma-check-group--quick">{{ quick_form.quick_qualifications }}</div>
+          {% if quick_form.quick_qualifications.errors %}<ul class="mt-2 list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in quick_form.quick_qualifications.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <hr class="my-10 border-0 border-t border-rule">
+        <div class="mb-4 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+          Additional qualifications <span class="ml-2 font-normal normal-case tracking-normal text-muted">Up to 4</span>
+        </div>
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        <div class="flex flex-col">
+          {% for f in formset %}
+          <div class="grid grid-cols-1 items-center gap-3 border-b border-rule py-4 first:border-t sm:grid-cols-[2rem_1fr_1fr]">
+            {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+            <span class="text-center font-display text-[1.4rem] leading-none text-blue/30">{{ forloop.counter|stringformat:"02d" }}</span>
+            <div>{{ f.name }}{% if f.name.errors %}<ul class="mt-1 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+            <div>{{ f.detail }}{% if f.detail.errors %}<ul class="mt-1 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.detail.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+          </div>
+          {% endfor %}
+        </div>
+
+      {% elif step == 2 %}
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        <div class="flex flex-col">
+          {% for f in formset %}
+          <div class="grid grid-cols-1 items-center gap-3 border-b border-rule py-4 first:border-t sm:grid-cols-[2rem_1fr]">
+            {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+            <span class="text-center font-display text-[1.4rem] leading-none text-blue/30">{{ forloop.counter|stringformat:"02d" }}</span>
+            <div>{{ f.title }}{% if f.title.errors %}<ul class="mt-1 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+          </div>
+          {% endfor %}
+        </div>
+
+      {% elif step == 3 %}
+        {% if form.non_field_errors %}
+        <ul class="mb-6 list-none font-body text-[0.8rem] text-[#CC2A1A]">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        {% endif %}
+        <div class="mb-10">
+          <p class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+            {{ form.training_locations.label }} <span class="ml-2 font-normal normal-case tracking-normal text-muted">Select all that apply</span>
+          </p>
+          <div class="forma-loc-checks">
+            {% with sel=form.training_locations.value %}
+            {% for value, label in form.training_locations.field.choices %}
+            <div class="loc-check relative">
+              <input type="checkbox" name="training_locations" value="{{ value }}" id="id_training_locations_{{ forloop.counter0 }}" {% if sel and value in sel %}checked{% endif %}>
+              <label for="id_training_locations_{{ forloop.counter0 }}" class="m-0">
+                {% if value == 'gym' %}
+                <svg class="h-[18px] w-[18px] shrink-0 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                {% elif value == 'home' %}
+                <svg class="h-[18px] w-[18px] shrink-0 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                {% elif value == 'outdoor' %}
+                <svg class="h-[18px] w-[18px] shrink-0 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 000 20M12 2a14.5 14.5 0 010 20M2 12h20"/></svg>
+                {% elif value == 'online' %}
+                <svg class="h-[18px] w-[18px] shrink-0 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                {% endif %}
+                {{ label }}
+              </label>
+            </div>
+            {% endfor %}
+            {% endwith %}
+          </div>
+          {% if form.training_locations.errors %}<ul class="mt-2 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in form.training_locations.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <hr class="my-10 border-0 border-t border-rule">
+        <div class="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div class="flex flex-col gap-2">
+            <label for="{{ form.primary_area.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">{{ form.primary_area.label }}</label>
+            <div class="forma-select-wrap relative">
+              {{ form.primary_area }}
+              <svg class="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            {% if form.primary_area.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in form.primary_area.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="{{ form.postcode_district.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">{{ form.postcode_district.label }}</label>
+            <div class="forma-select-wrap relative">
+              {{ form.postcode_district }}
+              <svg class="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            {% if form.postcode_district.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in form.postcode_district.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+        </div>
+        <div class="mb-10">
+          <p class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+            {{ form.other_areas.label }} <span class="ml-2 font-normal normal-case tracking-normal text-muted">Select all that apply</span>
+          </p>
+          <div class="forma-check-group forma-area-grid">{{ form.other_areas }}</div>
+          {% if form.other_areas.errors %}<ul class="mt-2 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in form.other_areas.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+      {% elif step == 4 %}
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        <div class="flex flex-col">
+          {% for f in formset %}
+          <div class="grid grid-cols-1 items-end gap-3 border-b border-rule py-4 first:border-t sm:grid-cols-[2rem_1.5fr_1fr_100px]">
+            {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+            <span class="text-center font-display text-[1.4rem] leading-none text-blue/30">{{ forloop.counter|stringformat:"02d" }}</span>
+            <div>{{ f.label }}{% if f.label.errors %}<ul class="mt-1 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.label.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+            <div>{{ f.unit_note }}{% if f.unit_note.errors %}<ul class="mt-1 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.unit_note.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+            <div>{{ f.price }}{% if f.price.errors %}<ul class="mt-1 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.price.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+          </div>
+          {% endfor %}
+        </div>
+        <hr class="my-10 border-0 border-t border-rule">
+        <div class="flex flex-col gap-2">
+          <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+            {{ meta_form.free_consultation.label }} <span class="ml-2 font-normal normal-case tracking-normal text-muted">Shown prominently on your profile</span>
+          </span>
+          <div class="forma-loc-checks mt-2">
+            <div class="loc-check relative">
+              <input type="checkbox" name="{{ meta_form.free_consultation.html_name }}" id="{{ meta_form.free_consultation.id_for_label }}" value="on" {% if meta_form.free_consultation.value %}checked{% endif %}>
+              <label for="{{ meta_form.free_consultation.id_for_label }}" class="normal-case tracking-normal">Yes — I offer a free initial consultation</label>
+            </div>
+          </div>
+          {% if meta_form.free_consultation.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in meta_form.free_consultation.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+      {% elif step == 5 %}
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        <div class="mb-10">
+          <p class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+            Training photos <span class="ml-2 font-normal normal-case tracking-normal text-muted">Upload 6 — you can change these any time</span>
+          </p>
+          <div class="mt-3 grid grid-cols-2 gap-[3px] sm:grid-cols-3">
+            {% for f in formset %}
+            <div class="forma-photo-slot relative aspect-square border border-dashed border-rule bg-surface transition-colors hover:border-blue hover:bg-blue-light {% if f.instance.image %}has-image border-solid{% endif %}" data-slot="{{ forloop.counter }}">
+              {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+              <span class="pointer-events-none absolute left-2 top-2 z-[1] font-display text-[1rem] text-very-muted">{{ forloop.counter|stringformat:"02d" }}</span>
+              {{ f.image }}
+              <svg class="photo-placeholder-icon pointer-events-none absolute inset-0 m-auto h-6 w-6 text-muted {% if f.instance.image %}hidden{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span class="photo-placeholder-label pointer-events-none absolute bottom-3 left-0 right-0 z-[1] text-center font-body text-[0.6rem] font-medium uppercase tracking-wide-3 text-muted {% if f.instance.image %}hidden{% endif %}">Add photo</span>
+              <img src="{% if f.instance.image %}{{ f.instance.image.url }}{% endif %}" alt="" class="gallery-thumb pointer-events-none absolute inset-0 h-full w-full object-cover {% if not f.instance.image %}hidden{% endif %}">
+              {% if f.image.errors %}<ul class="absolute bottom-0 left-0 right-0 z-[2] list-none bg-paper/90 p-1 text-[0.6rem] text-[#CC2A1A]">{% for e in f.image.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <hr class="my-10 border-0 border-t border-rule">
+        {% with field=instagram_form.instagram_handle %}
+        <div class="flex flex-col gap-2">
+          <label for="{{ field.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+            {{ field.label }} <span class="ml-2 font-normal normal-case tracking-normal text-muted">Optional — links directly from your profile</span>
+          </label>
+          <div class="relative">
+            <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-body text-[0.92rem] text-muted">@</span>
+            {{ field }}
+          </div>
+          {% if field.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        {% endwith %}
+      {% endif %}
+    </form>
+  </div>
+
+  <aside class="flex flex-col gap-8 bg-surface px-6 py-10 lg:px-10 lg:py-12">
+    {% for meta in onboarding_steps %}
+    <div class="{% if forloop.counter0 != step %}hidden{% endif %}" data-sidebar-step="{{ forloop.counter0 }}">
+      <p class="mb-4 font-body text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-blue">{{ meta.sidebar_label }}</p>
+      <p class="font-serif text-[0.88rem] font-light italic leading-[1.7] text-slate">{{ meta.sidebar_tip }}</p>
+      {% if meta.sidebar_example_label %}
+      <div class="mt-4 border border-rule border-l-2 border-l-blue bg-paper p-4">
+        <p class="mb-2 font-body text-[0.58rem] font-semibold uppercase tracking-wide-3 text-blue">{{ meta.sidebar_example_label }}</p>
+        <p class="whitespace-pre-line font-serif text-[0.82rem] italic leading-relaxed text-slate">{{ meta.sidebar_example }}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    <hr class="border-0 border-t border-rule">
+
+    <div>
+      <p class="mb-2 font-body text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-blue">Your progress</p>
+      <div class="mt-2 flex flex-col gap-2">
+        {% for label in tab_labels %}
+        {% with n=forloop.counter %}
+        <div class="flex items-center gap-2.5 font-body text-[0.72rem] {% if n == step_display %}text-ink font-medium{% elif n <= profile.onboarding_step %}text-ink{% else %}text-muted{% endif %}">
+          <span class="h-1.5 w-1.5 shrink-0 rounded-full {% if n == step_display or n <= profile.onboarding_step %}bg-blue{% else %}bg-rule{% endif %}"></span>
+          {{ label }}
+        </div>
+        {% endwith %}
+        {% endfor %}
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="sticky bottom-0 z-[90] flex items-center justify-between gap-4 border-t border-rule bg-paper px-page py-8">
+  {% if prev_step %}
+  <a href="{% url 'pages:onboarding_step' step=prev_step %}" class="inline-flex items-center gap-2 border-0 bg-transparent font-body text-[0.75rem] font-medium uppercase tracking-wide-3 text-muted no-underline transition-colors hover:text-ink">← Back</a>
+  {% else %}
+  <span class="inline-flex items-center gap-2 font-body text-[0.75rem] font-medium uppercase tracking-wide-3 text-very-muted opacity-30">← Back</span>
+  {% endif %}
+  <span class="font-body text-meta text-muted">{{ step_display }} of {{ total_steps }}</span>
+  {% if step_display == total_steps %}
+  <button type="submit" form="onboarding-step-form" class="inline-flex items-center gap-3 border-0 bg-ink px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white transition-colors hover:bg-[#2a2a2a]">Submit profile →</button>
+  {% else %}
+  <button type="submit" form="onboarding-step-form" class="inline-flex items-center gap-3 border-0 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white transition-colors hover:bg-blue-mid hover:-translate-y-px">Continue →</button>
+  {% endif %}
+</div>
+
+{% if step == 0 %}
+<script>
+(function () {
+  var tagline = document.getElementById('{{ form.tagline.id_for_label }}');
+  var countEl = document.getElementById('tagline-count');
+  if (tagline && countEl) {
+    function sync() { countEl.textContent = tagline.value.length + ' / 80'; }
+    tagline.addEventListener('input', sync);
+    sync();
+  }
+})();
+</script>
+{% elif step == 3 %}
+<script>
+(function () {
+  var areasEl = document.getElementById('onboarding-areas');
+  if (!areasEl) return;
+  var AREAS = JSON.parse(areasEl.textContent);
+  var primary = document.getElementById('{{ form.primary_area.id_for_label }}');
+  var postcode = document.getElementById('{{ form.postcode_district.id_for_label }}');
+  if (!primary || !postcode) return;
+  function allowedPostcodes(name) {
+    var set = {};
+    AREAS.forEach(function (a) { if (a.name === name) set[a.postcode] = true; });
+    return Object.keys(set);
+  }
+  function syncPostcodeFromPrimary() {
+    var name = primary.value;
+    if (!name) return;
+    var allowed = allowedPostcodes(name);
+    if (allowed.length && allowed.indexOf(postcode.value) === -1) postcode.value = allowed[0];
+  }
+  primary.addEventListener('change', syncPostcodeFromPrimary);
+})();
+</script>
+{% elif step == 5 %}
+<script>
+(function () {
+  document.querySelectorAll('.forma-photo-slot').forEach(function (slot) {
+    var input = slot.querySelector('input[type="file"]');
+    if (!input) return;
+    input.addEventListener('change', function () {
+      if (!input.files || !input.files[0]) return;
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var thumb = slot.querySelector('.gallery-thumb');
+        if (thumb) {
+          thumb.src = e.target.result;
+          thumb.classList.remove('hidden');
+        }
+        slot.classList.add('has-image', 'border-solid');
+        var ph = slot.querySelector('.photo-placeholder-icon');
+        var pl = slot.querySelector('.photo-placeholder-label');
+        if (ph) ph.classList.add('hidden');
+        if (pl) pl.classList.add('hidden');
+      };
+      reader.readAsDataURL(input.files[0]);
+    });
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

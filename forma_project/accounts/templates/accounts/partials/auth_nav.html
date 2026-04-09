@@ -1,0 +1,17 @@
+<nav class="fixed top-0 inset-x-0 z-[200] h-[60px] flex items-stretch bg-paper border-b border-rule" aria-label="Main">
+  <div class="flex items-center px-8 border-r border-rule shrink-0">
+    <a href="{% url 'home' %}" class="font-display text-[1.55rem] tracking-[0.1em] text-blue no-underline leading-none">Forma</a>
+  </div>
+  <div class="flex-1 flex items-center justify-end px-8 gap-10">
+    {% if user.is_authenticated %}
+    <span class="font-body text-[0.8rem] font-medium tracking-wide-5 text-muted hidden sm:inline">{{ user.get_username }}</span>
+    <form method="post" action="{% url 'accounts:logout' %}" class="inline m-0">
+      {% csrf_token %}
+      <button type="submit" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 bg-transparent cursor-pointer hover:text-ink hover:border-ink">Log out</button>
+    </form>
+    {% else %}
+    <a href="{% url 'accounts:login' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 no-underline hover:text-ink hover:border-ink">Log in</a>
+    <a href="{% url 'accounts:register' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-ink border-b border-ink pb-0.5 no-underline hover:text-blue hover:border-blue">Register</a>
+    {% endif %}
+  </div>
+</nav>

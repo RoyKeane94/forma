@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Signed out — Forma{% endblock %}
+{% block body %}
+<section class="border-t border-rule bg-surface min-h-[calc(100vh-60px)] px-page py-section">
+  <div class="max-w-md mx-auto">
+    <p class="flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue mb-6 after:block after:h-px after:bg-rule after:max-w-[3rem] after:flex-1">
+      Account
+    </p>
+    <h1 class="font-display text-[clamp(2.8rem,4.5vw,4.5rem)] leading-heading tracking-[0.02em] text-ink mb-6">
+      Signed out
+    </h1>
+    <p class="font-serif text-[1.05rem] font-light italic text-slate leading-serif mb-10">
+      You’re logged out. Come back any time.
+    </p>
+    <a href="{% url 'home' %}" class="inline-block bg-blue hover:bg-blue-mid text-white font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] px-8 py-[0.9rem] no-underline hover:-translate-y-0.5">Home</a>
+    <hr class="border-t border-rule my-10">
+    <p class="font-body text-[0.88rem] font-light text-slate leading-[1.7]">
+      <a href="{% url 'accounts:login' %}" class="text-muted border-b border-rule pb-0.5 no-underline hover:text-ink hover:border-ink">Sign in again</a>
+    </p>
+  </div>
+</section>
+{% endblock %}

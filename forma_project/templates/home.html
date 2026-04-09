@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Forma{% endblock %}
+{% block body %}
+<section class="border-t border-rule bg-paper min-h-[calc(100vh-60px)] px-page py-section">
+  <div class="max-w-3xl">
+    <p class="flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue mb-6 after:block after:h-px after:bg-rule after:max-w-[3rem] after:flex-1">
+      Home
+    </p>
+    <h1 class="font-display text-[clamp(2.8rem,4.5vw,4.5rem)] leading-heading tracking-[0.02em] text-ink mb-6">
+      Forma
+    </h1>
+    {% if user.is_authenticated %}
+    <p class="font-body text-[0.88rem] font-light text-ink leading-[1.7]">
+      Signed in as <span class="font-medium">{{ user.get_username }}</span>.
+    </p>
+    {% else %}
+    <p class="font-serif text-[1.05rem] font-light italic text-slate leading-serif mb-8">
+      Professional PT profiles and directory — sign in or register to continue.
+    </p>
+    <div class="flex flex-wrap gap-6 items-baseline">
+      <a href="{% url 'accounts:login' %}" class="inline-block bg-blue hover:bg-blue-mid text-white font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] px-8 py-[0.9rem] no-underline hover:-translate-y-0.5">Sign in</a>
+      <a href="{% url 'accounts:register' %}" class="text-muted border-b border-rule pb-0.5 no-underline font-body text-[0.78rem] font-medium uppercase tracking-wide-2 hover:text-ink hover:border-ink">Register</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

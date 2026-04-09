@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Register — Forma{% endblock %}
+{% block body %}
+<section class="border-t border-rule bg-surface min-h-[calc(100vh-60px)] px-page py-section">
+  <div class="max-w-md mx-auto">
+    <p class="flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue mb-6 after:block after:h-px after:bg-rule after:max-w-[3rem] after:flex-1">
+      Account
+    </p>
+    <h1 class="font-display text-[clamp(2.8rem,4.5vw,4.5rem)] leading-heading tracking-[0.02em] text-ink mb-4">
+      Register
+    </h1>
+    <p class="font-serif text-[1.05rem] font-light italic text-slate leading-serif mb-10">
+      Join Forma to build your professional profile.
+    </p>
+
+    <form method="post" action="" class="border-t border-rule pt-10" id="register-form" novalidate>
+      {% csrf_token %}
+
+      {% if form.errors %}
+      <div role="alert" class="mb-8 border border-rule bg-blue-light px-4 py-4">
+        <p class="font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue mb-3">
+          We couldn’t create your account
+        </p>
+        <ul class="list-none p-0 m-0 font-body text-[0.8rem] font-light text-slate leading-[1.7] space-y-2">
+          {% for field in form %}
+            {% for error in field.errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+          {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="mb-6">
+        <label for="{{ form.email.id_for_label }}" class="block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink mb-2">
+          {{ form.email.label }}
+        </label>
+        {{ form.email }}
+        {% if form.email.errors %}
+        <ul class="mt-2 list-none p-0 m-0 font-body text-[0.68rem] font-light text-muted normal-case tracking-normal">
+          {% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <div class="mb-6">
+        <label for="{{ form.password1.id_for_label }}" class="block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink mb-2">
+          {{ form.password1.label }}
+        </label>
+        {{ form.password1 }}
+        {% if form.password1.errors %}
+        <ul class="mt-2 list-none p-0 m-0 font-body text-[0.68rem] font-light text-muted normal-case tracking-normal">
+          {% for error in form.password1.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <div
+        id="register-password2-group"
+        class="mb-10{% if not form.password1.data and not form.password2.errors %} hidden{% endif %}"
+      >
+        <label for="{{ form.password2.id_for_label }}" class="block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink mb-2">
+          {{ form.password2.label }}
+        </label>
+        {{ form.password2 }}
+        {% if form.password2.errors %}
+        <ul class="mt-2 list-none p-0 m-0 font-body text-[0.68rem] font-light text-muted normal-case tracking-normal">
+          {% for error in form.password2.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="bg-blue hover:bg-blue-mid text-white font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] px-8 py-[0.9rem] border-0 cursor-pointer hover:-translate-y-0.5">
+        Create account
+      </button>
+    </form>
+
+    <hr class="border-t border-rule my-10">
+
+    <p class="font-body text-[0.88rem] font-light text-slate leading-[1.7]">
+      Already registered?
+      <a href="{% url 'accounts:login' %}" class="text-muted border-b border-rule pb-0.5 no-underline hover:text-ink hover:border-ink">Sign in</a>
+    </p>
+  </div>
+</section>
+
+<script>
+(function () {
+  var p1 = document.getElementById('id_password1');
+  var p2 = document.getElementById('id_password2');
+  var wrap = document.getElementById('register-password2-group');
+  if (!p1 || !p2 || !wrap) return;
+
+  function sync() {
+    if (p1.value.trim()) {
+      wrap.classList.remove('hidden');
+    } else {
+      wrap.classList.add('hidden');
+      p2.value = '';
+    }
+  }
+
+  p1.addEventListener('input', sync);
+  p1.addEventListener('change', sync);
+  sync();
+})();
+</script>
+{% endblock %}

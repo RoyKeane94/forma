@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Sign in — Forma{% endblock %}
+{% block body %}
+<section class="border-t border-rule bg-surface min-h-[calc(100vh-60px)] px-page py-section">
+  <div class="max-w-md mx-auto">
+    <p class="flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue mb-6 after:block after:h-px after:bg-rule after:max-w-[3rem] after:flex-1">
+      Account
+    </p>
+    <h1 class="font-display text-[clamp(2.8rem,4.5vw,4.5rem)] leading-heading tracking-[0.02em] text-ink mb-4">
+      Sign in
+    </h1>
+    <p class="font-serif text-[1.05rem] font-light italic text-slate leading-serif mb-10">
+      Access your Forma profile and settings.
+    </p>
+
+    <form method="post" action="" class="border-t border-rule pt-10" id="login-form" novalidate>
+      {% csrf_token %}
+
+      {% if form.errors %}
+      <div role="alert" class="mb-8 border border-rule bg-blue-light px-4 py-4">
+        <p class="font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue mb-3">
+          We couldn’t sign you in
+        </p>
+        <ul class="list-none p-0 m-0 font-body text-[0.8rem] font-light text-slate leading-[1.7] space-y-2">
+          {% for field in form %}
+            {% for error in field.errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+          {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="mb-6">
+        <label for="{{ form.email.id_for_label }}" class="block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink mb-2">
+          {{ form.email.label }}
+        </label>
+        {{ form.email }}
+        {% if form.email.errors %}
+        <ul class="mt-2 list-none p-0 m-0 font-body text-[0.68rem] font-light text-muted normal-case tracking-normal">
+          {% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <div class="mb-10">
+        <label for="{{ form.password.id_for_label }}" class="block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink mb-2">
+          {{ form.password.label }}
+        </label>
+        {{ form.password }}
+        {% if form.password.errors %}
+        <ul class="mt-2 list-none p-0 m-0 font-body text-[0.68rem] font-light text-muted normal-case tracking-normal">
+          {% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="bg-blue hover:bg-blue-mid text-white font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] px-8 py-[0.9rem] border-0 cursor-pointer hover:-translate-y-0.5">
+        Sign in
+      </button>
+    </form>
+
+    <hr class="border-t border-rule my-10">
+
+    <p class="font-body text-[0.88rem] font-light text-slate leading-[1.7]">
+      No account yet?
+      <a href="{% url 'accounts:register' %}" class="text-muted border-b border-rule pb-0.5 no-underline hover:text-ink hover:border-ink">Create one</a>
+    </p>
+  </div>
+</section>
+{% endblock %}

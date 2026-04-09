@@ -1,0 +1,27 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Forma{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-paper font-body text-ink antialiased">
+  {% block site_nav %}{% include "accounts/partials/auth_nav.html" %}{% endblock %}
+  <div class="{% block content_shell_class %}pt-[60px] min-h-screen{% endblock %}">
+    {% if messages %}
+    <div class="border-b border-rule bg-surface px-page py-4">
+      <ul class="list-none p-0 m-0 font-body text-[0.8rem] font-light text-slate">
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% block body %}{% endblock %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "forma-project",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./static_src/css/input.css -o ./static/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./static_src/css/input.css -o ./static/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17"
+  }
+}

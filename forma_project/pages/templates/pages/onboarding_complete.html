@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Profile submitted — Forma{% endblock %}
+{% block site_nav %}{% endblock %}
+{% block content_shell_class %}min-h-screen{% endblock %}
+
+{% block body %}
+<div class="flex min-h-[calc(100vh-0px)] flex-col items-center justify-center px-page py-section text-center">
+  <div class="mb-8 flex h-[60px] w-[60px] items-center justify-center rounded-full border border-blue/20 bg-blue-light">
+    <svg class="h-6 w-6 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  </div>
+  <h1 class="mb-4 font-display text-[3rem] leading-none tracking-[0.02em] text-ink">Profile submitted</h1>
+  <p class="mb-8 max-w-[42ch] font-serif text-[1.05rem] font-light italic leading-[1.7] text-slate">
+    We'll review your profile and have it live within 24 hours. You'll get an email when it's published.
+  </p>
+  <a href="{% url 'home' %}" class="inline-flex items-center gap-3 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-colors hover:bg-blue-mid">
+    Preview your profile →
+  </a>
+</div>
+{% endblock %}

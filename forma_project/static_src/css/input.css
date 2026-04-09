@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Django widgets only add `class="forma-input"` from Python — safelist in tailwind.config.js keeps this. */
+@layer components {
+  .forma-input {
+    @apply w-full border border-rule bg-white px-4 py-3 rounded-none appearance-none font-body text-[0.92rem] font-light text-ink focus:border-blue focus:outline-none;
+  }
+
+  .forma-input:focus {
+    box-shadow: 0 0 0 3px rgba(26, 63, 204, 0.08);
+  }
+
+  /* CheckboxSelectMultiple — Django 5 nests options in div > div > label > input */
+  .forma-check-group > div {
+    @apply mt-3 flex flex-wrap gap-2;
+  }
+
+  .forma-check-group > div > div {
+    @apply m-0 p-0;
+  }
+
+  .forma-check-group > div > div > label {
+    @apply relative m-0 flex min-h-[2.25rem] cursor-pointer select-none items-center gap-2 border border-rule bg-paper px-[0.9rem] py-[0.45rem] font-body text-[0.75rem] font-medium uppercase tracking-wide-5 text-slate transition-colors;
+  }
+
+  .forma-check-group > div > div > label input[type='checkbox'] {
+    @apply absolute h-0 w-0 opacity-0;
+  }
+
+  .forma-check-group > div > div > label:has(input:checked),
+  .forma-check-group > div > div > label:has(input:focus-visible) {
+    @apply border-blue/30 bg-blue-light text-blue;
+  }
+
+  .forma-check-group.forma-check-group--quick > div > div > label {
+    @apply normal-case tracking-normal text-[0.75rem];
+  }
+
+  .forma-check-group.forma-area-grid > div > div > label {
+    @apply px-[0.8rem] py-[0.35rem] text-[0.72rem];
+  }
+
+  /* Logistics pills with leading icon span inside label */
+  .forma-loc-checks .loc-check input[type='checkbox'] {
+    @apply absolute opacity-0 w-0 h-0;
+  }
+
+  .forma-loc-checks .loc-check label {
+    @apply flex items-center gap-2 font-body text-[0.75rem] font-medium uppercase tracking-wide-5 text-slate border border-rule px-[0.45rem] py-[0.45rem] pl-[0.9rem] pr-[0.9rem] bg-paper cursor-pointer transition-colors select-none m-0;
+  }
+
+  .forma-loc-checks .loc-check input[type='checkbox']:checked + label {
+    @apply bg-blue-light border-blue/30 text-blue;
+  }
+
+  .forma-loc-checks {
+    @apply flex flex-wrap gap-2 mt-3;
+  }
+
+  /* Native file inputs in custom shells */
+  .forma-portrait-upload input[type='file'],
+  .forma-photo-slot input[type='file'] {
+    @apply absolute inset-0 opacity-0 cursor-pointer w-full h-full p-0 border-0 bg-transparent;
+  }
+
+  .forma-photo-slot .forma-input {
+    @apply border-0 p-0 h-full absolute inset-0 opacity-0 z-10;
+  }
+
+  /* Select chevron wrapper keeps native select */
+  .forma-select-wrap .forma-input {
+    @apply pr-10 cursor-pointer;
+  }
+}
