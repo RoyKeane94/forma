@@ -22,9 +22,22 @@
   </div>
 </nav>
 
-<div class="sticky top-[60px] z-[99] h-[3px] bg-rule">
-  <div class="h-full bg-blue transition-all duration-300" style="width: {% widthratio step_display total_steps 100 %}%"></div>
+<div class="sticky top-[60px] z-[99] h-[3px] overflow-hidden bg-rule">
+  <div
+    class="onboarding-progress-fill h-[3px] w-0 bg-blue transition-[width] duration-300 ease-out"
+    data-step="{{ step_display }}"
+    data-total="{{ total_steps }}"
+  ></div>
 </div>
+<script>
+(function () {
+  var el = document.querySelector('.onboarding-progress-fill');
+  if (!el) return;
+  var s = parseFloat(el.dataset.step, 10);
+  var t = parseFloat(el.dataset.total, 10);
+  if (t > 0) el.style.width = (100 * s / t) + '%';
+})();
+</script>
 
 <div class="sticky top-[63px] z-[98] flex overflow-x-auto border-b border-rule bg-paper scrollbar-none [&::-webkit-scrollbar]:hidden" id="step-tabs">
   {% for label in tab_labels %}
