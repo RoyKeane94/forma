@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.text import slugify
 
 
 def _empty_list():
@@ -71,12 +72,56 @@ class TrainerProfile(models.Model):
 
     onboarding_step = models.PositiveSmallIntegerField(default=0)
     completed_at = models.DateTimeField(null=True, blank=True)
+    is_published = models.BooleanField(
+        default=True,
+        help_text='When false, the public trainer URL returns 404 for everyone except the owner.',
+    )
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+        help_text='Public URL segment: firstname-lastname (with numeric suffix if needed).',
+    )
 
     class Meta:
         db_table = 'pages_trainer_profile'
 
     def __str__(self):
         return f'TrainerProfile({self.user_id})'
+
+    @staticmethod
+    def slug_base_from_names(first_name: str, last_name: str) -> str:
+        a = slugify((first_name or '').strip())
+        b = slugify((last_name or '').strip())
+        parts = [p for p in (a, b) if p]
+        return '-'.join(parts) if parts else 'trainer'
+
+    def assign_public_slug(self) -> None:
+        base = self.slug_base_from_names(self.first_name, self.last_name)
+        candidate = base
+        n = 2
+        while True:
+            qs = TrainerProfile.objects.filter(slug=candidate)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            if not qs.exists():
+                self.slug = candidate
+                return
+            candidate = f'{base}-{n}'
+            n += 1
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        if update_fields is None:
+            self.assign_public_slug()
+        elif (
+            'first_name' in update_fields
+            or 'last_name' in update_fields
+            or 'slug' in update_fields
+            or not self.slug
+        ):
+            self.assign_public_slug()
+            kwargs['update_fields'] = list(dict.fromkeys(list(update_fields) + ['slug']))
+        return super().save(*args, **kwargs)
 
 
 class TrainerAdditionalQualification(models.Model):

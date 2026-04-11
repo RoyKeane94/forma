@@ -31,7 +31,7 @@ class TrainerGalleryPhotoInline(admin.TabularInline):
 
 @admin.register(TrainerProfile)
 class TrainerProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'first_name', 'last_name', 'onboarding_step', 'completed_at')
+    list_display = ('user', 'slug', 'first_name', 'last_name', 'onboarding_step', 'completed_at', 'is_published')
     search_fields = ('first_name', 'last_name', 'user__email', 'user__username')
     inlines = (
         TrainerAdditionalQualificationInline,

@@ -12,12 +12,12 @@
     <a class="font-display text-[1.55rem] tracking-wide-4 text-blue no-underline" href="{% url 'home' %}">Forma</a>
   </div>
   <div class="flex flex-1 items-center px-8">
-    <span class="font-body text-meta font-medium uppercase tracking-wide-5 text-ink">Set up your profile</span>
+    <span class="font-body text-meta font-medium uppercase tracking-wide-5 text-ink">{% if onboarding_edit %}Edit your page{% else %}Set up your profile{% endif %}</span>
     <span class="ml-8 font-body text-[0.7rem] uppercase tracking-wide-4 text-muted" id="nav-step-counter">Step {{ step_display }} of {{ total_steps }}</span>
   </div>
   <div class="flex items-center border-l border-rule px-8">
     <button type="submit" form="onboarding-step-form" name="save_draft" value="1" class="cursor-pointer border-0 bg-transparent font-body text-[0.68rem] font-medium uppercase tracking-wide-3 text-muted transition-colors hover:text-ink">
-      Save draft
+      {% if onboarding_edit %}Save{% else %}Save draft{% endif %}
     </button>
   </div>
 </nav>
@@ -43,7 +43,7 @@
   {% for label in tab_labels %}
   {% with n=forloop.counter %}
   {% if n <= max_reachable_step %}
-  <a href="{% url 'pages:onboarding_step' step=n %}" class="flex h-12 shrink-0 items-center gap-2 border-0 border-b-2 bg-transparent px-8 font-body text-[0.68rem] font-medium uppercase tracking-wide-3 whitespace-nowrap no-underline transition-colors {% if n == step_display %}border-blue text-blue{% elif n <= profile.onboarding_step %}border-transparent text-slate hover:text-ink{% else %}border-transparent text-muted hover:text-ink{% endif %}">
+  <a href="{% if onboarding_edit %}{% url 'pages:onboarding_step_edit' step=n %}{% else %}{% url 'pages:onboarding_step' step=n %}{% endif %}" class="flex h-12 shrink-0 items-center gap-2 border-0 border-b-2 bg-transparent px-8 font-body text-[0.68rem] font-medium uppercase tracking-wide-3 whitespace-nowrap no-underline transition-colors {% if n == step_display %}border-blue text-blue{% elif n <= profile.onboarding_step %}border-transparent text-slate hover:text-ink{% else %}border-transparent text-muted hover:text-ink{% endif %}">
     <span class="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full font-body text-[0.6rem] font-semibold {% if n == step_display %}bg-blue text-white{% elif n <= profile.onboarding_step %}bg-ink text-white{% else %}bg-rule text-muted{% endif %}">{{ n }}</span>
     {{ label }}
   </a>
@@ -306,7 +306,7 @@
         {% for label in tab_labels %}
         {% with n=forloop.counter %}
         <div class="flex items-center gap-2.5 font-body text-[0.72rem] {% if n == step_display %}text-ink font-medium{% elif n <= profile.onboarding_step %}text-ink{% else %}text-muted{% endif %}">
-          <span class="h-1.5 w-1.5 shrink-0 rounded-full {% if n == step_display or n <= profile.onboarding_step %}bg-blue{% else %}bg-rule{% endif %}"></span>
+          <span class="h-1.5 w-1.5 shrink-0 rounded-full {% if n == step_display %}bg-blue{% elif n <= profile.onboarding_step %}bg-ink{% else %}bg-rule{% endif %}"></span>
           {{ label }}
         </div>
         {% endwith %}
@@ -318,13 +318,13 @@
 
 <div class="sticky bottom-0 z-[90] flex items-center justify-between gap-4 border-t border-rule bg-paper px-page py-8">
   {% if prev_step %}
-  <a href="{% url 'pages:onboarding_step' step=prev_step %}" class="inline-flex items-center gap-2 border-0 bg-transparent font-body text-[0.75rem] font-medium uppercase tracking-wide-3 text-muted no-underline transition-colors hover:text-ink">← Back</a>
+  <a href="{% if onboarding_edit %}{% url 'pages:onboarding_step_edit' step=prev_step %}{% else %}{% url 'pages:onboarding_step' step=prev_step %}{% endif %}" class="inline-flex items-center gap-2 border-0 bg-transparent font-body text-[0.75rem] font-medium uppercase tracking-wide-3 text-muted no-underline transition-colors hover:text-ink">← Back</a>
   {% else %}
   <span class="inline-flex items-center gap-2 font-body text-[0.75rem] font-medium uppercase tracking-wide-3 text-very-muted opacity-30">← Back</span>
   {% endif %}
   <span class="font-body text-meta text-muted">{{ step_display }} of {{ total_steps }}</span>
   {% if step_display == total_steps %}
-  <button type="submit" form="onboarding-step-form" class="inline-flex items-center gap-3 border-0 bg-ink px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white transition-colors hover:bg-[#2a2a2a]">Submit profile →</button>
+  <button type="submit" form="onboarding-step-form" class="inline-flex items-center gap-3 border-0 bg-ink px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white transition-colors hover:bg-[#2a2a2a]">{% if onboarding_edit %}Save changes →{% else %}Submit profile →{% endif %}</button>
   {% else %}
   <button type="submit" form="onboarding-step-form" class="inline-flex items-center gap-3 border-0 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white transition-colors hover:bg-blue-mid hover:-translate-y-px">Continue →</button>
   {% endif %}

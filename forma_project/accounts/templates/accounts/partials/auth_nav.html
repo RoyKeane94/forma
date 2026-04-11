@@ -5,6 +5,7 @@
   <div class="flex-1 flex items-center justify-end px-8 gap-10">
     {% if user.is_authenticated %}
     <span class="font-body text-[0.8rem] font-medium tracking-wide-5 text-muted hidden sm:inline">{{ user.get_username }}</span>
+    <a href="{% url 'pages:my_account' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 no-underline hover:text-ink hover:border-ink">My Account</a>
     <form method="post" action="{% url 'accounts:logout' %}" class="inline m-0">
       {% csrf_token %}
       <button type="submit" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 bg-transparent cursor-pointer hover:text-ink hover:border-ink">Log out</button>

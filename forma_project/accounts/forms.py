@@ -1,6 +1,10 @@
 from django import forms
 from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import (
+    AuthenticationForm,
+    PasswordChangeForm,
+    UserCreationForm,
+)
 from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
@@ -114,3 +118,27 @@ class LoginForm(AuthenticationForm):
             self.confirm_login_allowed(self.user_cache)
 
         return self.cleaned_data
+
+
+class FormaPasswordChangeForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _apply_input_classes(self)
+
+
+class DeleteAccountForm(forms.Form):
+    password = forms.CharField(
+        label=_('Current password'),
+        widget=forms.PasswordInput(attrs={'autocomplete': 'current-password'}),
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+        _apply_input_classes(self)
+
+    def clean_password(self):
+        password = self.cleaned_data['password']
+        if not self.user.check_password(password):
+            raise forms.ValidationError(_('That password is not correct.'))
+        return password

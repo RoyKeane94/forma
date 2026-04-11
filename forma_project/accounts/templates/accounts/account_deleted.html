@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Account removed — Forma{% endblock %}
+{% block body %}
+<section class="min-h-[calc(100vh-60px)] border-t border-rule bg-surface px-page py-section">
+  <div class="mx-auto max-w-md">
+    <p class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+      Account
+    </p>
+    <h1 class="mb-6 font-display text-[clamp(2.8rem,4.5vw,4.5rem)] leading-heading tracking-[0.02em] text-ink">
+      Account removed
+    </h1>
+    <p class="mb-10 font-serif text-[1.05rem] font-light italic leading-serif text-slate">
+      Your Forma account and associated data have been deleted.
+    </p>
+    <a href="{% url 'home' %}" class="inline-block border-0 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] text-white no-underline transition-colors hover:bg-blue-mid hover:-translate-y-0.5">
+      Home
+    </a>
+  </div>
+</section>
+{% endblock %}
