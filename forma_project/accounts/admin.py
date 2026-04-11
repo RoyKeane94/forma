@@ -1,9 +1,5 @@
-from django.contrib import admin
+"""Accounts app: no models registered in admin.
 
-from .models import Profile
-
-
-@admin.register(Profile)
-class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user',)
-    search_fields = ('user__username', 'user__email')
+Trainer-related data is edited under **Pages → Trainer profiles** only, so the
+sidebar does not list a separate *Accounts → Profiles* entry.
+"""

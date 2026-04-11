@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Create Forma-made profile — Forma{% endblock %}
+{% block content_shell_class %}min-h-screen{% endblock %}
+
+{% block body %}
+<div class="px-page py-section">
+  <div class="mx-auto max-w-md">
+    <p class="mb-3 font-body text-[0.7rem] font-medium uppercase tracking-wide-3 text-blue">Staff</p>
+    <h1 class="mb-4 font-display text-[clamp(2rem,5vw,2.75rem)] leading-none tracking-[0.02em] text-ink">Create profile</h1>
+    <p class="mb-8 font-serif text-[1rem] font-light italic leading-[1.65] text-slate">
+      Enter the trainer’s name. You will complete their page using the standard onboarding steps.
+    </p>
+
+    <form method="post" class="border-t border-rule pt-8" novalidate>
+      {% csrf_token %}
+      {% if form.errors %}
+      <div role="alert" class="mb-6 border border-rule bg-blue-light px-4 py-4 font-body text-[0.8rem] text-slate">
+        Please correct the errors below.
+      </div>
+      {% endif %}
+      <div class="mb-5">
+        <label for="{{ form.first_name.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">First name</label>
+        {{ form.first_name }}
+        {% if form.first_name.errors %}<ul class="mt-2 m-0 list-none p-0 text-[0.7rem] text-[#CC2A1A]">{% for e in form.first_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <div class="mb-8">
+        <label for="{{ form.last_name.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">Last name</label>
+        {{ form.last_name }}
+        {% if form.last_name.errors %}<ul class="mt-2 m-0 list-none p-0 text-[0.7rem] text-[#CC2A1A]">{% for e in form.last_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <div class="flex flex-wrap items-center gap-4">
+        <button type="submit" class="inline-flex cursor-pointer items-center justify-center border-0 bg-blue px-8 py-[0.85rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white transition-colors hover:bg-blue-mid">
+          Start onboarding
+        </button>
+        <a href="{% url 'pages:staff_forma_profiles' %}" class="border-b border-rule pb-0.5 font-body text-[0.75rem] uppercase tracking-wide-3 text-muted no-underline hover:border-ink hover:text-ink">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

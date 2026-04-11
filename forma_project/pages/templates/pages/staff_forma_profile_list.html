@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Forma-made profiles — Forma{% endblock %}
+{% block content_shell_class %}min-h-screen{% endblock %}
+
+{% block body %}
+<div class="px-page py-section">
+  <div class="mx-auto max-w-3xl">
+    <p class="mb-3 font-body text-[0.7rem] font-medium uppercase tracking-wide-3 text-blue">Staff</p>
+    <h1 class="mb-2 font-display text-[clamp(2rem,5vw,2.75rem)] leading-none tracking-[0.02em] text-ink">Forma-made profiles</h1>
+    <p class="mb-8 max-w-[48ch] font-serif text-[1rem] font-light italic leading-[1.65] text-slate">
+      Profiles you created use the same onboarding flow. Public URLs use <span class="font-body not-italic text-ink">/first-last/five-characters</span>.
+    </p>
+
+    <p class="mb-6">
+      <a href="{% url 'pages:staff_forma_profile_new' %}" class="inline-flex items-center justify-center bg-blue px-6 py-3 font-body text-[0.75rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-colors hover:bg-blue-mid">
+        Create profile
+      </a>
+    </p>
+
+    {% if rows %}
+    <div class="overflow-x-auto border border-rule bg-surface">
+      <table class="w-full border-collapse text-left font-body text-[0.8rem]">
+        <thead>
+          <tr class="border-b border-rule bg-paper">
+            <th class="px-4 py-3 font-semibold uppercase tracking-wide-3 text-muted">Name</th>
+            <th class="px-4 py-3 font-semibold uppercase tracking-wide-3 text-muted">Public URL</th>
+            <th class="px-4 py-3 font-semibold uppercase tracking-wide-3 text-muted">Actions</th>
+            <th class="px-4 py-3 font-semibold uppercase tracking-wide-3 text-muted">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr class="border-b border-rule last:border-b-0">
+            <td class="px-4 py-3 text-ink">{{ row.label }}</td>
+            <td class="px-4 py-3">
+              {% if row.url %}
+              <a href="{{ row.url }}" class="break-all text-blue no-underline hover:underline">{{ row.url }}</a>
+              {% else %}
+              <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              {% if row.profile.completed_at %}
+              <a href="{% url 'pages:staff_forma_onboarding_edit' profile_pk=row.profile.pk %}" class="border-b border-rule pb-0.5 font-medium text-blue no-underline hover:border-ink hover:text-ink">Edit profile</a>
+              {% else %}
+              <a href="{% url 'pages:staff_forma_onboarding' profile_pk=row.profile.pk %}" class="border-b border-rule pb-0.5 text-blue no-underline hover:border-ink hover:text-ink">Continue onboarding</a>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-muted">
+              {% if row.profile.completed_at %}
+              <span>Complete</span>
+              {% else %}
+              <span>In progress</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="font-body text-[0.88rem] text-muted">You have not created any Forma-made profiles yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

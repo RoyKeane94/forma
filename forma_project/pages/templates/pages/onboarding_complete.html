@@ -14,7 +14,7 @@
   <p class="mb-8 max-w-[42ch] font-serif text-[1.05rem] font-light italic leading-[1.7] text-slate">
     We'll review your profile and have it live within 24 hours. You'll get an email when it's published.
   </p>
-  <a href="{% url 'pages:trainer_profile' profile_slug=profile.slug %}" class="inline-flex items-center gap-3 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-colors hover:bg-blue-mid">
+  <a href="{{ profile.get_absolute_url }}" class="inline-flex items-center gap-3 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-colors hover:bg-blue-mid">
     Preview your profile →
   </a>
   <p class="mt-6 font-body text-[0.72rem] text-muted">

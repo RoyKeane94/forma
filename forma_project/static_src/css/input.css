@@ -73,4 +73,105 @@
   .forma-select-wrap .forma-input {
     @apply pr-10 cursor-pointer;
   }
+
+  /* Custom primary-area combobox (native <select> kept for POST; enhanced via JS) */
+  .forma-combobox {
+    @apply relative max-w-md;
+  }
+
+  .forma-combobox--enhanced select.forma-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+    @apply opacity-0 pointer-events-none;
+  }
+
+  .forma-combobox [data-combobox-trigger] {
+    @apply hidden w-full items-center justify-between gap-3 border border-rule bg-white px-4 py-3 text-left font-body text-[0.75rem] font-medium uppercase tracking-wide-5 text-slate transition-colors;
+  }
+
+  .forma-combobox--enhanced [data-combobox-trigger] {
+    @apply flex cursor-pointer;
+  }
+
+  .forma-combobox [data-combobox-trigger]:hover {
+    @apply border-blue/30;
+  }
+
+  .forma-combobox [data-combobox-trigger]:focus {
+    @apply border-blue outline-none;
+    box-shadow: 0 0 0 3px rgba(26, 63, 204, 0.08);
+  }
+
+  .forma-combobox [data-combobox-trigger][aria-expanded='true'] {
+    @apply border-blue/40;
+  }
+
+  .forma-combobox [data-combobox-trigger] .forma-combobox__label {
+    @apply min-w-0 flex-1 truncate;
+  }
+
+  .forma-combobox [data-combobox-trigger] .forma-combobox__label--placeholder {
+    @apply font-light normal-case tracking-normal text-muted;
+  }
+
+  .forma-combobox [data-combobox-chevron] {
+    @apply h-3.5 w-3.5 shrink-0 text-muted transition-transform;
+  }
+
+  .forma-combobox [data-combobox-trigger][aria-expanded='true'] [data-combobox-chevron] {
+    @apply rotate-180;
+  }
+
+  .forma-combobox [data-combobox-panel] {
+    @apply absolute left-0 right-0 z-[120] mt-px max-h-[min(16rem,55vh)] overflow-y-auto border border-rule border-t-0 bg-white py-1 shadow-[0_12px_32px_-8px_rgba(15,15,15,0.12)];
+  }
+
+  .forma-combobox [data-combobox-panel][hidden] {
+    @apply hidden;
+  }
+
+  .forma-combobox [data-combobox-panel] [role='option'] {
+    @apply m-0 block w-full cursor-pointer border-0 bg-transparent px-4 py-2.5 text-left font-body text-[0.72rem] font-medium uppercase tracking-wide-5 text-slate transition-colors;
+  }
+
+  .forma-combobox [data-combobox-panel] [role='option']:hover,
+  .forma-combobox [data-combobox-panel] [role='option'][data-active='true'] {
+    @apply bg-blue-light text-blue;
+  }
+
+  .forma-combobox [data-combobox-panel] [role='option'][aria-selected='true'] {
+    @apply bg-blue-light/80 text-blue;
+  }
+
+  .forma-combobox [data-combobox-panel] [role='option']:focus {
+    @apply bg-blue-light text-blue outline-none;
+  }
+
+  /* Onboarding reviews — star rating radios */
+  .forma-review-star-radios ul {
+    @apply m-0 flex flex-wrap items-center gap-2 p-0;
+  }
+
+  .forma-review-star-radios li {
+    @apply m-0 list-none p-0;
+  }
+
+  .forma-review-star-radios label {
+    @apply m-0 flex cursor-pointer items-center gap-1.5 border border-transparent px-2 py-1 font-body text-[1rem] leading-none text-muted transition-colors hover:border-rule hover:text-ink;
+  }
+
+  .forma-review-star-radios input[type='radio'] {
+    @apply absolute h-px w-px overflow-hidden p-0 opacity-0;
+  }
+
+  .forma-review-star-radios label:has(input:checked) {
+    @apply border-blue/25 bg-blue-light text-blue;
+  }
 }

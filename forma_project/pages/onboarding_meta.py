@@ -4,7 +4,7 @@ ONBOARDING_STEPS = [
     {
         'tab': 'About you',
         'title': 'About you',
-        'step_label': 'Step 1 of 6',
+        'step_label': 'Step 1 of 7',
         'description': (
             "The basics — your name, where you're based, and a short description "
             'of who you are and how you train.'
@@ -23,7 +23,7 @@ ONBOARDING_STEPS = [
     {
         'tab': 'Qualifications',
         'title': 'Qualifications',
-        'step_label': 'Step 2 of 6',
+        'step_label': 'Step 2 of 7',
         'description': (
             'Your certifications and credentials. These appear verbatim on your profile — be specific.'
         ),
@@ -40,7 +40,7 @@ ONBOARDING_STEPS = [
     {
         'tab': 'Specialisms',
         'title': 'What you do best',
-        'step_label': 'Step 3 of 6',
+        'step_label': 'Step 3 of 7',
         'description': (
             'Up to four areas. Keep them short — these are labels, not descriptions.'
         ),
@@ -57,7 +57,7 @@ ONBOARDING_STEPS = [
     {
         'tab': 'Logistics',
         'title': 'Logistics',
-        'step_label': 'Step 4 of 6',
+        'step_label': 'Step 4 of 7',
         'description': (
             "Where you train and which areas you cover. Clients use this to work out whether you're "
             'the right fit geographically.'
@@ -73,7 +73,7 @@ ONBOARDING_STEPS = [
     {
         'tab': 'Pricing',
         'title': 'Pricing',
-        'step_label': 'Step 5 of 6',
+        'step_label': 'Step 5 of 7',
         'description': (
             "Be upfront. Clients who see your rates before enquiring are warmer leads — they've "
             'already decided the price works for them.'
@@ -87,21 +87,39 @@ ONBOARDING_STEPS = [
         'sidebar_example': None,
     },
     {
-        'tab': 'Photos & Instagram',
-        'title': 'Photos & Instagram',
-        'step_label': 'Step 6 of 6',
+        'tab': 'Photos, video & Instagram',
+        'title': 'Photos, video & Instagram',
+        'step_label': 'Step 6 of 7',
         'description': (
-            'Upload six photos that represent your training style. These are what a potential '
-            'client sees before they read anything else.'
+            'Optional intro video, six gallery photos, and your Instagram handle. '
+            'If you turn the video block on but have not uploaded a clip yet, your public page shows a tasteful placeholder.'
         ),
-        'sidebar_label': 'Photo tips',
+        'sidebar_label': 'Intro video',
         'sidebar_tip': (
-            'Mix action shots (training a client, demonstrating an exercise) with at least one clear '
-            'photo of your face. Avoid dark gyms if possible — natural light reads better.'
+            'Keep an intro under about a minute — enough for someone to sense your personality and coaching style. '
+            'If you enable “show on profile” with no file yet, clients still see the block with a “coming soon” style placeholder.'
         ),
-        'sidebar_example_label': 'Good mix',
+        'sidebar_example_label': 'Photo mix',
         'sidebar_example': (
             '1 portrait · 2 training clients · 2 outdoor or gym action · 1 with equipment'
+        ),
+    },
+    {
+        'tab': 'Reviews',
+        'title': 'Client reviews',
+        'step_label': 'Step 7 of 7',
+        'description': (
+            'You can add up to three short testimonials when you create your profile. '
+            'They appear on your public page once both a name and a quote are filled in for each slot.'
+        ),
+        'sidebar_label': 'Social proof',
+        'sidebar_tip': (
+            'First name plus initial (e.g. “Jamie T.”) is enough if clients prefer not to be fully named. '
+            'Short, specific quotes beat generic praise every time.'
+        ),
+        'sidebar_example_label': 'Example',
+        'sidebar_example': (
+            '"Maya rebuilt my confidence in the gym after a shoulder injury — sessions are structured but never rigid."'
         ),
     },
 ]

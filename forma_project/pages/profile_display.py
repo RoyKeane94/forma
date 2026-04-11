@@ -24,8 +24,9 @@ def non_empty_additional_qualifications(profile):
     for q in profile.additional_qualifications.all():
         name = (q.name or '').strip()
         detail = (q.detail or '').strip()
-        if name or detail:
-            rows.append({'name': name, 'detail': detail})
+        description = (q.description or '').strip()
+        if name or detail or description:
+            rows.append({'name': name, 'detail': detail, 'description': description})
     return rows
 
 
@@ -40,4 +41,25 @@ def visible_price_tiers(profile):
         has_price = t.price is not None
         if label or has_price:
             out.append(t)
+    return out
+
+
+def non_empty_client_reviews(profile):
+    """Structured reviews from onboarding (max three); requires rating + confirmation."""
+    out = []
+    for item in profile.client_reviews or []:
+        if not isinstance(item, dict):
+            continue
+        name = (item.get('name') or '').strip()
+        quote = (item.get('quote') or '').strip()
+        rating = item.get('rating')
+        if not isinstance(rating, int) or not (1 <= rating <= 5):
+            rating = None
+        confirmed = bool(item.get('confirmed'))
+        if name and quote and rating is not None and confirmed:
+            focus = (item.get('focus') or '').strip()
+            row = {'name': name, 'quote': quote, 'rating': rating}
+            if focus:
+                row['focus'] = focus
+            out.append(row)
     return out

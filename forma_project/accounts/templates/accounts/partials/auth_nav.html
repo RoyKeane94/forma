@@ -5,6 +5,9 @@
   <div class="flex-1 flex items-center justify-end px-8 gap-10">
     {% if user.is_authenticated %}
     <span class="font-body text-[0.8rem] font-medium tracking-wide-5 text-muted hidden sm:inline">{{ user.get_username }}</span>
+    {% if user.is_superuser %}
+    <a href="{% url 'pages:staff_forma_profiles' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-blue border-b border-blue/30 pb-0.5 no-underline hover:text-ink hover:border-ink">Forma profiles</a>
+    {% endif %}
     <a href="{% url 'pages:my_account' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 no-underline hover:text-ink hover:border-ink">My Account</a>
     <form method="post" action="{% url 'accounts:logout' %}" class="inline m-0">
       {% csrf_token %}

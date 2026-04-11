@@ -72,32 +72,40 @@
   </div>
 </section>
 
-{# Intro video — no asset in model yet #}
+{% if profile.show_intro_video %}
 <section class="grid border-t border-rule lg:grid-cols-[1fr_340px]" id="intro">
-  <div class="relative flex aspect-video items-center justify-center bg-ink">
-    <div class="absolute inset-0 z-[1] opacity-[0.35]" style="background:repeating-linear-gradient(0deg,rgba(255,255,255,0.02) 0 1px,transparent 1px 4px)" aria-hidden="true"></div>
-    <div class="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_center,rgba(26,63,204,0.12),rgba(0,0,0,0.55))]" aria-hidden="true"></div>
+  <div class="relative flex aspect-video items-center justify-center overflow-hidden bg-ink">
+    <div class="pointer-events-none absolute inset-0 z-[1] opacity-[0.35]" style="background:repeating-linear-gradient(0deg,rgba(255,255,255,0.02) 0 1px,transparent 1px 4px)" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_center,rgba(26,63,204,0.12),rgba(0,0,0,0.55))]" aria-hidden="true"></div>
+    {% if profile.intro_video %}
+    <video class="relative z-[2] h-full w-full object-contain" controls playsinline preload="metadata" src="{{ profile.intro_video.url }}"></video>
+    {% else %}
     <div class="relative z-[2] max-w-[16rem] px-6 text-center">
       {% include "pages/includes/trainer_media_placeholder.html" with caption="Intro video" %}
     </div>
-    <div class="absolute bottom-5 left-6 z-[2]">
+    <div class="pointer-events-none absolute bottom-5 left-6 z-[3] max-w-[min(90%,20rem)]">
       <p class="font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-white/50">Intro video</p>
       <p class="font-serif text-[1.05rem] font-light italic text-white/85">{{ profile.first_name }} {{ profile.last_name }} — in their own words</p>
     </div>
+    {% endif %}
   </div>
   <aside class="flex flex-col justify-between border-t border-rule bg-surface p-8 lg:border-l lg:border-t-0 lg:p-12">
     <div>
       <p class="mb-3 font-body text-label text-blue">Watch first</p>
       <h2 class="mb-4 font-display text-[2.2rem] leading-none tracking-[0.02em] text-ink">Before you read anything else.</h2>
-      <p class="font-serif text-[0.95rem] font-light italic leading-[1.7] text-slate">A short intro clip will live here once it&apos;s uploaded.</p>
+      {% if profile.intro_video %}
+      <p class="font-serif text-[0.95rem] font-light italic leading-[1.7] text-slate">A quick sense of how they coach — then scroll for the detail.</p>
+      {% else %}
+      <p class="font-serif text-[0.95rem] font-light italic leading-[1.7] text-slate">They’ve left this block visible; a clip or a fuller placeholder will appear here when it’s ready.</p>
+      {% endif %}
     </div>
   </aside>
 </section>
+{% endif %}
 
 <section class="grid border-t border-rule lg:grid-cols-2" id="about">
   <div class="border-rule px-page py-section lg:border-r lg:px-16">
     <p class="mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">About</p>
-    <h2 class="mb-8 font-display text-[clamp(2.5rem,4.5vw,4.5rem)] leading-[0.92] tracking-[0.02em] text-ink">Train hard.<br>Train right.</h2>
     <div class="max-w-[52ch] font-serif text-[1.05rem] font-light leading-[1.8] text-slate [&_p+p]:mt-[1.1em]">
       {{ profile.bio|linebreaks }}
     </div>
@@ -105,17 +113,33 @@
   <div class="bg-surface px-page py-section lg:px-16">
     <p class="mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">Qualifications</p>
     <div class="flex flex-col">
-      {% for row in additional_quals %}
-      <div class="flex gap-6 border-b border-rule py-5 last:border-b-0">
-        <span class="min-w-[2ch] shrink-0 font-display text-[1.5rem] leading-none tracking-[0.03em] text-blue">{{ forloop.counter|stringformat:"02d" }}</span>
-        <div>
-          {% if row.name %}<p class="mb-1 font-body text-[0.85rem] font-medium tracking-[0.04em] text-ink">{{ row.name }}</p>{% endif %}
-          {% if row.detail %}<p class="font-serif text-[0.8rem] italic text-muted">{{ row.detail }}</p>{% endif %}
-        </div>
+      {% if quick_qual_labels %}
+      <div class="mb-8 border-b border-rule pb-8 last:mb-0 last:border-b-0 last:pb-0">
+        <p class="mb-3 font-body text-[0.65rem] font-semibold uppercase tracking-wide-3 text-muted">Credentials</p>
+        <ul class="list-none space-y-2">
+          {% for label in quick_qual_labels %}
+          <li class="font-body text-[0.85rem] font-medium tracking-[0.04em] text-ink">{{ label }}</li>
+          {% endfor %}
+        </ul>
       </div>
-      {% empty %}
-      <p class="font-serif text-[0.95rem] italic text-muted">Additional qualifications will appear here when added.</p>
-      {% endfor %}
+      {% endif %}
+      {% if additional_quals %}
+      <div>
+        {% if quick_qual_labels %}
+        <p class="mb-3 font-body text-[0.65rem] font-semibold uppercase tracking-wide-3 text-muted">Also qualified in</p>
+        {% endif %}
+        {% for row in additional_quals %}
+        <div class="flex gap-6 border-b border-rule py-5 last:border-b-0">
+          <span class="min-w-[2ch] shrink-0 font-display text-[1.5rem] leading-none tracking-[0.03em] text-blue">{{ forloop.counter|stringformat:"02d" }}</span>
+          <div>
+            {% if row.name %}<p class="mb-1 font-body text-[0.85rem] font-medium tracking-[0.04em] text-ink">{{ row.name }}</p>{% endif %}
+            {% if row.detail %}<p class="mb-2 font-serif text-[0.8rem] italic text-muted">{{ row.detail }}</p>{% endif %}
+            {% if row.description %}<p class="max-w-[52ch] font-body text-[0.8rem] font-light leading-relaxed text-slate">{{ row.description }}</p>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
     </div>
   </div>
 </section>
@@ -192,6 +216,29 @@
 </section>
 {% endif %}
 
+{% if client_reviews %}
+<section class="border-t border-rule bg-white px-page py-section" id="reviews">
+  <p class="mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">Reviews</p>
+  <h2 class="mb-10 font-display text-[clamp(2.5rem,4vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink">What clients say</h2>
+  <div class="grid gap-6 md:grid-cols-3">
+    {% for rev in client_reviews %}
+    <blockquote class="border border-rule bg-surface p-6">
+      <div class="mb-3 flex gap-0.5 text-blue" aria-label="{{ rev.rating }} out of 5 stars">
+        {% for _ in "12345" %}
+        <span class="font-body text-[0.95rem] leading-none {% if forloop.counter <= rev.rating %}text-blue{% else %}text-rule{% endif %}" aria-hidden="true">★</span>
+        {% endfor %}
+      </div>
+      {% if rev.focus %}
+      <p class="mb-3 font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-blue">Focus: {{ rev.focus }}</p>
+      {% endif %}
+      <p class="mb-4 font-serif text-[0.95rem] font-light italic leading-[1.65] text-slate">&ldquo;{{ rev.quote }}&rdquo;</p>
+      <footer class="font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-muted">— {{ rev.name }}</footer>
+    </blockquote>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
 <section class="border-t border-rule bg-paper px-page py-section" id="instagram">
   <div class="mb-8 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
     <div class="flex items-center gap-4">
@@ -227,13 +274,6 @@
   </div>
 </section>
 
-<section class="border-t border-rule bg-surface px-page py-16 text-center" id="reviews">
-  <p class="mb-3 font-body text-label text-blue">Reviews</p>
-  <div class="mx-auto max-w-md border border-dashed border-rule bg-paper px-8 py-12">
-    {% include "pages/includes/trainer_media_placeholder.html" with caption="Verified client reviews" %}
-  </div>
-</section>
-
 <section class="grid min-h-[420px] border-t border-rule lg:grid-cols-2" id="enquire">
   <div class="relative flex flex-col justify-end border-rule bg-surface px-page py-section lg:border-r lg:px-16">
     <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_0%_100%,rgba(26,63,204,0.07),transparent_55%)]" aria-hidden="true"></div>
@@ -261,10 +301,14 @@
   </div>
 </section>
 
-<footer class="flex flex-col items-start justify-between gap-4 border-t border-rule bg-ink px-page py-6 sm:flex-row sm:items-center">
-  <a href="{% url 'home' %}" class="font-display text-[1.4rem] tracking-wide-4 text-paper no-underline">Forma</a>
-  <div class="flex flex-wrap gap-6">
-    <span class="font-body text-[0.65rem] uppercase tracking-wide-4 text-paper/30">Public profile</span>
+{% endblock %}
+
+{% block site_footer %}
+<footer class="flex flex-col items-start justify-between gap-6 border-t border-rule bg-ink px-page py-8 sm:flex-row sm:items-center">
+  <div>
+    <a href="{% url 'home' %}" class="font-display text-[1.4rem] tracking-wide-4 text-paper no-underline">Forma</a>
+    <p class="mt-2 max-w-md font-body text-[0.72rem] font-light leading-relaxed text-paper/60">Forma - professional profiles for personal trainers</p>
   </div>
+  <span class="font-body text-[0.65rem] uppercase tracking-wide-4 text-paper/30">Public profile</span>
 </footer>
 {% endblock %}
