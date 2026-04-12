@@ -51,11 +51,11 @@
     <div class="relative flex min-h-[280px] flex-1 flex-col items-center justify-end bg-gradient-to-b from-blue-light to-surface px-6 pb-0 pt-10 lg:min-h-[380px]">
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_60%_30%,rgba(26,63,204,0.08),transparent_60%)]" aria-hidden="true"></div>
       {% if profile.portrait %}
-      <div class="relative z-[1] w-full max-w-[280px] overflow-hidden shadow-[0_20px_50px_-20px_rgba(15,15,15,0.25)]">
+      <div class="relative z-[1] w-full max-w-[200px] overflow-hidden shadow-[0_20px_50px_-20px_rgba(15,15,15,0.25)]">
         <img src="{{ profile.portrait.url }}" alt="" class="aspect-[3/4] w-full object-cover object-top">
       </div>
       {% else %}
-      <div class="relative z-[1] w-full max-w-[280px] overflow-hidden border border-dashed border-rule bg-paper/50">
+      <div class="relative z-[1] w-full max-w-[200px] overflow-hidden border border-dashed border-rule bg-paper/50">
         <div class="aspect-[3/4] w-full">
           {% include "pages/includes/trainer_media_placeholder.html" with caption="Portrait" %}
         </div>
