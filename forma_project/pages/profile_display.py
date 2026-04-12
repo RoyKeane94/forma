@@ -10,6 +10,23 @@ def quick_qualification_labels(keys):
     return [_QUICK[k] for k in (keys or []) if k in _QUICK]
 
 
+def quick_qualification_items(profile):
+    """Selected quick presets with optional client-facing note per key."""
+    keys = profile.quick_qualifications or []
+    raw = getattr(profile, 'quick_qualification_notes', None) or {}
+    if not isinstance(raw, dict):
+        raw = {}
+    return [
+        {
+            'key': k,
+            'label': _QUICK[k],
+            'note': (raw.get(k) or '').strip(),
+        }
+        for k in keys
+        if k in _QUICK
+    ]
+
+
 def training_location_labels(keys):
     return [_LOCS[k] for k in (keys or []) if k in _LOCS]
 

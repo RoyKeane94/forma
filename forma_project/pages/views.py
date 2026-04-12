@@ -23,18 +23,30 @@ from .forms import (
     TrainerSpecialismFormSet,
     client_reviews_form_initial,
 )
-from .models import TrainerProfile, ensure_onboarding_children
+from .models import QUICK_QUALIFICATION_CHOICES, TrainerProfile, ensure_onboarding_children
 from .onboarding_meta import ONBOARDING_STEPS, TAB_LABELS
 from .profile_display import (
     non_empty_additional_qualifications,
     non_empty_client_reviews,
     non_empty_specialisms,
-    quick_qualification_labels,
+    quick_qualification_items,
     training_location_items,
     visible_price_tiers,
 )
 
 STEP_COUNT = 7
+
+_QUICK_QUAL_NOTE_MAX_LEN = 600
+
+
+def _quick_qual_notes_from_post(request) -> dict:
+    out = {}
+    allowed = {k for k, _ in QUICK_QUALIFICATION_CHOICES}
+    for key in allowed:
+        raw = (request.POST.get(f'quick_qual_note_{key}') or '').strip()
+        if raw:
+            out[key] = raw[:_QUICK_QUAL_NOTE_MAX_LEN]
+    return out
 
 
 def _get_profile(user) -> TrainerProfile:
@@ -402,7 +414,7 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
 
     context = {
         'profile': profile,
-        'quick_qual_labels': quick_qualification_labels(profile.quick_qualifications),
+        'quick_qual_items': quick_qualification_items(profile),
         'training_location_items': training_location_items(profile.training_locations),
         'additional_quals': non_empty_additional_qualifications(profile),
         'client_reviews': non_empty_client_reviews(profile),
@@ -439,12 +451,24 @@ def _process_step_post(
         quick = OnboardingStep2QuickForm(request.POST)
         fs = TrainerAdditionalQualificationFormSet(request.POST, instance=profile)
         if quick.is_valid() and fs.is_valid():
-            profile.quick_qualifications = list(quick.cleaned_data.get('quick_qualifications') or [])
-            profile.save(update_fields=['quick_qualifications'])
+            selected = list(quick.cleaned_data.get('quick_qualifications') or [])
+            profile.quick_qualifications = selected
+            notes = _quick_qual_notes_from_post(request)
+            profile.quick_qualification_notes = {k: notes[k] for k in selected if k in notes}
+            profile.save(update_fields=['quick_qualifications', 'quick_qualification_notes'])
             fs.save()
             _advance_if_needed()
             return True, {}
-        return False, {'quick_form': quick, 'formset': fs}
+        post_notes = _quick_qual_notes_from_post(request)
+        return False, {
+            'quick_form': quick,
+            'formset': fs,
+            'quick_qual_selected': list(request.POST.getlist('quick_qualifications')),
+            'quick_qual_note_rows': [
+                {'key': k, 'label': lab, 'text': post_notes.get(k, '')}
+                for k, lab in QUICK_QUALIFICATION_CHOICES
+            ],
+        }
 
     if step_idx == 2:
         fs = TrainerSpecialismFormSet(request.POST, instance=profile)
@@ -501,6 +525,12 @@ def _load_step_get_forms(context: dict, profile: TrainerProfile, step_idx: int) 
             initial={'quick_qualifications': profile.quick_qualifications or []}
         )
         context['formset'] = TrainerAdditionalQualificationFormSet(instance=profile)
+        notes = dict(profile.quick_qualification_notes or {})
+        context['quick_qual_selected'] = list(profile.quick_qualifications or [])
+        context['quick_qual_note_rows'] = [
+            {'key': k, 'label': lab, 'text': (notes.get(k) or '')}
+            for k, lab in QUICK_QUALIFICATION_CHOICES
+        ]
     elif step_idx == 2:
         context['formset'] = TrainerSpecialismFormSet(instance=profile)
     elif step_idx == 3:

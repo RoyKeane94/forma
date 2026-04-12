@@ -13,6 +13,10 @@ def _empty_list():
     return []
 
 
+def _empty_dict():
+    return {}
+
+
 # ── Step 2: quick-add preset keys (stored on TrainerProfile.quick_qualifications JSON) ──
 QUICK_QUALIFICATION_CHOICES = [
     ('reps3', 'REPS Level 3'),
@@ -88,8 +92,13 @@ class TrainerProfile(models.Model):
     bio = models.TextField(help_text='Longer profile copy.')
     portrait = models.ImageField(upload_to='trainer/portraits/', blank=True, null=True)
 
-    # Step 2 — quick presets (checkbox group)
+    # Step 2 — quick presets (checkbox group) + optional client-facing lines per key
     quick_qualifications = models.JSONField(default=_empty_list, blank=True)
+    quick_qualification_notes = models.JSONField(
+        default=_empty_dict,
+        blank=True,
+        help_text='Maps quick preset keys to short text shown on the public profile.',
+    )
 
     # Step 4 — logistics
     training_locations = models.JSONField(default=_empty_list, blank=True)
@@ -258,7 +267,7 @@ class TrainerProfile(models.Model):
 
 
 class TrainerAdditionalQualification(models.Model):
-    """Step 2 — free-text rows (up to 4)."""
+    """Step 2 — free-text rows (up to 10)."""
 
     profile = models.ForeignKey(
         TrainerProfile,
@@ -366,7 +375,7 @@ def ensure_onboarding_children(profile: TrainerProfile) -> None:
     Ensure fixed-count child rows exist so formsets can bind predictably.
     Call from a view before rendering onboarding (e.g. after profile creation).
     """
-    for order in range(1, 5):
+    for order in range(1, 11):
         TrainerAdditionalQualification.objects.get_or_create(
             profile=profile,
             order=order,

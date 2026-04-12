@@ -62,10 +62,10 @@
       </div>
       {% endif %}
     </div>
-    {% if quick_qual_labels %}
+    {% if quick_qual_items %}
     <div class="flex flex-wrap gap-1 border-t border-rule px-4 py-4 sm:px-6">
-      {% for label in quick_qual_labels %}
-      <span class="border border-blue/15 bg-blue-light px-2.5 py-1 font-body text-[0.6rem] font-medium uppercase tracking-wide-3 text-blue">{{ label }}</span>
+      {% for item in quick_qual_items %}
+      <span class="border border-blue/15 bg-blue-light px-2.5 py-1 font-body text-[0.6rem] font-medium uppercase tracking-wide-3 text-blue">{{ item.label }}</span>
       {% endfor %}
     </div>
     {% endif %}
@@ -113,19 +113,24 @@
   <div class="bg-surface px-page py-section lg:px-16">
     <p class="mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">Qualifications</p>
     <div class="flex flex-col">
-      {% if quick_qual_labels %}
+      {% if quick_qual_items %}
       <div class="mb-8 border-b border-rule pb-8 last:mb-0 last:border-b-0 last:pb-0">
         <p class="mb-3 font-body text-[0.65rem] font-semibold uppercase tracking-wide-3 text-muted">Credentials</p>
-        <ul class="list-none space-y-2">
-          {% for label in quick_qual_labels %}
-          <li class="font-body text-[0.85rem] font-medium tracking-[0.04em] text-ink">{{ label }}</li>
+        <ul class="list-none space-y-4">
+          {% for item in quick_qual_items %}
+          <li>
+            <p class="font-body text-[0.85rem] font-medium tracking-[0.04em] text-ink">{{ item.label }}</p>
+            {% if item.note %}
+            <p class="mt-1 max-w-[52ch] font-body text-[0.8rem] font-light leading-relaxed text-slate">{{ item.note }}</p>
+            {% endif %}
+          </li>
           {% endfor %}
         </ul>
       </div>
       {% endif %}
       {% if additional_quals %}
       <div>
-        {% if quick_qual_labels %}
+        {% if quick_qual_items %}
         <p class="mb-3 font-body text-[0.65rem] font-semibold uppercase tracking-wide-3 text-muted">Also qualified in</p>
         {% endif %}
         {% for row in additional_quals %}

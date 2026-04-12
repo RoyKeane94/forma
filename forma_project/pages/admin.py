@@ -103,6 +103,7 @@ class TrainerProfileAdmin(admin.ModelAdmin):
                     'bio',
                     'portrait',
                     'quick_qualifications',
+                    'quick_qualification_notes',
                 ),
             },
         ),

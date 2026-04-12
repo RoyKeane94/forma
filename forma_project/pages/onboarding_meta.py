@@ -30,11 +30,12 @@ ONBOARDING_STEPS = [
         'sidebar_label': 'What to include',
         'sidebar_tip': (
             'List the qualification name exactly as it appears on your certificate, '
-            'then add the issuing body or year in the detail field.'
+            'then use the next field to explain in plain language what it qualifies you to do for clients.'
         ),
         'sidebar_example_label': 'Example',
         'sidebar_example': (
-            'Name: "Pre & Postnatal Certificate"\nDetail: "Guild of Pregnancy & Postnatal Exercise"'
+            'Name: "Pre & Postnatal Certificate"\n'
+            'Client-facing line: "Safe exercise planning before and after birth — including pelvic floor and core rebuild."'
         ),
     },
     {

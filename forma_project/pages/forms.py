@@ -3,7 +3,7 @@ Onboarding forms for PT profile setup (7 steps). Widgets use `.forma-input` (see
 
 View wiring (after user has a TrainerProfile and `ensure_onboarding_children(profile)` has run):
   Step 1: OnboardingStep1Form
-  Step 2: OnboardingStep2QuickForm + TrainerAdditionalQualificationFormSet
+  Step 2: OnboardingStep2QuickForm + TrainerAdditionalQualificationFormSet (up to 10 rows)
   Step 3: TrainerSpecialismFormSet
   Step 4: OnboardingStep4Form (saves training_locations + other_areas JSON on save())
   Step 5: OnboardingStep5MetaForm + TrainerPriceTierFormSet
@@ -107,28 +107,13 @@ class OnboardingStep2QuickForm(forms.Form):
 class AdditionalQualificationForm(forms.ModelForm):
     class Meta:
         model = TrainerAdditionalQualification
-        fields = ('name', 'detail', 'description')
+        fields = ('name', 'detail')
         widgets = {
             'name': forms.TextInput(attrs=_forma_attrs({'placeholder': 'Qualification name'})),
-            'detail': forms.TextInput(attrs=_forma_attrs({'placeholder': 'Issuing body or year'})),
-            'description': forms.Textarea(
-                attrs=_forma_attrs(
-                    {
-                        'rows': 3,
-                        'placeholder': 'e.g. What you learned and how it helps clients — in plain language',
-                    }
-                )
+            'detail': forms.TextInput(
+                attrs=_forma_attrs({'placeholder': 'Tell clients what this qualifies you for'})
             ),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['description'].required = False
-        self.fields['description'].label = 'What it means (for clients)'
-        self.fields['description'].help_text = (
-            'Clients often do not know what certificate titles mean. '
-            'Use one or two sentences they can understand.'
-        )
 
 
 TrainerAdditionalQualificationFormSet = inlineformset_factory(
@@ -137,7 +122,7 @@ TrainerAdditionalQualificationFormSet = inlineformset_factory(
     form=AdditionalQualificationForm,
     extra=0,
     can_delete=False,
-    max_num=4,
+    max_num=10,
     validate_max=True,
 )
 
