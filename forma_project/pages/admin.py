@@ -33,6 +33,7 @@ class TrainerAdditionalQualificationInline(admin.TabularInline):
 class TrainerSpecialismInline(admin.TabularInline):
     model = TrainerSpecialism
     extra = 0
+    fields = ('order', 'title', 'description')
 
 
 class TrainerPriceTierInline(admin.TabularInline):
@@ -64,6 +65,8 @@ class TrainerProfileAdmin(admin.ModelAdmin):
     search_fields = (
         'first_name',
         'last_name',
+        'contact_email',
+        'contact_phone',
         'primary_area__name',
         'primary_area__district__code',
         'user__email',
@@ -127,6 +130,9 @@ class TrainerProfileAdmin(admin.ModelAdmin):
             'Pricing & contact',
             {
                 'fields': (
+                    'contact_email',
+                    'contact_phone',
+                    'contact_phone_preference',
                     'free_consultation',
                     'instagram_handle',
                 ),

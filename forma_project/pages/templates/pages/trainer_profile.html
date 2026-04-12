@@ -24,8 +24,8 @@
   </div>
 </nav>
 
-<section class="grid min-h-screen border-b border-rule lg:min-h-0 lg:grid-cols-[5fr_4fr]">
-  <div class="relative flex flex-col justify-end border-rule bg-paper px-page py-12 lg:border-r lg:py-16">
+<section class="flex min-h-0 flex-col border-b border-rule max-lg:min-h-screen lg:min-h-0 lg:flex-row lg:items-stretch">
+  <div class="relative flex w-full flex-col justify-start border-rule bg-paper px-page py-12 lg:min-w-0 lg:flex-1 lg:border-r lg:py-16">
     <div class="pointer-events-none absolute inset-0 opacity-[0.35] bg-[linear-gradient(#DDDBD4_1px,transparent_1px),linear-gradient(90deg,#DDDBD4_1px,transparent_1px)] [background-size:80px_80px]" aria-hidden="true"></div>
     <p class="pointer-events-none absolute bottom-[-0.15em] left-[-0.02em] z-0 select-none font-display text-[clamp(10rem,28vw,28rem)] leading-[0.82] tracking-[-0.01em] text-blue/[0.045]" aria-hidden="true">{{ initials_watermark }}</p>
     <div class="relative z-[1] max-w-[52rem]">
@@ -47,22 +47,42 @@
     </div>
   </div>
 
-  <div class="flex flex-col bg-surface">
-    <div class="relative flex min-h-[280px] flex-1 flex-col items-center justify-end bg-gradient-to-b from-blue-light to-surface px-6 pb-0 pt-10 lg:min-h-[380px]">
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_60%_30%,rgba(26,63,204,0.08),transparent_60%)]" aria-hidden="true"></div>
+  <div class="flex min-h-0 w-full flex-col bg-surface max-lg:flex-1 {% if profile.portrait %}lg:w-1/3 lg:min-w-0 lg:shrink-0{% endif %}">
+    <div
+      class="relative z-[1] flex min-h-0 flex-1 flex-col overflow-hidden bg-gradient-to-b from-blue-light to-surface {% if not profile.portrait %}min-h-[280px] items-stretch lg:min-h-[380px]{% endif %}"
+    >
+      <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_60%_30%,rgba(26,63,204,0.08),transparent_60%)]" aria-hidden="true"></div>
       {% if profile.portrait %}
-      <div class="relative z-[1] w-full max-w-[200px] overflow-hidden shadow-[0_20px_50px_-20px_rgba(15,15,15,0.25)]">
-        <img src="{{ profile.portrait.url }}" alt="" class="aspect-[3/4] w-full object-cover object-top">
+      {# Right column is one-third of the hero on lg; portrait fits that box with object-contain (no crop). Quals wrap inside the same width. #}
+      <div class="relative z-[1] flex min-h-0 w-full flex-1 flex-col items-stretch">
+        <div class="flex min-h-0 flex-1 flex-col items-stretch">
+          <div class="flex min-h-0 flex-1 items-center justify-center lg:items-stretch lg:justify-center lg:w-full">
+            <div class="box-border flex h-full min-h-0 w-full max-w-full flex-1 border border-rule bg-paper/50 max-lg:max-h-[min(100%,70svh)] lg:max-h-none">
+              <img
+                src="{{ profile.portrait.url }}"
+                alt=""
+                class="block h-full w-full max-h-[min(100%,70svh)] object-contain object-top lg:max-h-full"
+              />
+            </div>
+          </div>
+        </div>
+        {% if quick_qual_items %}
+        <div class="flex min-w-0 w-full flex-wrap gap-1 border-t border-rule px-4 py-4 sm:px-6 lg:px-3 lg:py-3">
+          {% for item in quick_qual_items %}
+          <span class="max-w-full border border-blue/15 bg-blue-light px-2.5 py-1 font-body text-[0.6rem] font-medium uppercase tracking-wide-3 text-blue [overflow-wrap:anywhere]">{{ item.label }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
       </div>
       {% else %}
-      <div class="relative z-[1] w-full max-w-[200px] overflow-hidden border border-dashed border-rule bg-paper/50">
-        <div class="aspect-[3/4] w-full">
+      <div class="relative z-[1] m-6 flex min-h-[240px] flex-1 flex-col items-center justify-center border border-dashed border-rule bg-paper/50">
+        <div class="aspect-[3/4] w-full max-w-[20rem]">
           {% include "pages/includes/trainer_media_placeholder.html" with caption="Portrait" %}
         </div>
       </div>
       {% endif %}
     </div>
-    {% if quick_qual_items %}
+    {% if quick_qual_items and not profile.portrait %}
     <div class="flex flex-wrap gap-1 border-t border-rule px-4 py-4 sm:px-6">
       {% for item in quick_qual_items %}
       <span class="border border-blue/15 bg-blue-light px-2.5 py-1 font-body text-[0.6rem] font-medium uppercase tracking-wide-3 text-blue">{{ item.label }}</span>
@@ -149,7 +169,7 @@
   </div>
 </section>
 
-{% if specialisms %}
+{% if specialism_items %}
 <section class="border-t border-rule bg-white px-page py-section">
   <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
     <div>
@@ -158,10 +178,13 @@
     </div>
   </div>
   <div class="grid grid-cols-2 gap-px border border-rule bg-rule md:grid-cols-4">
-    {% for title in specialisms %}
-    <div class="bg-white p-5 transition-colors hover:bg-paper">
+    {% for row in specialism_items %}
+    <div class="flex flex-col items-start bg-white p-5 transition-colors hover:bg-paper">
       <p class="mb-2 font-display text-[1.8rem] leading-none text-blue/35">{{ forloop.counter|stringformat:"02d" }}</p>
-      <p class="font-body text-[0.78rem] font-medium uppercase tracking-[0.06em] text-ink">{{ title }}</p>
+      <p class="font-body text-[0.78rem] font-medium uppercase tracking-[0.06em] text-ink">{{ row.title }}</p>
+      {% if row.description %}
+      <p class="mt-3 max-w-[28ch] font-serif text-[0.82rem] font-light leading-relaxed text-slate">{{ row.description }}</p>
+      {% endif %}
     </div>
     {% endfor %}
   </div>
@@ -280,7 +303,7 @@
 </section>
 
 <section class="grid min-h-[420px] border-t border-rule lg:grid-cols-2" id="enquire">
-  <div class="relative flex flex-col justify-end border-rule bg-surface px-page py-section lg:border-r lg:px-16">
+  <div class="relative flex flex-col justify-start border-rule bg-surface px-page py-section lg:border-r lg:px-16">
     <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_0%_100%,rgba(26,63,204,0.07),transparent_55%)]" aria-hidden="true"></div>
     <div class="relative">
       <h2 class="mb-6 font-display text-[clamp(3rem,6vw,5.5rem)] leading-[0.9] tracking-[0.02em] text-ink">Start<br>for <span class="text-blue">real</span><br>this time.</h2>
@@ -293,18 +316,89 @@
       </div>
     </div>
   </div>
-  <div class="flex flex-col justify-center gap-6 px-page py-section lg:px-16">
+  <div class="flex flex-col justify-start gap-6 px-page py-section lg:px-16">
     <p class="flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">Get in touch</p>
     {% if profile.free_consultation %}
     <p class="max-w-[44ch] font-serif text-[1.1rem] font-light leading-[1.75] text-slate">The first step is a <strong class="font-normal italic text-ink">free consultation</strong> — we&apos;ll talk through goals and fit.</p>
     {% else %}
     <p class="max-w-[44ch] font-serif text-[1.1rem] font-light leading-[1.75] text-slate">Reach out to discuss availability and how we might work together.</p>
     {% endif %}
+    {% if profile.contact_email or profile.contact_phone %}
+    <div class="flex max-w-lg flex-col gap-4 border-t border-rule pt-6">
+      {% if profile.contact_email %}
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <div class="min-w-0 flex-1">
+          <p class="mb-1 font-body text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-muted">Email</p>
+          <a href="mailto:{{ profile.contact_email }}" class="break-all font-body text-[0.92rem] font-medium text-ink no-underline transition-colors hover:text-blue">{{ profile.contact_email }}</a>
+        </div>
+        <button
+          type="button"
+          class="inline-flex h-10 shrink-0 items-center justify-center border border-rule bg-paper px-4 font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-ink transition-colors hover:border-ink hover:bg-surface"
+          data-copy-value="{{ profile.contact_email|escape }}"
+          aria-label="Copy email address"
+        >
+          Copy
+        </button>
+      </div>
+      {% endif %}
+      {% if profile.contact_phone %}
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <div class="min-w-0 flex-1">
+          <p class="mb-1 font-body text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-muted">Phone</p>
+          <a href="tel:{{ profile.contact_phone|cut:' '|cut:'-' }}" class="font-body text-[0.92rem] font-medium text-ink no-underline transition-colors hover:text-blue">{{ profile.contact_phone }}</a>
+        </div>
+        <button
+          type="button"
+          class="inline-flex h-10 shrink-0 items-center justify-center border border-rule bg-paper px-4 font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-ink transition-colors hover:border-ink hover:bg-surface"
+          data-copy-value="{{ profile.contact_phone|escape }}"
+          aria-label="Copy phone number"
+        >
+          Copy
+        </button>
+      </div>
+      {% endif %}
+      {% if profile.contact_phone and profile.contact_phone_preference %}
+      <div class="min-w-0">
+        <p class="mb-1 font-body text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-muted">Preferred contact method</p>
+        <p class="font-body text-[0.92rem] font-medium text-ink">{{ profile.get_contact_phone_preference_display }}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
     {% if instagram_url %}
     <p class="font-body text-[0.68rem] tracking-wide-5 text-muted">Or message <a href="{{ instagram_url }}" class="text-blue no-underline hover:underline">@{{ profile.instagram_handle }}</a> on Instagram.</p>
     {% endif %}
   </div>
 </section>
+
+<script>
+(function () {
+  function copyText(text, btn) {
+    var label = btn.textContent;
+    function done(ok) {
+      btn.textContent = ok ? 'Copied' : 'Failed';
+      setTimeout(function () {
+        btn.textContent = label;
+      }, ok ? 1600 : 2200);
+    }
+    if (!text) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        done(true);
+      }).catch(function () {
+        done(false);
+      });
+    } else {
+      done(false);
+    }
+  }
+  document.querySelectorAll('#enquire [data-copy-value]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      copyText(btn.getAttribute('data-copy-value') || '', btn);
+    });
+  });
+})();
+</script>
 
 {% endblock %}
 

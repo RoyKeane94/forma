@@ -51,6 +51,18 @@ def non_empty_specialisms(profile):
     return [s.title.strip() for s in profile.specialisms.all() if (s.title or '').strip()]
 
 
+def specialism_display_items(profile):
+    """Titles with optional brief descriptions for public profile / marketing blocks."""
+    out = []
+    for s in profile.specialisms.all():
+        title = (s.title or '').strip()
+        if not title:
+            continue
+        desc = (s.description or '').strip()
+        out.append({'title': title, 'description': desc})
+    return out
+
+
 def visible_price_tiers(profile):
     out = []
     for t in profile.price_tiers.all():

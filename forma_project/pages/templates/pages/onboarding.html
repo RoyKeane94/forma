@@ -100,21 +100,53 @@
           {% if form.bio.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.bio.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <hr class="my-10 border-0 border-t border-rule">
-        <div class="flex flex-col gap-2">
+        <p class="mb-6 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Client contact</p>
+        <p class="mb-6 max-w-[52ch] font-body text-[0.72rem] leading-relaxed text-muted">These details are shown on your public profile in <span class="font-medium text-slate">Get in touch</span> — visitors can copy them there.</p>
+        <div class="mb-6 flex flex-col gap-2">
+          <label for="{{ form.contact_email.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+            {{ form.contact_email.label }} <span class="ml-2 font-body text-[0.68rem] font-normal normal-case tracking-normal text-muted">Optional</span>
+          </label>
+          {{ form.contact_email }}
+          {% if form.contact_email.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.contact_email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="mb-6 flex flex-col gap-2">
+          <label for="{{ form.contact_phone.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+            {{ form.contact_phone.label }} <span class="ml-2 font-body text-[0.68rem] font-normal normal-case tracking-normal text-muted">Optional</span>
+          </label>
+          {{ form.contact_phone }}
+          {% if form.contact_phone.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.contact_phone.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="mb-10 flex flex-col gap-3">
+          <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+            {{ form.contact_phone_preference.label }} <span class="ml-2 font-normal normal-case tracking-normal text-muted">Required if you add a number</span>
+          </span>
+          <div class="[&_ul]:m-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-8 [&_ul]:gap-y-3 [&_ul]:p-0 [&_li]:m-0 [&_label]:font-body [&_label]:text-[0.8rem] [&_label]:font-light [&_label]:normal-case [&_label]:tracking-normal [&_label]:text-slate">
+            {{ form.contact_phone_preference }}
+          </div>
+          {% if form.contact_phone_preference.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.contact_phone_preference.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <hr class="my-10 border-0 border-t border-rule">
+        <div class="flex flex-col gap-2" data-portrait-widget>
           <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Profile photo</span>
-          <div class="forma-portrait-upload relative flex cursor-pointer items-center gap-8 border border-dashed border-rule bg-surface p-6 transition-colors hover:border-blue">
-            {{ form.portrait }}
-            <div class="pointer-events-none flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-rule">
-              {% if form.portrait.value %}
-              <img src="{{ form.portrait.value.url }}" alt="" class="h-full w-full rounded-full object-cover">
-              {% else %}
-              <svg class="h-7 w-7 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              {% endif %}
-            </div>
-            <div class="pointer-events-none">
-              <div class="font-body text-[0.85rem] font-medium text-ink">Upload your profile photo</div>
-              <div class="font-serif text-[0.82rem] italic leading-relaxed text-muted">Square crop works best. Min 800×800px. JPG or PNG.</div>
-            </div>
+          <div
+            id="portrait-upload-zone"
+            class="forma-portrait-upload overflow-hidden border border-dashed border-rule bg-surface transition-colors hover:border-blue"
+          >
+            <label
+              for="{{ form.portrait.id_for_label }}"
+              class="flex cursor-pointer flex-col gap-4 p-6 sm:flex-row sm:items-center sm:gap-8"
+            >
+              <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-rule">
+                <img id="portrait-thumb-img" src="{% if form.portrait.value %}{{ form.portrait.value.url }}{% endif %}" alt="" class="{% if not form.portrait.value %}hidden {% endif %}h-full w-full object-cover">
+                <svg id="portrait-thumb-placeholder" class="{% if form.portrait.value %}hidden {% endif %}h-7 w-7 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div id="portrait-upload-title" class="font-body text-[0.85rem] font-medium text-ink">Upload your profile photo</div>
+                <p class="mt-2 font-serif text-[0.82rem] italic leading-relaxed text-muted">An iPhone photo works well — natural light, shoulders up. Square crop is ideal.</p>
+                <p class="mt-1 font-body text-[0.72rem] leading-relaxed text-muted">Save as JPG or PNG if you can; roughly <span class="font-medium text-slate">800×800px</span> or larger keeps your page sharp.</p>
+              </div>
+            </label>
+            <div id="portrait-field-root">{{ form.portrait }}</div>
           </div>
           {% if form.portrait.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.portrait.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
@@ -168,10 +200,21 @@
         {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         <div class="flex flex-col">
           {% for f in formset %}
-          <div class="grid grid-cols-1 items-center gap-3 border-b border-rule py-4 first:border-t sm:grid-cols-[2rem_1fr]">
+          <div class="grid grid-cols-1 items-start gap-3 border-b border-rule py-4 first:border-t sm:grid-cols-[2rem_1fr]">
             {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
-            <span class="text-center font-display text-[1.4rem] leading-none text-blue/30">{{ forloop.counter|stringformat:"02d" }}</span>
-            <div>{{ f.title }}{% if f.title.errors %}<ul class="mt-1 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+            <span class="pt-2 text-center font-display text-[1.4rem] leading-none text-blue/30">{{ forloop.counter|stringformat:"02d" }}</span>
+            <div class="flex min-w-0 flex-col gap-3">
+              <div class="flex flex-col gap-2">
+                <span class="font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-muted">Title</span>
+                {{ f.title }}
+                {% if f.title.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+              </div>
+              <div class="flex flex-col gap-2">
+                <span class="font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-muted">Brief description <span class="font-normal normal-case tracking-normal text-very-muted">(optional)</span></span>
+                {{ f.description }}
+                {% if f.description.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+              </div>
+            </div>
           </div>
           {% endfor %}
         </div>
@@ -483,6 +526,53 @@
     function sync() { countEl.textContent = tagline.value.length + ' / 80'; }
     tagline.addEventListener('input', sync);
     sync();
+  }
+
+  var widget = document.querySelector('[data-portrait-widget]');
+  var fieldRoot = document.getElementById('portrait-field-root');
+  var portraitInput = fieldRoot ? fieldRoot.querySelector('input[type="file"]') : null;
+  if (!widget || !fieldRoot || !portraitInput) return;
+
+  var thumbImg = document.getElementById('portrait-thumb-img');
+  var thumbPh = document.getElementById('portrait-thumb-placeholder');
+  var uploadTitle = document.getElementById('portrait-upload-title');
+  var clearCheckbox = fieldRoot.querySelector('input[type="checkbox"][name*="clear"]');
+  var thumbBlobUrl = null;
+
+  function revokeThumbUrl() {
+    if (thumbBlobUrl) {
+      URL.revokeObjectURL(thumbBlobUrl);
+      thumbBlobUrl = null;
+    }
+  }
+
+  portraitInput.addEventListener('change', function () {
+    var f = this.files && this.files[0];
+    if (!f || !/^image\//.test(f.type)) return;
+    revokeThumbUrl();
+    if (thumbImg) {
+      thumbBlobUrl = URL.createObjectURL(f);
+      thumbImg.src = thumbBlobUrl;
+      thumbImg.classList.remove('hidden');
+    }
+    if (thumbPh) thumbPh.classList.add('hidden');
+    if (clearCheckbox) clearCheckbox.checked = false;
+    if (uploadTitle) uploadTitle.textContent = 'Photo selected — save or continue when you are done';
+  });
+
+  if (clearCheckbox) {
+    clearCheckbox.addEventListener('change', function () {
+      if (this.checked) {
+        revokeThumbUrl();
+        portraitInput.value = '';
+        if (thumbImg) {
+          thumbImg.removeAttribute('src');
+          thumbImg.classList.add('hidden');
+        }
+        if (thumbPh) thumbPh.classList.remove('hidden');
+        if (uploadTitle) uploadTitle.textContent = 'Upload your profile photo';
+      }
+    });
   }
 })();
 </script>

@@ -37,6 +37,12 @@ TRAINING_LOCATION_CHOICES = [
     ('online', 'Online'),
 ]
 
+CONTACT_PHONE_PREFERENCE_CHOICES = [
+    ('call', 'Phone call'),
+    ('whatsapp', 'WhatsApp'),
+    ('text', 'Text message'),
+]
+
 
 class PostcodeDistrict(models.Model):
     """Outward postcode district (e.g. SW12) for logistics."""
@@ -91,6 +97,23 @@ class TrainerProfile(models.Model):
     )
     bio = models.TextField(help_text='Longer profile copy.')
     portrait = models.ImageField(upload_to='trainer/portraits/', blank=True, null=True)
+    contact_email = models.EmailField(
+        max_length=254,
+        blank=True,
+        help_text='Shown to clients who want to reach you by email.',
+    )
+    contact_phone = models.CharField(
+        max_length=32,
+        blank=True,
+        help_text='Digits, spaces, and leading + are fine.',
+    )
+    contact_phone_preference = models.CharField(
+        'Preferred contact method',
+        max_length=16,
+        blank=True,
+        choices=CONTACT_PHONE_PREFERENCE_CHOICES,
+        help_text='How you prefer clients to use this number (shown on your public page).',
+    )
 
     # Step 2 — quick presets (checkbox group) + optional client-facing lines per key
     quick_qualifications = models.JSONField(default=_empty_list, blank=True)
@@ -294,7 +317,7 @@ class TrainerAdditionalQualification(models.Model):
 
 
 class TrainerSpecialism(models.Model):
-    """Step 3 — up to four short labels."""
+    """Step 3 — up to four short labels plus optional client-facing line each."""
 
     profile = models.ForeignKey(
         TrainerProfile,
@@ -303,6 +326,11 @@ class TrainerSpecialism(models.Model):
     )
     order = models.PositiveSmallIntegerField()
     title = models.CharField(max_length=120, blank=True)
+    description = models.CharField(
+        max_length=280,
+        blank=True,
+        help_text='Optional: one short sentence explaining this specialism for clients.',
+    )
 
     class Meta:
         db_table = 'pages_trainer_specialism'

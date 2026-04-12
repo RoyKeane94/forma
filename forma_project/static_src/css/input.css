@@ -59,10 +59,23 @@
     @apply flex flex-wrap gap-2 mt-3;
   }
 
-  /* Native file inputs in custom shells */
-  .forma-portrait-upload input[type='file'],
+  /* Gallery slots: invisible file input over tile */
   .forma-photo-slot input[type='file'] {
     @apply absolute inset-0 opacity-0 cursor-pointer w-full h-full p-0 border-0 bg-transparent;
+  }
+
+  /* Portrait step: tap target is the preview row (label[for=file]); controls sit in a strip below */
+  .forma-portrait-upload #portrait-field-root {
+    @apply relative z-[1] border-t border-rule bg-paper/90 px-4 py-3 text-left font-body text-[0.68rem] leading-snug text-muted;
+  }
+
+  .forma-portrait-upload #portrait-field-root input[type='file'] {
+    @apply relative z-[1] mt-2 block w-full max-w-md cursor-pointer border-0 bg-transparent p-0 font-body text-[0.72rem] text-ink opacity-100;
+  }
+
+  .forma-portrait-upload #portrait-field-root input[type='checkbox'],
+  .forma-portrait-upload #portrait-field-root label[for] {
+    @apply relative z-[2] inline-block max-w-full cursor-pointer text-ink;
   }
 
   .forma-photo-slot .forma-input {

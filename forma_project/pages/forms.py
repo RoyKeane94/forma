@@ -2,9 +2,9 @@
 Onboarding forms for PT profile setup (7 steps). Widgets use `.forma-input` (see static_src/css/input.css).
 
 View wiring (after user has a TrainerProfile and `ensure_onboarding_children(profile)` has run):
-  Step 1: OnboardingStep1Form
+  Step 1: OnboardingStep1Form (identity, tagline, bio, client contact email/phone + preference, portrait)
   Step 2: OnboardingStep2QuickForm + TrainerAdditionalQualificationFormSet (up to 10 rows)
-  Step 3: TrainerSpecialismFormSet
+  Step 3: TrainerSpecialismFormSet (title + optional brief description per row)
   Step 4: OnboardingStep4Form (saves training_locations + other_areas JSON on save())
   Step 5: OnboardingStep5MetaForm + TrainerPriceTierFormSet
   Step 6: OnboardingStep6InstagramForm (intro video, show toggle, Instagram) + TrainerGalleryPhotoFormSet
@@ -55,7 +55,21 @@ def other_area_choices():
 class OnboardingStep1Form(forms.ModelForm):
     class Meta:
         model = TrainerProfile
-        fields = ('first_name', 'last_name', 'tagline', 'bio', 'portrait')
+        fields = (
+            'first_name',
+            'last_name',
+            'tagline',
+            'bio',
+            'contact_email',
+            'contact_phone',
+            'contact_phone_preference',
+            'portrait',
+        )
+        labels = {
+            'contact_email': 'Contact email',
+            'contact_phone': 'Contact phone',
+            'contact_phone_preference': 'Preferred contact method for this number',
+        }
         widgets = {
             'first_name': forms.TextInput(attrs=_forma_attrs({'placeholder': 'Maya', 'autocomplete': 'given-name'})),
             'last_name': forms.TextInput(attrs=_forma_attrs({'placeholder': 'Torres', 'autocomplete': 'family-name'})),
@@ -75,6 +89,25 @@ class OnboardingStep1Form(forms.ModelForm):
                     }
                 )
             ),
+            'contact_email': forms.EmailInput(
+                attrs=_forma_attrs(
+                    {
+                        'placeholder': 'you@example.com',
+                        'autocomplete': 'email',
+                        'inputmode': 'email',
+                    }
+                )
+            ),
+            'contact_phone': forms.TextInput(
+                attrs=_forma_attrs(
+                    {
+                        'placeholder': '+44 7700 900000',
+                        'autocomplete': 'tel',
+                        'inputmode': 'tel',
+                    }
+                )
+            ),
+            'contact_phone_preference': forms.RadioSelect(),
             'portrait': forms.ClearableFileInput(
                 attrs={
                     'class': FORMA_INPUT_CLASS,
@@ -87,6 +120,22 @@ class OnboardingStep1Form(forms.ModelForm):
         data = self.cleaned_data['tagline'].strip()
         if len(data) > 80:
             raise ValidationError('Tagline must be 80 characters or fewer.')
+        return data
+
+    def clean_contact_phone(self):
+        return (self.cleaned_data.get('contact_phone') or '').strip()
+
+    def clean(self):
+        data = super().clean()
+        phone = (data.get('contact_phone') or '').strip()
+        pref = (data.get('contact_phone_preference') or '').strip()
+        if phone and not pref:
+            self.add_error(
+                'contact_phone_preference',
+                'Choose how you prefer to be reached on this number (call, WhatsApp, or text).',
+            )
+        if pref and not phone:
+            self.add_error('contact_phone', 'Enter a phone number, or clear the preferred contact method.')
         return data
 
 
@@ -133,12 +182,23 @@ TrainerAdditionalQualificationFormSet = inlineformset_factory(
 class TrainerSpecialismForm(forms.ModelForm):
     class Meta:
         model = TrainerSpecialism
-        fields = ('title',)
+        fields = ('title', 'description')
         widgets = {
             'title': forms.TextInput(
                 attrs=_forma_attrs({'placeholder': 'e.g. Strength Training'}),
             ),
+            'description': forms.Textarea(
+                attrs=_forma_attrs(
+                    {
+                        'rows': 2,
+                        'placeholder': 'Optional — one sentence on what this means for clients',
+                    }
+                )
+            ),
         }
+
+    def clean_description(self):
+        return (self.cleaned_data.get('description') or '').strip()
 
 
 TrainerSpecialismFormSet = inlineformset_factory(

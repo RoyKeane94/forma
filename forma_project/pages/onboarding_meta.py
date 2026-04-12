@@ -6,8 +6,8 @@ ONBOARDING_STEPS = [
         'title': 'About you',
         'step_label': 'Step 1 of 7',
         'description': (
-            "The basics — your name, where you're based, and a short description "
-            'of who you are and how you train.'
+            "The basics — your name, where you're based, a short description "
+            'of who you are and how you train, optional client contact details, and your photo.'
         ),
         'sidebar_label': 'Writing your bio',
         'sidebar_tip': (
@@ -43,12 +43,12 @@ ONBOARDING_STEPS = [
         'title': 'What you do best',
         'step_label': 'Step 3 of 7',
         'description': (
-            'Up to four areas. Keep them short — these are labels, not descriptions.'
+            'Up to four areas: a short title plus an optional one-line description so clients know what you mean.'
         ),
-        'sidebar_label': 'Keep it short',
+        'sidebar_label': 'Titles and blurbs',
         'sidebar_tip': (
-            "These are labels, not descriptions. Clients scan them quickly to work out if you're "
-            'relevant. Two or three words each is ideal.'
+            'Keep each title to a few words (it scans fast on your page). Use the description line to spell out '
+            'who it is for or what you cover — one sentence is enough.'
         ),
         'sidebar_example_label': 'Good examples',
         'sidebar_example': (
