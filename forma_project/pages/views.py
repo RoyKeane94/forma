@@ -370,7 +370,7 @@ def keep_forma_profile_register(request, profile_slug: str, url_key: str):
     if len(url_key) != 5:
         raise Http404
     profile = get_object_or_404(
-        TrainerProfile.objects.select_related('user'),
+        TrainerProfile.objects.select_related('user', 'primary_area'),
         slug__iexact=profile_slug,
         public_url_key__iexact=url_key,
         forma_made=True,
