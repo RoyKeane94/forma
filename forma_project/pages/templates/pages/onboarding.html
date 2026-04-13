@@ -89,7 +89,12 @@
             {{ form.tagline.label }} <span class="ml-2 font-body text-[0.68rem] font-normal normal-case tracking-normal text-muted">One line — what you do and for whom</span>
           </label>
           {{ form.tagline }}
-          <p class="text-right font-body text-[0.62rem] text-very-muted" id="tagline-count" aria-live="polite">0 / 80</p>
+          <p
+            class="text-right font-body text-[0.65rem] tabular-nums text-muted transition-colors"
+            id="tagline-count"
+            data-max-length="{{ form.tagline.field.max_length }}"
+            aria-live="polite"
+          >0 / {{ form.tagline.field.max_length }}</p>
           {% if form.tagline.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.tagline.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <div class="mb-10 flex flex-col gap-2">
@@ -520,11 +525,26 @@
 {% if step == 0 %}
 <script>
 (function () {
-  var tagline = document.getElementById('{{ form.tagline.id_for_label }}');
+  var formEl = document.getElementById('onboarding-step-form');
+  var tagline =
+    (formEl && formEl.querySelector('input[name="tagline"]')) ||
+    document.getElementById('{{ form.tagline.id_for_label|escapejs }}');
   var countEl = document.getElementById('tagline-count');
   if (tagline && countEl) {
-    function sync() { countEl.textContent = tagline.value.length + ' / 80'; }
-    tagline.addEventListener('input', sync);
+    var maxLen = parseInt(countEl.getAttribute('data-max-length'), 10);
+    if (!maxLen || maxLen < 1) maxLen = 80;
+    function sync() {
+      var n = tagline.value.length;
+      var atLimit = n >= maxLen;
+      countEl.textContent = n + ' / ' + maxLen;
+      countEl.classList.toggle('text-muted', !atLimit);
+      countEl.classList.toggle('text-ink', atLimit);
+      countEl.classList.toggle('font-medium', atLimit);
+    }
+    ['input', 'keyup', 'paste', 'cut', 'change'].forEach(function (ev) {
+      tagline.addEventListener(ev, sync);
+    });
+    tagline.setAttribute('aria-describedby', 'tagline-count');
     sync();
   }
 

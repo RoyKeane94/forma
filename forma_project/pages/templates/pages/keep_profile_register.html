@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Keep your profile — Forma{% endblock %}
+{% block body %}
+<section class="border-t border-rule bg-surface min-h-[calc(100vh-60px)] px-page py-section">
+  <div class="max-w-md mx-auto">
+    <h1 class="mb-4 font-display text-[clamp(2.8rem,4.5vw,4.5rem)] leading-heading tracking-[0.02em] text-ink">
+      Keep your profile
+    </h1>
+    <p class="mb-6 font-serif text-[1.05rem] font-light italic leading-serif text-slate">
+      Create your Forma account with your own email and password. <span class="font-medium not-italic text-slate">{{ profile.first_name }} {{ profile.last_name }}</span>’s page will move to your account and use a standard public link (no five-letter code in the URL).
+    </p>
+    <div class="mb-10 border border-rule bg-paper px-4 py-4">
+      <p class="mb-2 font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-muted">Example public link</p>
+      <p class="break-all font-body text-[0.85rem] font-medium tracking-wide-2 text-ink">
+        <span class="select-all">{{ request.scheme }}://{{ request.get_host }}{% url 'pages:trainer_profile' profile_slug=profile.slug %}</span>
+      </p>
+      <p class="mt-3 font-body text-[0.7rem] leading-relaxed text-muted">
+        If that address is already taken on Forma, the path may gain a short number after your name, for example
+        <span class="font-mono text-[0.68rem] text-slate">/{{ profile.slug }}-2/</span>.
+      </p>
+    </div>
+
+    <form method="post" action="" class="border-t border-rule pt-10" id="keep-profile-register-form" novalidate>
+      {% csrf_token %}
+
+      {% if form.errors %}
+      <div role="alert" class="mb-8 border border-rule bg-blue-light px-4 py-4">
+        <p class="mb-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">
+          We couldn’t create your account
+        </p>
+        <ul class="m-0 list-none space-y-2 p-0 font-body text-[0.8rem] font-light leading-[1.7] text-slate">
+          {% for field in form %}
+            {% for error in field.errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+          {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="mb-6">
+        <label for="{{ form.email.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">
+          {{ form.email.label }}
+        </label>
+        {{ form.email }}
+        {% if form.email.errors %}
+        <ul class="mt-2 m-0 list-none p-0 font-body text-[0.68rem] font-light tracking-normal text-muted normal-case">
+          {% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <div class="mb-6">
+        <label for="{{ form.password1.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">
+          {{ form.password1.label }}
+        </label>
+        {{ form.password1 }}
+        {% if form.password1.errors %}
+        <ul class="mt-2 m-0 list-none p-0 font-body text-[0.68rem] font-light tracking-normal text-muted normal-case">
+          {% for error in form.password1.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <div
+        id="keep-profile-password2-group"
+        class="mb-10{% if not form.password1.data and not form.password2.errors %} hidden{% endif %}"
+      >
+        <label for="{{ form.password2.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">
+          {{ form.password2.label }}
+        </label>
+        {{ form.password2 }}
+        {% if form.password2.errors %}
+        <ul class="mt-2 m-0 list-none p-0 font-body text-[0.68rem] font-light tracking-normal text-muted normal-case">
+          {% for error in form.password2.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="cursor-pointer border-0 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] text-white transition-all hover:-translate-y-0.5 hover:bg-blue-mid">
+        Keep profile &amp; create account
+      </button>
+    </form>
+
+    <hr class="my-10 border-t border-rule">
+
+    <p class="font-body text-[0.88rem] font-light leading-[1.7] text-slate">
+      Already registered?
+      <a href="{% url 'accounts:login' %}" class="border-b border-rule pb-0.5 text-muted no-underline hover:border-ink hover:text-ink">Sign in</a>
+    </p>
+  </div>
+</section>
+
+<script>
+(function () {
+  var p1 = document.getElementById('id_password1');
+  var p2 = document.getElementById('id_password2');
+  var wrap = document.getElementById('keep-profile-password2-group');
+  if (!p1 || !p2 || !wrap) return;
+
+  function sync() {
+    if (p1.value.trim()) {
+      wrap.classList.remove('hidden');
+    } else {
+      wrap.classList.add('hidden');
+      p2.value = '';
+    }
+  }
+
+  p1.addEventListener('input', sync);
+  p1.addEventListener('change', sync);
+  sync();
+})();
+</script>
+{% endblock %}

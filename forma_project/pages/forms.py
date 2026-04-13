@@ -4,7 +4,7 @@ Onboarding forms for PT profile setup (7 steps). Widgets use `.forma-input` (see
 View wiring (after user has a TrainerProfile and `ensure_onboarding_children(profile)` has run):
   Step 1: OnboardingStep1Form (identity, tagline, bio, client contact email/phone + preference, portrait)
   Step 2: OnboardingStep2QuickForm + TrainerAdditionalQualificationFormSet (up to 10 rows)
-  Step 3: TrainerSpecialismFormSet (title + optional brief description per row)
+  Step 3: TrainerSpecialismFormSet (up to four rows: title + optional brief description)
   Step 4: OnboardingStep4Form (saves training_locations + other_areas JSON on save())
   Step 5: OnboardingStep5MetaForm + TrainerPriceTierFormSet
   Step 6: OnboardingStep6InstagramForm (intro video, show toggle, Instagram) + TrainerGalleryPhotoFormSet
@@ -16,6 +16,7 @@ Constants: QUICK_QUALIFICATION_CHOICES, TRAINING_LOCATION_CHOICES (from models).
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
+from django.forms.models import BaseInlineFormSet
 
 from .models import (
     QUICK_QUALIFICATION_CHOICES,
@@ -201,10 +202,18 @@ class TrainerSpecialismForm(forms.ModelForm):
         return (self.cleaned_data.get('description') or '').strip()
 
 
+class TrainerSpecialismInlineFormSet(BaseInlineFormSet):
+    """Cap at four rows even if legacy data created orders 5–10."""
+
+    def get_queryset(self):
+        return super().get_queryset().filter(order__lte=4)
+
+
 TrainerSpecialismFormSet = inlineformset_factory(
     TrainerProfile,
     TrainerSpecialism,
     form=TrainerSpecialismForm,
+    formset=TrainerSpecialismInlineFormSet,
     extra=0,
     can_delete=False,
     max_num=4,
@@ -289,10 +298,18 @@ class TrainerPriceTierForm(forms.ModelForm):
         }
 
 
+class TrainerPriceTierInlineFormSet(BaseInlineFormSet):
+    """Align with max_num=4 when legacy DB rows exist beyond order 4."""
+
+    def get_queryset(self):
+        return super().get_queryset().filter(order__lte=4)
+
+
 TrainerPriceTierFormSet = inlineformset_factory(
     TrainerProfile,
     TrainerPriceTier,
     form=TrainerPriceTierForm,
+    formset=TrainerPriceTierInlineFormSet,
     extra=0,
     can_delete=False,
     max_num=4,

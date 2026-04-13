@@ -409,16 +409,22 @@ def ensure_onboarding_children(profile: TrainerProfile) -> None:
             order=order,
             defaults={'name': '', 'detail': ''},
         )
-        TrainerSpecialism.objects.get_or_create(
-            profile=profile,
-            order=order,
-            defaults={'title': ''},
-        )
+    # Step 5 formset max_num=4; extra price rows break validation ("at most 4 forms").
+    for order in range(1, 5):
         TrainerPriceTier.objects.get_or_create(
             profile=profile,
             order=order,
             defaults={'label': '', 'unit_note': '', 'price': None},
         )
+    TrainerPriceTier.objects.filter(profile=profile, order__gt=4).delete()
+    # Step 3 caps at four specialisms; extra rows break the formset (max_num=4).
+    for order in range(1, 5):
+        TrainerSpecialism.objects.get_or_create(
+            profile=profile,
+            order=order,
+            defaults={'title': ''},
+        )
+    TrainerSpecialism.objects.filter(profile=profile, order__gt=4).delete()
     for slot in range(1, 7):
         TrainerGalleryPhoto.objects.get_or_create(
             profile=profile,

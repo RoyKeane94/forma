@@ -39,6 +39,11 @@ urlpatterns = [
     path('onboarding/complete/', views.onboarding_complete, name='onboarding_complete'),
     path('onboarding/<int:step>/', views.onboarding_step, name='onboarding_step'),
     path('trainer/<int:profile_id>/', views.trainer_profile_id_redirect, name='trainer_profile_legacy'),
+    path(
+        '<slug:profile_slug>/<slug:url_key>/keep-profile/',
+        views.keep_forma_profile_register,
+        name='keep_forma_profile',
+    ),
     path('<slug:profile_slug>/<slug:url_key>/', views.trainer_public_profile, name='trainer_profile_forma'),
     path('<slug:profile_slug>/', views.trainer_public_profile, name='trainer_profile'),
 ]

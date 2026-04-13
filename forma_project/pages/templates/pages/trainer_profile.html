@@ -1,17 +1,16 @@
 {% extends "base.html" %}
 {% block title %}{{ profile.first_name }} {{ profile.last_name }} — Forma{% endblock %}
+{# Global auth nav also shows “Forma”; hide it here so only the profile bar appears. #}
+{% block site_nav %}{% endblock %}
+{% block content_shell_class %}min-h-screen{% endblock %}
 
 {% block body %}
 <nav class="sticky top-0 z-[200] flex h-[60px] items-stretch border-b border-rule bg-paper">
   <div class="flex shrink-0 items-center border-r border-rule px-8">
     <a class="font-display text-[1.55rem] tracking-wide-4 text-blue no-underline" href="{% url 'home' %}">Forma</a>
   </div>
-  <div class="flex min-w-0 flex-1 items-center gap-6 px-8">
+  <div class="flex min-w-0 flex-1 items-center px-6 sm:px-8">
     <span class="truncate font-body text-[0.8rem] font-medium tracking-wide-5 text-ink">{{ profile.first_name }} {{ profile.last_name }}</span>
-    {% if nav_spec_line %}
-    <span class="hidden shrink-0 text-rule sm:inline">—</span>
-    <span class="hidden truncate font-body text-[0.7rem] uppercase tracking-wide-4 text-muted sm:inline">{{ nav_spec_line }}</span>
-    {% endif %}
   </div>
   <div class="flex shrink-0 items-center gap-4 border-l border-rule px-6 sm:px-8">
     {% if instagram_url %}
@@ -20,26 +19,36 @@
       <span class="font-body text-[0.7rem] tracking-wide-5">@{{ profile.instagram_handle }}</span>
     </a>
     {% endif %}
+    {% if profile.forma_made and profile.public_url_key and not request.user.is_authenticated %}
+    <a href="{% url 'pages:keep_forma_profile' profile_slug=profile.slug url_key=profile.public_url_key %}" class="inline-flex items-center border border-blue bg-transparent px-3 py-2 font-body text-[0.68rem] font-medium uppercase tracking-wide-3 text-blue no-underline transition-colors hover:bg-blue-light sm:px-4">Keep your profile</a>
+    {% endif %}
     <a href="#enquire" class="inline-flex items-center bg-blue px-4 py-2 font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-white no-underline transition-colors hover:bg-blue-mid sm:px-5">Book</a>
   </div>
 </nav>
 
-<section class="flex min-h-0 flex-col border-b border-rule max-lg:min-h-screen lg:min-h-0 lg:flex-row lg:items-stretch">
-  <div class="relative flex w-full flex-col justify-start border-rule bg-paper px-page py-12 lg:min-w-0 lg:flex-1 lg:border-r lg:py-16">
-    <div class="pointer-events-none absolute inset-0 opacity-[0.35] bg-[linear-gradient(#DDDBD4_1px,transparent_1px),linear-gradient(90deg,#DDDBD4_1px,transparent_1px)] [background-size:80px_80px]" aria-hidden="true"></div>
-    <p class="pointer-events-none absolute bottom-[-0.15em] left-[-0.02em] z-0 select-none font-display text-[clamp(10rem,28vw,28rem)] leading-[0.82] tracking-[-0.01em] text-blue/[0.045]" aria-hidden="true">{{ initials_watermark }}</p>
-    <div class="relative z-[1] max-w-[52rem]">
-      <div class="mb-6 flex items-center gap-3">
-        <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-blue"></span>
-        <span class="font-body text-[0.7rem] font-medium uppercase tracking-wide-3 text-blue">
-          Personal trainer{% if profile.primary_area %} · {{ profile.primary_area }}{% endif %}{% if profile.postcode_district %} · {{ profile.postcode_district }}{% endif %}
-        </span>
-      </div>
-      <h1 class="mb-8 font-display text-[clamp(3.5rem,11vw,10rem)] leading-[0.88] tracking-[0.01em] text-ink">
+<section class="flex min-h-0 flex-col overflow-visible border-b border-rule max-lg:min-h-screen lg:min-h-0 lg:flex-row lg:items-stretch">
+  <div class="relative flex h-full w-full max-lg:min-h-screen max-lg:flex-1 flex-col overflow-visible border-rule bg-paper px-page pt-page lg:min-h-0 lg:min-w-0 lg:flex-1 lg:border-r">
+    <div class="pointer-events-none absolute inset-0 z-0 opacity-[0.35] bg-[linear-gradient(#DDDBD4_1px,transparent_1px),linear-gradient(90deg,#DDDBD4_1px,transparent_1px)] [background-size:80px_80px]" aria-hidden="true"></div>
+    <div class="relative z-[1] mt-auto flex w-full max-w-[52rem] flex-col gap-y-6 pb-16 lg:gap-y-7">
+      <p class="font-body text-[clamp(0.8rem,1.25vw,0.95rem)] font-medium leading-snug tracking-wide-2 text-blue">
+        Personal Trainer{% if profile.primary_area %} · {{ profile.primary_area }}{% endif %}{% if profile.postcode_district %} · {{ profile.postcode_district }}{% endif %}
+      </p>
+      <h1 class="font-display text-[clamp(3.5rem,11vw,10rem)] leading-[0.88] tracking-[0.01em] text-ink">
         {{ profile.first_name }}<br>{{ profile.last_name }}
       </h1>
-      <div class="mb-6 h-0.5 w-12 bg-blue"></div>
-      <p class="mb-10 max-w-[46ch] font-serif text-[clamp(1.05rem,1.8vw,1.3rem)] font-light leading-serif text-slate">{{ profile.tagline }}</p>
+      {% if review_stats %}
+      <p class="flex flex-wrap items-center gap-x-3 gap-y-1 font-body text-[clamp(0.95rem,2.2vw,1.15rem)] tracking-wide-5 text-muted">
+        <span class="inline-flex items-center gap-1 text-blue" aria-label="{{ review_stats.average }} out of 5 average">
+          <span class="text-[1.15em] leading-none" aria-hidden="true">★</span>
+          <span class="font-semibold text-ink">{{ review_stats.average }}</span>
+          <span class="sr-only">out of 5</span>
+        </span>
+        <span class="text-rule" aria-hidden="true">·</span>
+        <span>{{ review_stats.count }} review{{ review_stats.count|pluralize }}</span>
+      </p>
+      {% endif %}
+      <div class="h-0.5 w-12 bg-blue"></div>
+      <p class="max-w-[46ch] font-serif text-[clamp(1.05rem,1.8vw,1.3rem)] font-light leading-serif text-slate">{{ profile.tagline }}</p>
       <div class="flex flex-wrap items-center gap-4">
         <a href="#enquire" class="inline-flex items-center gap-2 bg-blue px-8 py-[0.85rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-all hover:bg-blue-mid hover:-translate-y-0.5">Book a session →</a>
         <a href="#about" class="border-b border-rule pb-0.5 font-body text-[0.75rem] uppercase tracking-wide-4 text-muted no-underline transition-colors hover:border-ink hover:text-ink">Read more</a>

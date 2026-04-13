@@ -48,13 +48,17 @@ def non_empty_additional_qualifications(profile):
 
 
 def non_empty_specialisms(profile):
-    return [s.title.strip() for s in profile.specialisms.all() if (s.title or '').strip()]
+    return [
+        s.title.strip()
+        for s in profile.specialisms.filter(order__lte=4)
+        if (s.title or '').strip()
+    ]
 
 
 def specialism_display_items(profile):
     """Titles with optional brief descriptions for public profile / marketing blocks."""
     out = []
-    for s in profile.specialisms.all():
+    for s in profile.specialisms.filter(order__lte=4):
         title = (s.title or '').strip()
         if not title:
             continue
@@ -65,7 +69,7 @@ def specialism_display_items(profile):
 
 def visible_price_tiers(profile):
     out = []
-    for t in profile.price_tiers.all():
+    for t in profile.price_tiers.filter(order__lte=4):
         label = (t.label or '').strip()
         has_price = t.price is not None
         if label or has_price:

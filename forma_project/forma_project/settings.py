@@ -46,6 +46,10 @@ INSTALLED_APPS = [
     'pages',
 ]
 
+_use_s3_media = bool(os.getenv('AWS_STORAGE_BUCKET_NAME', '').strip())
+if _use_s3_media:
+    INSTALLED_APPS.append('storages')
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -80,12 +84,28 @@ WSGI_APPLICATION = 'forma_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+_db_host = os.getenv('DB_HOST', '').strip()
+if _db_host:
+    _db = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'postgres').strip(),
+        'USER': os.getenv('DB_USER', 'postgres').strip(),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': _db_host,
+        'PORT': os.getenv('DB_PORT', '5432').strip(),
+        'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '60')),
     }
-}
+    _sslmode = os.getenv('DB_SSLMODE', 'require').strip()
+    if _sslmode and _sslmode.lower() not in ('disable', 'false', '0'):
+        _db['OPTIONS'] = {'sslmode': _sslmode}
+    DATABASES = {'default': _db}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -126,8 +146,34 @@ STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+STORAGES = {
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
+
+if _use_s3_media:
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '').strip()
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '').strip()
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', '').strip()
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'eu-north-1').strip()
+    AWS_DEFAULT_ACL = None
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    STORAGES['default'] = {
+        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+    }
+    _bucket = AWS_STORAGE_BUCKET_NAME
+    _region = AWS_S3_REGION_NAME
+    MEDIA_URL = f'https://{_bucket}.s3.{_region}.amazonaws.com/'
+    MEDIA_ROOT = None
+else:
+    STORAGES['default'] = {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    }
+    MEDIA_URL = 'media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

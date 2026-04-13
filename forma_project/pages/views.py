@@ -1,12 +1,14 @@
 import secrets
 
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from accounts.forms import RegisterForm
 from accounts.models import Profile as AccountsProfile
 
 from .forms import (
@@ -28,7 +30,6 @@ from .onboarding_meta import ONBOARDING_STEPS, TAB_LABELS
 from .profile_display import (
     non_empty_additional_qualifications,
     non_empty_client_reviews,
-    non_empty_specialisms,
     specialism_display_items,
     quick_qualification_items,
     training_location_items,
@@ -361,6 +362,55 @@ def trainer_profile_id_redirect(request, profile_id: int):
     return redirect(profile, permanent=True)
 
 
+def keep_forma_profile_register(request, profile_slug: str, url_key: str):
+    """
+    Forma-made public profiles: register a real account and attach this TrainerProfile to it.
+    URL must match slug + 5-char key (same as the public page).
+    """
+    if len(url_key) != 5:
+        raise Http404
+    profile = get_object_or_404(
+        TrainerProfile.objects.select_related('user'),
+        slug__iexact=profile_slug,
+        public_url_key__iexact=url_key,
+        forma_made=True,
+    )
+    if not profile.is_published:
+        raise Http404
+    if request.user.is_authenticated:
+        messages.info(
+            request,
+            'You’re signed in. Sign out first if you need to claim this page with a different account.',
+        )
+        return redirect('pages:my_account')
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                new_user = form.save()
+                AccountsProfile.objects.get_or_create(user=new_user)
+                old_user = profile.user
+                profile.user = new_user
+                profile.forma_made = False
+                profile.public_url_key = None
+                profile.save()
+                if old_user.pk != new_user.pk:
+                    old_user.delete()
+            login(request, new_user, backend='django.contrib.auth.backends.ModelBackend')
+            messages.success(
+                request,
+                'Your account is ready — this profile is now yours. Your public link has been updated.',
+            )
+            return redirect('pages:my_account')
+    else:
+        form = RegisterForm()
+    return render(
+        request,
+        'pages/keep_profile_register.html',
+        {'form': form, 'profile': profile},
+    )
+
+
 def trainer_public_profile(request, profile_slug: str, url_key: str | None = None):
     if url_key is not None and len(url_key) != 5:
         raise Http404
@@ -393,36 +443,38 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
         and profile.forma_made
         and profile.created_by_id == request.user.pk
     )
+    # Owner or creating superuser: may preview drafts (unpublished or onboarding incomplete).
+    # Everyone else: self-serve profiles need completed onboarding + published; Forma-made
+    # only needs published (completed_at is still unset until step 7 — staff would otherwise
+    # see a live URL that 404s for clients).
     if not is_owner and not is_forma_creator:
-        if not profile.completed_at or not profile.is_published:
+        if not profile.is_published:
             raise Http404
-
-    specs = non_empty_specialisms(profile)
-    nav_spec = ''
-    if specs:
-        nav_spec = ' · '.join(specs[:2])
-    if profile.postcode_district:
-        nav_spec = f'{nav_spec} · {profile.postcode_district}' if nav_spec else profile.postcode_district
-
-    initials = ''
-    if profile.first_name:
-        initials += profile.first_name[0].upper()
-    if profile.last_name:
-        initials += profile.last_name[0].upper()
+        if not profile.forma_made and not profile.completed_at:
+            raise Http404
 
     ig_handle = (profile.instagram_handle or '').strip().lstrip('@')
     instagram_url = f'https://www.instagram.com/{ig_handle}/' if ig_handle else ''
+
+    review_rows = non_empty_client_reviews(profile)
+    review_stats = None
+    if review_rows:
+        n = len(review_rows)
+        total = sum(int(r['rating']) for r in review_rows)
+        review_stats = {
+            'count': n,
+            'average': round(total / n, 1),
+        }
 
     context = {
         'profile': profile,
         'quick_qual_items': quick_qualification_items(profile),
         'training_location_items': training_location_items(profile.training_locations),
         'additional_quals': non_empty_additional_qualifications(profile),
-        'client_reviews': non_empty_client_reviews(profile),
+        'client_reviews': review_rows,
         'specialism_items': specialism_display_items(profile),
         'price_tiers': visible_price_tiers(profile),
-        'nav_spec_line': nav_spec,
-        'initials_watermark': initials or '·',
+        'review_stats': review_stats,
         'instagram_url': instagram_url,
     }
     return render(request, 'pages/trainer_profile.html', context)
