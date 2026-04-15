@@ -1,0 +1,3 @@
+# Railpack / Railway look for requirements.txt at the repository root.
+# App dependencies live under forma_project/.
+-r forma_project/requirements.txt
