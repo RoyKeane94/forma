@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -27,10 +28,29 @@ load_dotenv(BASE_DIR / '.env')
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Production: set DJANGO_DEBUG=0 (or false). Default is development-friendly.
+DEBUG = os.getenv('DJANGO_DEBUG', 'true').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = []
+_allowed = os.getenv('DJANGO_ALLOWED_HOSTS', '').strip()
+if not DEBUG:
+    if not _allowed:
+        raise ImproperlyConfigured(
+            'Set DJANGO_ALLOWED_HOSTS (comma-separated hostnames) when DJANGO_DEBUG is off.'
+        )
+    ALLOWED_HOSTS = [h.strip() for h in _allowed.split(',') if h.strip()]
+else:
+    ALLOWED_HOSTS = (
+        [h.strip() for h in _allowed.split(',') if h.strip()]
+        if _allowed
+        else ['127.0.0.1', 'localhost']
+    )
+
+_csrf_origins = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').strip()
+if _csrf_origins:
+    CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(',') if o.strip()]
+
+if not DEBUG and not SECRET_KEY:
+    raise ImproperlyConfigured('Set DJANGO_SECRET_KEY when DJANGO_DEBUG is off.')
 
 
 # Application definition
@@ -52,6 +72,7 @@ if _use_s3_media:
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -145,10 +166,15 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STORAGES = {
     'staticfiles': {
-        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        'BACKEND': (
+            'whitenoise.storage.CompressedStaticFilesStorage'
+            if not DEBUG
+            else 'django.contrib.staticfiles.storage.StaticFilesStorage'
+        ),
     },
 }
 
@@ -191,3 +217,7 @@ STRIPE_PRODUCT_ID = os.getenv('STRIPE_PRODUCT_ID', '').strip()
 STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID', '').strip()
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '').strip()
 STRIPE_TRIAL_DAYS = int(os.getenv('STRIPE_TRIAL_DAYS', '30') or 30)
+
+# Railway / Heroku / other HTTPS reverse proxies: set DJANGO_SECURE_PROXY_SSL=1
+if os.getenv('DJANGO_SECURE_PROXY_SSL', '').lower() in ('1', 'true', 'yes'):
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
