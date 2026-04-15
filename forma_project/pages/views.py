@@ -1,12 +1,17 @@
+import logging
 import secrets
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import transaction
-from django.http import Http404
+from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 from accounts.forms import RegisterForm
 from accounts.models import Profile as AccountsProfile
@@ -26,6 +31,15 @@ from .forms import (
     client_reviews_form_initial,
 )
 from .models import QUICK_QUALIFICATION_CHOICES, TrainerProfile, ensure_onboarding_children
+from .stripe_keep_profile import (
+    checkout_session_paid,
+    create_subscription_checkout_session,
+    delete_pending_registration,
+    peek_pending_registration,
+    retrieve_checkout_session,
+    store_pending_registration,
+    stripe_configured,
+)
 from .onboarding_meta import ONBOARDING_STEPS, TAB_LABELS
 from .profile_display import (
     non_empty_additional_qualifications,
@@ -38,7 +52,146 @@ from .profile_display import (
 
 STEP_COUNT = 7
 
+logger = logging.getLogger(__name__)
+
 _QUICK_QUAL_NOTE_MAX_LEN = 600
+
+
+def _finalize_keep_forma_profile(*, profile_id: int, email: str, password: str):
+    """
+    Attach the Forma-made profile to a new user (or return existing user if already done).
+    Returns (user, error_code). error_code is None on success.
+    """
+    User = get_user_model()
+    email = (email or '').strip().lower()
+    with transaction.atomic():
+        profile = (
+            TrainerProfile.objects.select_for_update()
+            .select_related('user')
+            .get(pk=profile_id)
+        )
+        if not profile.forma_made:
+            existing = profile.user
+            if (existing.email or '').strip().lower() == email:
+                return existing, None
+            return None, 'already_claimed'
+        if User.objects.filter(email__iexact=email).exists():
+            return None, 'email_taken'
+        new_user = User.objects.create_user(
+            username=email,
+            email=email,
+            password=password,
+        )
+        AccountsProfile.objects.get_or_create(user=new_user)
+        old_user = profile.user
+        profile.user = new_user
+        profile.forma_made = False
+        profile.public_url_key = None
+        profile.save()
+        if old_user.pk != new_user.pk:
+            old_user.delete()
+        return new_user, None
+
+
+def _stripe_metadata_dict(meta) -> dict:
+    """Copy a Stripe metadata mapping to a plain str→str dict (never use dict(meta) on StripeObject)."""
+    if meta is None:
+        return {}
+    if isinstance(meta, dict):
+        return {str(k): '' if v is None else str(v) for k, v in meta.items()}
+    to_dict = getattr(meta, 'to_dict', None)
+    if callable(to_dict):
+        try:
+            raw = to_dict()
+            if isinstance(raw, dict):
+                return {str(k): '' if v is None else str(v) for k, v in raw.items()}
+        except Exception:
+            pass
+    if hasattr(meta, 'items'):
+        try:
+            return {str(k): '' if v is None else str(v) for k, v in meta.items()}
+        except Exception:
+            pass
+    out = {}
+    for key in getattr(meta, 'keys', lambda: [])():
+        try:
+            out[str(key)] = '' if meta[key] is None else str(meta[key])
+        except (KeyError, TypeError):
+            continue
+    return out
+
+
+def _checkout_session_metadata_dict(stripe_session) -> dict:
+    """Checkout Session.metadata via full session serialization (most reliable with StripeObject)."""
+    to_dict = getattr(stripe_session, 'to_dict', None)
+    if callable(to_dict):
+        try:
+            whole = to_dict()
+            if isinstance(whole, dict):
+                md = whole.get('metadata')
+                if isinstance(md, dict):
+                    return {str(k): '' if v is None else str(v) for k, v in md.items()}
+        except Exception:
+            pass
+    return _stripe_metadata_dict(getattr(stripe_session, 'metadata', None))
+
+
+def _keep_profile_checkout_metadata_ok(meta: dict) -> bool:
+    """Sessions we create set purpose=keep_profile; tolerate missing purpose if token+profile are set."""
+    if not meta:
+        return False
+    if (meta.get('purpose') or '').strip() == 'keep_profile':
+        return True
+    return bool((meta.get('pending_token') or '').strip() and (meta.get('profile_id') or '').strip())
+
+
+def _complete_keep_profile_from_stripe_session(*, profile: TrainerProfile, stripe_session) -> tuple:
+    """
+    After a paid Checkout Session, create the account if pending data exists.
+    Returns (user | None, error_message for display).
+    """
+    if not checkout_session_paid(stripe_session):
+        return None, 'Payment was not completed. Please try again or contact support.'
+
+    meta = _checkout_session_metadata_dict(stripe_session)
+    try:
+        meta_profile_id = int(meta.get('profile_id') or 0)
+    except (TypeError, ValueError):
+        meta_profile_id = 0
+    if meta_profile_id != profile.pk:
+        return None, 'This payment does not match this profile page.'
+
+    pending_token = (meta.get('pending_token') or '').strip()
+    if not pending_token:
+        if not profile.forma_made:
+            return profile.user, None
+        return None, 'Your registration data expired. Please start again from the form.'
+
+    data = peek_pending_registration(pending_token)
+    if not data:
+        if not profile.forma_made:
+            return profile.user, None
+        return None, 'Your registration data expired. Please start again from the form.'
+
+    if int(data.get('profile_id') or 0) != profile.pk:
+        return None, 'Something went wrong linking your payment. Please contact support.'
+
+    user, err = _finalize_keep_forma_profile(
+        profile_id=profile.pk,
+        email=data['email'],
+        password=data['password'],
+    )
+    if err == 'email_taken':
+        delete_pending_registration(pending_token)
+        return None, 'That email is already registered. Sign in, or contact support if you were charged.'
+    if err == 'already_claimed':
+        delete_pending_registration(pending_token)
+        return None, 'This profile has already been claimed.'
+    if user is None:
+        return None, 'We could not finish creating your account. Please contact support.'
+
+    delete_pending_registration(pending_token)
+    return user, None
 
 
 def _quick_qual_notes_from_post(request) -> dict:
@@ -364,8 +517,8 @@ def trainer_profile_id_redirect(request, profile_id: int):
 
 def keep_forma_profile_register(request, profile_slug: str, url_key: str):
     """
-    Forma-made public profiles: register a real account and attach this TrainerProfile to it.
-    URL must match slug + 5-char key (same as the public page).
+    Forma-made public profiles: collect email/password, then Stripe Checkout.
+    The account is created only after payment (success page or webhook).
     """
     if len(url_key) != 5:
         raise Http404
@@ -383,32 +536,176 @@ def keep_forma_profile_register(request, profile_slug: str, url_key: str):
             'You’re signed in. Sign out first if you need to claim this page with a different account.',
         )
         return redirect('pages:my_account')
+
+    if request.GET.get('checkout') == 'canceled':
+        messages.info(request, 'Checkout was cancelled. Your account has not been charged.')
+
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            with transaction.atomic():
-                new_user = form.save()
-                AccountsProfile.objects.get_or_create(user=new_user)
-                old_user = profile.user
-                profile.user = new_user
-                profile.forma_made = False
-                profile.public_url_key = None
-                profile.save()
-                if old_user.pk != new_user.pk:
-                    old_user.delete()
-            login(request, new_user, backend='django.contrib.auth.backends.ModelBackend')
-            messages.success(
-                request,
-                'Your account is ready — this profile is now yours. Your public link has been updated.',
-            )
-            return redirect('pages:my_account')
+            if not stripe_configured():
+                form.add_error(
+                    None,
+                    'Payments are not configured on this server. Add Stripe keys to the environment.',
+                )
+            else:
+                pending_token = secrets.token_urlsafe(32)
+                email = form.cleaned_data['email']
+                password = form.cleaned_data['password1']
+                store_pending_registration(
+                    pending_token=pending_token,
+                    profile_id=profile.pk,
+                    email=email,
+                    password=password,
+                )
+                success_url = request.build_absolute_uri(
+                    reverse('pages:keep_forma_profile_success'),
+                ) + '?session_id={CHECKOUT_SESSION_ID}'
+                cancel_url = request.build_absolute_uri(
+                    reverse(
+                        'pages:keep_forma_profile',
+                        kwargs={
+                            'profile_slug': profile.slug,
+                            'url_key': profile.public_url_key,
+                        },
+                    )
+                ) + '?checkout=canceled'
+                try:
+                    checkout_url = create_subscription_checkout_session(
+                        success_url=success_url,
+                        cancel_url=cancel_url,
+                        customer_email=email,
+                        pending_token=pending_token,
+                        profile_id=profile.pk,
+                    )
+                except Exception:
+                    logger.exception('Stripe Checkout failed for keep-profile')
+                    delete_pending_registration(pending_token)
+                    form.add_error(
+                        None,
+                        'Could not start checkout. Check Stripe product/price configuration and try again.',
+                    )
+                else:
+                    return redirect(checkout_url)
     else:
         form = RegisterForm()
+
     return render(
         request,
         'pages/keep_profile_register.html',
         {'form': form, 'profile': profile},
     )
+
+
+def keep_forma_profile_checkout_success(request):
+    """
+    Stripe redirects here with ?session_id=… — profile is identified from Checkout metadata
+    (the vanity URL key is cleared after claim, so we cannot use /slug/key/ for this step).
+    """
+    if request.user.is_authenticated:
+        return redirect('pages:my_account')
+
+    session_id = (request.GET.get('session_id') or '').strip()
+    if not session_id or not stripe_configured():
+        messages.error(request, 'Missing payment session. Please open your profile link and try again.')
+        return redirect('pages:my_account')
+
+    try:
+        stripe_session = retrieve_checkout_session(session_id)
+    except Exception:
+        logger.exception('Could not retrieve Stripe session')
+        messages.error(request, 'Could not verify payment. Please contact support.')
+        return redirect('pages:my_account')
+
+    meta = _checkout_session_metadata_dict(stripe_session)
+    if not _keep_profile_checkout_metadata_ok(meta):
+        messages.error(request, 'This payment session is not valid for profile signup.')
+        return redirect('pages:my_account')
+
+    try:
+        profile_id = int(meta.get('profile_id') or 0)
+    except (TypeError, ValueError):
+        profile_id = 0
+    profile = get_object_or_404(
+        TrainerProfile.objects.select_related('user', 'primary_area'),
+        pk=profile_id,
+    )
+    if not profile.is_published:
+        raise Http404
+
+    user, err_msg = _complete_keep_profile_from_stripe_session(
+        profile=profile,
+        stripe_session=stripe_session,
+    )
+    if err_msg:
+        messages.error(request, err_msg)
+        return redirect('pages:my_account')
+
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    messages.success(
+        request,
+        'Your account is ready — this profile is now yours. Your public link has been updated.',
+    )
+    return redirect('pages:my_account')
+
+
+@csrf_exempt
+@require_POST
+def stripe_webhook(request):
+    """Optional: completes keep-profile signup if the customer closes the tab before the success URL."""
+    secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', '') or ''
+    if not secret.strip():
+        return HttpResponse(status=404)
+
+    import stripe
+
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
+
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, secret)
+    except ValueError:
+        return HttpResponseBadRequest('invalid payload')
+    except stripe.error.SignatureVerificationError:
+        return HttpResponseBadRequest('invalid signature')
+
+    if event['type'] != 'checkout.session.completed':
+        return HttpResponse(status=200)
+
+    session = event['data']['object']
+    meta = session.get('metadata') or {}
+    if not isinstance(meta, dict):
+        meta = _stripe_metadata_dict(meta)
+    if not _keep_profile_checkout_metadata_ok(meta):
+        return HttpResponse(status=200)
+
+    try:
+        profile_id = int(meta.get('profile_id') or 0)
+    except (TypeError, ValueError):
+        return HttpResponse(status=200)
+
+    profile = TrainerProfile.objects.filter(pk=profile_id, forma_made=True).select_related('user').first()
+    if profile is None:
+        profile = TrainerProfile.objects.filter(pk=profile_id).first()
+        if profile is None:
+            return HttpResponse(status=200)
+        if not profile.forma_made:
+            return HttpResponse(status=200)
+
+    try:
+        stripe_session = retrieve_checkout_session(session['id'])
+    except Exception:
+        logger.exception('Webhook could not reload checkout session')
+        return HttpResponse(status=500)
+
+    user, err_msg = _complete_keep_profile_from_stripe_session(
+        profile=profile,
+        stripe_session=stripe_session,
+    )
+    if err_msg and user is None:
+        logger.warning('Stripe webhook keep-profile incomplete: %s', err_msg)
+    return HttpResponse(status=200)
 
 
 def trainer_public_profile(request, profile_slug: str, url_key: str | None = None):

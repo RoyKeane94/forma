@@ -183,3 +183,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/logged-out/'
+
+# Stripe (keep-profile checkout — use test keys in .env for development)
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SK', '').strip()
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PK', '').strip()
+STRIPE_PRODUCT_ID = os.getenv('STRIPE_PRODUCT_ID', '').strip()
+STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID', '').strip()
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '').strip()
+STRIPE_TRIAL_DAYS = int(os.getenv('STRIPE_TRIAL_DAYS', '30') or 30)

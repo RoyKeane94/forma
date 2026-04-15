@@ -6,6 +6,12 @@ app_name = 'pages'
 
 urlpatterns = [
     path('account/', views.my_account, name='my_account'),
+    path(
+        'keep-profile-return/',
+        views.keep_forma_profile_checkout_success,
+        name='keep_forma_profile_success',
+    ),
+    path('stripe/webhook/', views.stripe_webhook, name='stripe_webhook'),
     path('staff/forma-profiles/', views.staff_forma_profile_list, name='staff_forma_profiles'),
     path('staff/forma-profiles/new/', views.staff_forma_profile_create, name='staff_forma_profile_new'),
     path(
