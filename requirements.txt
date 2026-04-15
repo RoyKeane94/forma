@@ -1,5 +1,6 @@
 # Keep this file in sync with forma_project/requirements.txt (same lines below).
 Django>=5.0,<5.1
+Pillow>=10,<12
 gunicorn>=22,<24
 whitenoise>=6.6,<7
 stripe>=11,<12
