@@ -107,6 +107,60 @@ def retrieve_checkout_session(session_id: str):
     )
 
 
+def _stripe_object_id(value) -> str:
+    if value is None:
+        return ''
+    if isinstance(value, str):
+        return value
+    return str(getattr(value, 'id', value) or '')
+
+
+def save_checkout_billing_ids(user, stripe_session) -> None:
+    """Store Stripe customer/subscription from a completed Checkout Session on the user’s Profile."""
+    from accounts.models import Profile
+
+    cust_id = _stripe_object_id(getattr(stripe_session, 'customer', None))
+    sub_id = _stripe_object_id(getattr(stripe_session, 'subscription', None))
+    if not cust_id and not sub_id:
+        return
+    prof, _ = Profile.objects.get_or_create(user=user)
+    changed = []
+    if cust_id and prof.stripe_customer_id != cust_id:
+        prof.stripe_customer_id = cust_id
+        changed.append('stripe_customer_id')
+    if sub_id and prof.stripe_subscription_id != sub_id:
+        prof.stripe_subscription_id = sub_id
+        changed.append('stripe_subscription_id')
+    if changed:
+        prof.save(update_fields=changed)
+
+
+def cancel_stripe_subscription_immediately(subscription_id: str) -> tuple[bool, str | None]:
+    """
+    End a subscription in Stripe right away.
+    Returns (ok, error_message). If ok is False, do not delete the Django user.
+    """
+    sid = (subscription_id or '').strip()
+    if not sid:
+        return True, None
+    if not stripe_configured():
+        return False, 'Stripe is not configured on this server.'
+
+    import stripe
+
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    try:
+        stripe.Subscription.delete(sid)
+    except stripe.error.InvalidRequestError as e:
+        err = (getattr(e, 'user_message', None) or str(e) or '').lower()
+        if 'no such subscription' in err or 'already been canceled' in err or 'already cancelled' in err:
+            return True, None
+        return False, getattr(e, 'user_message', None) or str(e)
+    except stripe.error.StripeError as e:
+        return False, getattr(e, 'user_message', None) or str(e)
+    return True, None
+
+
 def checkout_session_paid(session) -> bool:
     """True when checkout completed and subscription is usable (incl. trial start)."""
     if session.status != 'complete':

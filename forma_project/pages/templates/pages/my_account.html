@@ -107,6 +107,14 @@
     </div>
 
     <aside class="border-t border-rule pt-8 lg:border-t-0 lg:border-l lg:border-rule lg:pl-10 lg:pt-0" aria-label="Account settings">
+      {% if accounts_profile.stripe_subscription_id %}
+      <p class="mb-4 font-body text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-blue">Billing</p>
+      <nav class="mb-8 flex flex-col items-start gap-4">
+        <a href="{% url 'accounts:cancel_subscription' %}" class="border-b border-transparent pb-0.5 font-body text-[0.78rem] text-muted no-underline transition-colors hover:border-[#CC2A1A]/40 hover:text-[#CC2A1A]">
+          Cancel subscription
+        </a>
+      </nav>
+      {% endif %}
       <p class="mb-4 font-body text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-blue">Security</p>
       <nav class="flex flex-col items-start gap-4">
         <a href="{% url 'accounts:password_change' %}" class="border-b border-rule pb-0.5 font-body text-[0.78rem] text-ink no-underline transition-colors hover:border-ink">

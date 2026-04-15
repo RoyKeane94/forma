@@ -126,6 +126,33 @@ class FormaPasswordChangeForm(PasswordChangeForm):
         _apply_input_classes(self)
 
 
+class CancelSubscriptionDeleteAccountForm(forms.Form):
+    """Confirm password + acknowledge losing subscription, account, and trainer page."""
+
+    acknowledge = forms.BooleanField(
+        required=True,
+        label=_(
+            'I understand that cancelling ends my Forma subscription, permanently deletes '
+            'my account and my trainer page, and I would need to start again if I wanted to rejoin.'
+        ),
+    )
+    password = forms.CharField(
+        label=_('Current password'),
+        widget=forms.PasswordInput(attrs={'autocomplete': 'current-password'}),
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+        _apply_input_classes(self)
+
+    def clean_password(self):
+        password = self.cleaned_data['password']
+        if not self.user.check_password(password):
+            raise forms.ValidationError(_('That password is not correct.'))
+        return password
+
+
 class DeleteAccountForm(forms.Form):
     password = forms.CharField(
         label=_('Current password'),

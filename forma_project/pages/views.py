@@ -37,6 +37,7 @@ from .stripe_keep_profile import (
     delete_pending_registration,
     peek_pending_registration,
     retrieve_checkout_session,
+    save_checkout_billing_ids,
     store_pending_registration,
     stripe_configured,
 )
@@ -231,6 +232,7 @@ def _advance_profile(profile: TrainerProfile, step_idx: int) -> None:
 @login_required
 def my_account(request):
     profile = _get_profile(request.user)
+    accounts_profile, _ = AccountsProfile.objects.get_or_create(user=request.user)
     if request.method == 'POST' and request.POST.get('update_visibility'):
         profile.is_published = request.POST.get('is_published') == 'on'
         profile.save(update_fields=['is_published'])
@@ -249,6 +251,7 @@ def my_account(request):
         'pages/my_account.html',
         {
             'profile': profile,
+            'accounts_profile': accounts_profile,
             'tab_labels': TAB_LABELS,
             'public_profile_url': public_profile_url,
         },
@@ -641,6 +644,9 @@ def keep_forma_profile_checkout_success(request):
         messages.error(request, err_msg)
         return redirect('pages:my_account')
 
+    if user is not None:
+        save_checkout_billing_ids(user, stripe_session)
+
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
     messages.success(
         request,
@@ -703,6 +709,8 @@ def stripe_webhook(request):
         profile=profile,
         stripe_session=stripe_session,
     )
+    if user is not None:
+        save_checkout_billing_ids(user, stripe_session)
     if err_msg and user is None:
         logger.warning('Stripe webhook keep-profile incomplete: %s', err_msg)
     return HttpResponse(status=200)

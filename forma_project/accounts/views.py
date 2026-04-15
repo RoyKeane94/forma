@@ -7,7 +7,15 @@ from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView
 
-from .forms import DeleteAccountForm, FormaPasswordChangeForm, LoginForm, RegisterForm
+from pages.stripe_keep_profile import cancel_stripe_subscription_immediately
+
+from .forms import (
+    CancelSubscriptionDeleteAccountForm,
+    DeleteAccountForm,
+    FormaPasswordChangeForm,
+    LoginForm,
+    RegisterForm,
+)
 from .models import Profile
 
 
@@ -33,6 +41,43 @@ class FormaPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
 
 class AccountDeletedView(TemplateView):
     template_name = 'accounts/account_deleted.html'
+
+
+@login_required
+def cancel_subscription_and_account(request):
+    """Cancel Stripe subscription then delete the user (trainer profile + account)."""
+    acc_profile, _ = Profile.objects.get_or_create(user=request.user)
+    if not (acc_profile.stripe_subscription_id or '').strip():
+        messages.info(
+            request,
+            'There is no active Forma subscription on this account. Use “Delete account” if you want to remove your account.',
+        )
+        return redirect('pages:my_account')
+
+    if request.method == 'POST':
+        form = CancelSubscriptionDeleteAccountForm(request.user, request.POST)
+        if form.is_valid():
+            sub_id = acc_profile.stripe_subscription_id.strip()
+            ok, stripe_err = cancel_stripe_subscription_immediately(sub_id)
+            if not ok:
+                form.add_error(None, stripe_err or 'Could not cancel your subscription with Stripe.')
+            else:
+                user_pk = request.user.pk
+                logout(request)
+                get_user_model().objects.filter(pk=user_pk).delete()
+                messages.success(
+                    request,
+                    'Your subscription has been cancelled and your Forma account and trainer page have been removed.',
+                )
+                return redirect('accounts:account_deleted')
+    else:
+        form = CancelSubscriptionDeleteAccountForm(request.user)
+
+    return render(
+        request,
+        'accounts/cancel_subscription.html',
+        {'form': form},
+    )
 
 
 @login_required

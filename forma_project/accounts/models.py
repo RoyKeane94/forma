@@ -10,6 +10,18 @@ class Profile(models.Model):
         on_delete=models.CASCADE,
         related_name='profile',
     )
+    stripe_customer_id = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text='Stripe Customer id after keep-profile checkout (cus_…).',
+    )
+    stripe_subscription_id = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text='Stripe Subscription id for Forma billing (sub_…).',
+    )
 
     class Meta:
         db_table = 'accounts_profile'

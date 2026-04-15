@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Cancel subscription — Forma{% endblock %}
+{% block body %}
+<section class="min-h-[calc(100vh-60px)] border-t border-rule bg-surface px-page py-section">
+  <div class="mx-auto max-w-md">
+    <p class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+      Account
+    </p>
+    <h1 class="mb-4 font-display text-[clamp(2.8rem,4.5vw,4.5rem)] leading-heading tracking-[0.02em] text-ink">
+      Cancel subscription
+    </h1>
+    <p class="mb-4 font-serif text-[1.05rem] font-light italic leading-serif text-slate">
+      Cancelling stops your Forma billing in Stripe. We will also permanently delete your Forma account and your trainer page.
+    </p>
+    <p class="mb-8 border border-rule bg-paper px-4 py-4 font-body text-[0.8rem] font-light leading-[1.65] text-slate">
+      This cannot be undone. Make sure you have anything you need from your page saved elsewhere first.
+    </p>
+
+    <form method="post" action="" class="border-t border-rule pt-10" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div role="alert" class="mb-8 border border-rule bg-blue-light px-4 py-4">
+        <ul class="m-0 list-none space-y-2 p-0 font-body text-[0.8rem] font-light leading-[1.7] text-slate">
+          {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="mb-8">
+        <label class="flex cursor-pointer items-start gap-3 font-body text-[0.8rem] font-light leading-snug text-ink">
+          {{ form.acknowledge }}
+          <span>{{ form.acknowledge.label }}</span>
+        </label>
+        {% if form.acknowledge.errors %}
+        <ul class="mt-2 m-0 list-none p-0 font-body text-[0.68rem] font-light normal-case tracking-normal text-muted">
+          {% for error in form.acknowledge.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <div class="mb-10">
+        <label for="{{ form.password.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">
+          {{ form.password.label }}
+        </label>
+        {{ form.password }}
+        {% if form.password.errors %}
+        <ul class="mt-2 m-0 list-none p-0 font-body text-[0.68rem] font-light normal-case tracking-normal text-muted">
+          {% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <button type="submit" class="inline-flex cursor-pointer items-center justify-center border-0 bg-[#CC2A1A] px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#b32417]">
+          Cancel subscription &amp; remove my account
+        </button>
+        <a href="{% url 'pages:my_account' %}" class="border-b border-rule pb-0.5 text-center font-body text-[0.78rem] font-medium uppercase tracking-wide-3 text-muted no-underline transition-colors hover:border-ink hover:text-ink sm:text-left">
+          Back to my account
+        </a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
