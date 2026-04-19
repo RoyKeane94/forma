@@ -22,6 +22,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load .env next to manage.py so os.getenv sees DJANGO_SECRET_KEY (etc.)
 load_dotenv(BASE_DIR / '.env')
 
+
+def _split_csv(value: str) -> list[str]:
+    return [part.strip() for part in value.split(',') if part.strip()]
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -31,23 +36,34 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # Production: set DJANGO_DEBUG=0 (or false). Default is development-friendly.
 DEBUG = os.getenv('DJANGO_DEBUG', 'true').lower() in ('1', 'true', 'yes')
 
-_allowed = os.getenv('DJANGO_ALLOWED_HOSTS', '').strip()
+# Comma-separated hostnames, e.g. ALLOWED_HOSTS=example.com,127.0.0.1,localhost
+_allowed = os.getenv('ALLOWED_HOSTS', '').strip() or os.getenv('DJANGO_ALLOWED_HOSTS', '').strip()
+_local_hosts = ('127.0.0.1', 'localhost')
 if not DEBUG:
     if not _allowed:
         raise ImproperlyConfigured(
-            'Set DJANGO_ALLOWED_HOSTS (comma-separated hostnames) when DJANGO_DEBUG is off.'
+            'Set ALLOWED_HOSTS (or DJANGO_ALLOWED_HOSTS) to a comma-separated list of '
+            'hostnames when DJANGO_DEBUG is off.'
         )
-    ALLOWED_HOSTS = [h.strip() for h in _allowed.split(',') if h.strip()]
+    ALLOWED_HOSTS = _split_csv(_allowed)
 else:
-    ALLOWED_HOSTS = (
-        [h.strip() for h in _allowed.split(',') if h.strip()]
-        if _allowed
-        else ['127.0.0.1', 'localhost']
-    )
+    if _allowed:
+        # Same .env as production: keep listed hosts and always allow local runserver.
+        ALLOWED_HOSTS = list(dict.fromkeys(_split_csv(_allowed) + list(_local_hosts)))
+    else:
+        ALLOWED_HOSTS = list(_local_hosts)
 
-_csrf_origins = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').strip()
-if _csrf_origins:
-    CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(',') if o.strip()]
+# Comma-separated full origins, e.g. https://app.example.com
+_csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS', '').strip() or os.getenv(
+    'DJANGO_CSRF_TRUSTED_ORIGINS', ''
+).strip()
+_local_csrf_origins = ('http://127.0.0.1:8000', 'http://localhost:8000')
+if DEBUG:
+    merged_csrf = list(dict.fromkeys(_split_csv(_csrf_origins) + list(_local_csrf_origins)))
+    if merged_csrf:
+        CSRF_TRUSTED_ORIGINS = merged_csrf
+elif _csrf_origins:
+    CSRF_TRUSTED_ORIGINS = _split_csv(_csrf_origins)
 
 if not DEBUG and not SECRET_KEY:
     raise ImproperlyConfigured('Set DJANGO_SECRET_KEY when DJANGO_DEBUG is off.')
