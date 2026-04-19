@@ -76,8 +76,8 @@ ONBOARDING_STEPS = [
         'title': 'Pricing',
         'step_label': 'Step 5 of 7',
         'description': (
-            "Be upfront. Clients who see your rates before enquiring are warmer leads — they've "
-            'already decided the price works for them.'
+            'Be upfront. Clients who see your rates before enquiring are warmer leads. '
+            "They've already decided the price works for them."
         ),
         'sidebar_label': 'On showing prices',
         'sidebar_tip': (

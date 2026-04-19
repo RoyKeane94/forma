@@ -18,6 +18,7 @@ from accounts.models import Profile as AccountsProfile
 
 from .forms import (
     OnboardingStep1Form,
+    TrainerWhoIWorkWithFormSet,
     OnboardingStep2QuickForm,
     OnboardingStep4Form,
     OnboardingStep5MetaForm,
@@ -26,9 +27,11 @@ from .forms import (
     StaffTrainerCreateForm,
     TrainerAdditionalQualificationFormSet,
     TrainerGalleryPhotoFormSet,
+    PRICE_TIER_MAX_NUM,
     TrainerPriceTierFormSet,
     TrainerSpecialismFormSet,
     client_reviews_form_initial,
+    price_tier_row_captions_for_meta_form,
 )
 from .models import QUICK_QUALIFICATION_CHOICES, TrainerProfile, ensure_onboarding_children
 from .stripe_keep_profile import (
@@ -43,10 +46,12 @@ from .stripe_keep_profile import (
 )
 from .onboarding_meta import ONBOARDING_STEPS, TAB_LABELS
 from .profile_display import (
-    non_empty_additional_qualifications,
+    areas_covered_count,
     non_empty_client_reviews,
-    specialism_display_items,
+    split_featured_client_reviews,
+    visible_who_i_work_with_items,
     quick_qualification_items,
+    specialism_display_items,
     training_location_items,
     visible_price_tiers,
 )
@@ -321,7 +326,6 @@ def _onboarding_step_for_profile(
         'prev_step': step - 1 if step > 1 else None,
         'profile': profile,
         'total_steps': STEP_COUNT,
-        'onboarding_steps': ONBOARDING_STEPS,
         'tab_labels': TAB_LABELS,
         'step_meta': ONBOARDING_STEPS[step_idx],
         'max_reachable_step': max_reachable_step,
@@ -727,6 +731,7 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
         'specialisms',
         'price_tiers',
         'gallery_photos',
+        'who_i_work_with_items',
     )
     if url_key is not None:
         profile = get_object_or_404(
@@ -762,6 +767,7 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
     instagram_url = f'https://www.instagram.com/{ig_handle}/' if ig_handle else ''
 
     review_rows = non_empty_client_reviews(profile)
+    featured_review, other_reviews = split_featured_client_reviews(profile, review_rows)
     review_stats = None
     if review_rows:
         n = len(review_rows)
@@ -771,18 +777,74 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
             'average': round(total / n, 1),
         }
 
+    price_tiers = visible_price_tiers(profile)
+
     context = {
         'profile': profile,
         'quick_qual_items': quick_qualification_items(profile),
         'training_location_items': training_location_items(profile.training_locations),
-        'additional_quals': non_empty_additional_qualifications(profile),
-        'client_reviews': review_rows,
+        'featured_review': featured_review,
+        'other_reviews': other_reviews,
         'specialism_items': specialism_display_items(profile),
-        'price_tiers': visible_price_tiers(profile),
+        'price_tiers': price_tiers,
         'review_stats': review_stats,
         'instagram_url': instagram_url,
+        'who_i_work_with_items': visible_who_i_work_with_items(profile),
+        'areas_covered_count': areas_covered_count(profile),
     }
     return render(request, 'pages/trainer_profile.html', context)
+
+
+def _pricing_row_has_content(cleaned: dict | None) -> bool:
+    if not cleaned:
+        return False
+    label = (cleaned.get('label') or '').strip()
+    has_price = cleaned.get('price') is not None
+    return bool(label or has_price)
+
+
+def _pricing_most_popular_row_ok(meta, pfs) -> bool:
+    """Requires meta and formset to have already passed is_valid()."""
+    cd = meta.cleaned_data
+    if not cd.get('show_most_popular_tier'):
+        return True
+    raw = (cd.get('most_popular_row') or '').strip()
+    if not raw.isdigit():
+        return True
+    idx = int(raw)
+    if idx < 0 or idx >= len(pfs.forms):
+        meta.add_error('most_popular_row', 'Choose a valid price row.')
+        return False
+    form = pfs.forms[idx]
+    fcd = getattr(form, 'cleaned_data', None) or {}
+    if not _pricing_row_has_content(fcd):
+        meta.add_error(
+            'most_popular_row',
+            'Pick a row that already has a label or a price filled in.',
+        )
+        return False
+    return True
+
+
+def _pricing_step_show_add_button(formset) -> bool:
+    return len(formset.forms) < PRICE_TIER_MAX_NUM
+
+
+def _apply_pricing_most_popular(profile: TrainerProfile, meta_cleaned: dict) -> None:
+    profile.price_tiers.filter(order__lte=10).update(is_most_popular=False)
+    if not meta_cleaned.get('show_most_popular_tier'):
+        return
+    raw = (meta_cleaned.get('most_popular_row') or '').strip()
+    if not raw.isdigit():
+        return
+    idx = int(raw)
+    tiers = list(profile.price_tiers.filter(order__lte=10).order_by('order'))
+    if not (0 <= idx < len(tiers)):
+        return
+    t = tiers[idx]
+    if _pricing_row_has_content({'label': t.label, 'price': t.price}):
+        t.is_most_popular = True
+        t.save(update_fields=['is_most_popular'])
 
 
 def _process_step_post(
@@ -798,12 +860,17 @@ def _process_step_post(
             _advance_profile(profile, step_idx)
 
     if step_idx == 0:
+        ensure_onboarding_children(profile)
         form = OnboardingStep1Form(request.POST, request.FILES, instance=profile)
-        if form.is_valid():
+        wfs = TrainerWhoIWorkWithFormSet(request.POST, instance=profile)
+        form_ok = form.is_valid()
+        wfs_ok = wfs.is_valid()
+        if form_ok and wfs_ok:
             form.save()
+            wfs.save()
             _advance_if_needed()
             return True, {}
-        return False, {'form': form}
+        return False, {'form': form, 'who_formset': wfs}
 
     if step_idx == 1:
         quick = OnboardingStep2QuickForm(request.POST)
@@ -845,14 +912,27 @@ def _process_step_post(
         return False, {'form': form}
 
     if step_idx == 4:
-        meta = OnboardingStep5MetaForm(request.POST, instance=profile)
         pfs = TrainerPriceTierFormSet(request.POST, instance=profile)
-        if meta.is_valid() and pfs.is_valid():
+        meta = OnboardingStep5MetaForm(
+            request.POST,
+            instance=profile,
+            tier_row_captions=price_tier_row_captions_for_meta_form(pfs),
+        )
+        ok_pfs = pfs.is_valid()
+        ok_meta = meta.is_valid()
+        if ok_pfs and ok_meta and not _pricing_most_popular_row_ok(meta, pfs):
+            ok_meta = False
+        if ok_pfs and ok_meta:
             meta.save()
             pfs.save()
+            _apply_pricing_most_popular(profile, meta.cleaned_data)
             _advance_if_needed()
             return True, {}
-        return False, {'meta_form': meta, 'formset': pfs}
+        return False, {
+            'meta_form': meta,
+            'formset': pfs,
+            'price_tier_show_add_button': _pricing_step_show_add_button(pfs),
+        }
 
     if step_idx == 5:
         ig = OnboardingStep6InstagramForm(request.POST, instance=profile)
@@ -877,7 +957,9 @@ def _process_step_post(
 
 def _load_step_get_forms(context: dict, profile: TrainerProfile, step_idx: int) -> None:
     if step_idx == 0:
+        ensure_onboarding_children(profile)
         context['form'] = OnboardingStep1Form(instance=profile)
+        context['who_formset'] = TrainerWhoIWorkWithFormSet(instance=profile)
     elif step_idx == 1:
         context['quick_form'] = OnboardingStep2QuickForm(
             initial={'quick_qualifications': profile.quick_qualifications or []}
@@ -894,8 +976,13 @@ def _load_step_get_forms(context: dict, profile: TrainerProfile, step_idx: int) 
     elif step_idx == 3:
         context['form'] = OnboardingStep4Form(instance=profile)
     elif step_idx == 4:
-        context['meta_form'] = OnboardingStep5MetaForm(instance=profile)
-        context['formset'] = TrainerPriceTierFormSet(instance=profile)
+        fs = TrainerPriceTierFormSet(instance=profile)
+        context['formset'] = fs
+        context['meta_form'] = OnboardingStep5MetaForm(
+            instance=profile,
+            tier_row_captions=price_tier_row_captions_for_meta_form(fs),
+        )
+        context['price_tier_show_add_button'] = _pricing_step_show_add_button(fs)
     elif step_idx == 5:
         context['instagram_form'] = OnboardingStep6InstagramForm(instance=profile)
         context['formset'] = TrainerGalleryPhotoFormSet(instance=profile)

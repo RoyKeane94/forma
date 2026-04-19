@@ -55,8 +55,8 @@
   {% endfor %}
 </div>
 
-<div class="grid min-h-[calc(100vh-111px)] grid-cols-1 lg:grid-cols-[1fr_320px]">
-  <div class="border-r-0 border-rule lg:border-r px-page py-section lg:py-16">
+<div class="min-h-[calc(100vh-111px)] px-page py-section lg:py-16">
+  <div class="mx-auto max-w-4xl">
     <form id="onboarding-step-form" method="post" action="" enctype="multipart/form-data" class="max-w-none" novalidate>
       {% csrf_token %}
 
@@ -70,18 +70,18 @@
 
       {% if step == 0 %}
         {% if form.non_field_errors %}
-        <ul class="mb-6 list-none font-body text-[0.8rem] text-[#CC2A1A]">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        <ul class="mb-6 list-none font-body text-[0.8rem] text-danger">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
         {% endif %}
         <div class="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div class="flex flex-col gap-2">
             <label for="{{ form.first_name.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">{{ form.first_name.label }}</label>
             {{ form.first_name }}
-            {% if form.first_name.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.first_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if form.first_name.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in form.first_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
           <div class="flex flex-col gap-2">
             <label for="{{ form.last_name.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">{{ form.last_name.label }}</label>
             {{ form.last_name }}
-            {% if form.last_name.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.last_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if form.last_name.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in form.last_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
         </div>
         <div class="mb-10 flex flex-col gap-2">
@@ -95,14 +95,41 @@
             data-max-length="{{ form.tagline.field.max_length }}"
             aria-live="polite"
           >0 / {{ form.tagline.field.max_length }}</p>
-          {% if form.tagline.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.tagline.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if form.tagline.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in form.tagline.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <div class="mb-10 flex flex-col gap-2">
           <label for="{{ form.bio.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
-            {{ form.bio.label }} <span class="ml-2 font-body text-[0.68rem] font-normal normal-case tracking-normal text-muted">2–3 paragraphs. Who you are, how you train, who you work with.</span>
+            {{ form.bio.label }} <span class="ml-2 font-body text-[0.68rem] font-normal normal-case tracking-normal text-muted">2–3 paragraphs. Who you are and how you train.</span>
           </label>
           {{ form.bio }}
-          {% if form.bio.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.bio.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if form.bio.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in form.bio.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <hr class="my-10 border-0 border-t border-rule">
+        <div class="mb-10">
+          <p class="mb-2 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Who I work with <span class="ml-2 font-normal normal-case tracking-normal text-muted">Optional — headline + short paragraph per client type; shown on your public page</span></p>
+          <p class="mb-6 max-w-[52ch] font-body text-[0.72rem] leading-relaxed text-muted">Use the blank row at the bottom to add another (up to 8).</p>
+          {{ who_formset.management_form }}
+          {% if who_formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-danger">{% for e in who_formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          <div class="flex flex-col">
+            {% for f in who_formset %}
+            <div class="grid grid-cols-1 items-start gap-3 border-b border-rule py-4 first:border-t sm:grid-cols-[2rem_1fr]">
+              {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+              <span class="pt-2 text-center font-display text-[1.4rem] leading-none text-blue/30">{{ forloop.counter|stringformat:"02d" }}</span>
+              <div class="flex min-w-0 flex-col gap-3">
+                <div class="flex flex-col gap-2">
+                  <span class="font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-muted">Title</span>
+                  {{ f.title }}
+                  {% if f.title.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in f.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                <div class="flex flex-col gap-2">
+                  <span class="font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-muted">Description <span class="font-normal normal-case tracking-normal text-very-muted">(optional)</span></span>
+                  {{ f.description }}
+                  {% if f.description.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in f.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
         </div>
         <hr class="my-10 border-0 border-t border-rule">
         <p class="mb-6 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Client contact</p>
@@ -112,14 +139,14 @@
             {{ form.contact_email.label }} <span class="ml-2 font-body text-[0.68rem] font-normal normal-case tracking-normal text-muted">Optional</span>
           </label>
           {{ form.contact_email }}
-          {% if form.contact_email.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.contact_email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if form.contact_email.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in form.contact_email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <div class="mb-6 flex flex-col gap-2">
           <label for="{{ form.contact_phone.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
             {{ form.contact_phone.label }} <span class="ml-2 font-body text-[0.68rem] font-normal normal-case tracking-normal text-muted">Optional</span>
           </label>
           {{ form.contact_phone }}
-          {% if form.contact_phone.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.contact_phone.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if form.contact_phone.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in form.contact_phone.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <div class="mb-10 flex flex-col gap-3">
           <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
@@ -128,7 +155,7 @@
           <div class="[&_ul]:m-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-8 [&_ul]:gap-y-3 [&_ul]:p-0 [&_li]:m-0 [&_label]:font-body [&_label]:text-[0.8rem] [&_label]:font-light [&_label]:normal-case [&_label]:tracking-normal [&_label]:text-slate">
             {{ form.contact_phone_preference }}
           </div>
-          {% if form.contact_phone_preference.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.contact_phone_preference.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if form.contact_phone_preference.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in form.contact_phone_preference.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <hr class="my-10 border-0 border-t border-rule">
         <div class="flex flex-col gap-2" data-portrait-widget>
@@ -153,17 +180,17 @@
             </label>
             <div id="portrait-field-root">{{ form.portrait }}</div>
           </div>
-          {% if form.portrait.errors %}<ul class="list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in form.portrait.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if form.portrait.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in form.portrait.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
 
       {% elif step == 1 %}
-        {% if quick_form.non_field_errors %}<ul class="mb-6 list-none text-[#CC2A1A]">{% for e in quick_form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        {% if quick_form.non_field_errors %}<ul class="mb-6 list-none text-danger">{% for e in quick_form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         <div class="mb-10">
           <p class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
             {{ quick_form.quick_qualifications.label }} <span class="ml-2 font-normal normal-case tracking-normal text-muted">Check all that apply</span>
           </p>
           <div class="forma-check-group forma-check-group--quick">{{ quick_form.quick_qualifications }}</div>
-          {% if quick_form.quick_qualifications.errors %}<ul class="mt-2 list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in quick_form.quick_qualifications.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if quick_form.quick_qualifications.errors %}<ul class="mt-2 list-none font-body text-[0.65rem] text-danger">{% for e in quick_form.quick_qualifications.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <div class="mb-10 flex flex-col gap-4" id="quick-qual-note-rows">
           {% for row in quick_qual_note_rows %}
@@ -188,21 +215,21 @@
           Additional qualifications <span class="ml-2 font-normal normal-case tracking-normal text-muted">Up to 10</span>
         </div>
         {{ formset.management_form }}
-        {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-danger">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         <div class="flex flex-col">
           {% for f in formset %}
           <div class="grid grid-cols-1 items-center gap-3 border-b border-rule py-4 first:border-t sm:grid-cols-[2rem_1fr_1fr]">
             {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
             <span class="text-center font-display text-[1.4rem] leading-none text-blue/30">{{ forloop.counter|stringformat:"02d" }}</span>
-            <div>{{ f.name }}{% if f.name.errors %}<ul class="mt-1 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
-            <div>{{ f.detail }}{% if f.detail.errors %}<ul class="mt-1 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.detail.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+            <div>{{ f.name }}{% if f.name.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in f.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+            <div>{{ f.detail }}{% if f.detail.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in f.detail.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
           </div>
           {% endfor %}
         </div>
 
       {% elif step == 2 %}
         {{ formset.management_form }}
-        {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-danger">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         <div class="flex flex-col">
           {% for f in formset %}
           <div class="grid grid-cols-1 items-start gap-3 border-b border-rule py-4 first:border-t sm:grid-cols-[2rem_1fr]">
@@ -212,12 +239,12 @@
               <div class="flex flex-col gap-2">
                 <span class="font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-muted">Title</span>
                 {{ f.title }}
-                {% if f.title.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                {% if f.title.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in f.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
               </div>
               <div class="flex flex-col gap-2">
                 <span class="font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-muted">Brief description <span class="font-normal normal-case tracking-normal text-very-muted">(optional)</span></span>
                 {{ f.description }}
-                {% if f.description.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                {% if f.description.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in f.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
               </div>
             </div>
           </div>
@@ -226,7 +253,7 @@
 
       {% elif step == 3 %}
         {% if form.non_field_errors %}
-        <ul class="mb-6 list-none font-body text-[0.8rem] text-[#CC2A1A]">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        <ul class="mb-6 list-none font-body text-[0.8rem] text-danger">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
         {% endif %}
         <div class="mb-10">
           <p class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
@@ -253,7 +280,7 @@
             {% endfor %}
             {% endwith %}
           </div>
-          {% if form.training_locations.errors %}<ul class="mt-2 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in form.training_locations.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if form.training_locations.errors %}<ul class="mt-2 list-none text-[0.65rem] text-danger">{% for e in form.training_locations.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <hr class="my-10 border-0 border-t border-rule">
         <div class="mb-10 flex max-w-md flex-col gap-2">
@@ -266,77 +293,123 @@
           >
             {{ form.primary_area }}
           </div>
-          {% if form.primary_area.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in form.primary_area.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if form.primary_area.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in form.primary_area.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <div class="mb-10">
           <p class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
             {{ form.other_areas.label }} <span class="ml-2 font-normal normal-case tracking-normal text-muted">Select all that apply</span>
           </p>
           <div class="forma-check-group forma-area-grid">{{ form.other_areas }}</div>
-          {% if form.other_areas.errors %}<ul class="mt-2 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in form.other_areas.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if form.other_areas.errors %}<ul class="mt-2 list-none text-[0.65rem] text-danger">{% for e in form.other_areas.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
 
       {% elif step == 4 %}
         {{ formset.management_form }}
-        {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-        <div class="flex flex-col">
+        {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-danger">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        <p class="mb-6 max-w-[68ch] font-body text-[0.72rem] font-light leading-relaxed text-muted">Fill in the rates you want to show. Use <span class="font-medium text-slate">Add another price</span> to jump to the next row, or scroll to the blank row at the bottom. You can save up to 10 options.</p>
+        <div id="price-tier-rows" class="flex flex-col">
           {% for f in formset %}
-          <div class="grid grid-cols-1 items-end gap-3 border-b border-rule py-4 first:border-t sm:grid-cols-[2rem_1.5fr_1fr_100px]">
+          <div id="price-tier-row-{{ forloop.counter0 }}" class="grid grid-cols-1 items-end gap-3 border-b border-rule py-4 first:border-t sm:grid-cols-[2rem_1.5fr_1fr_100px]">
             {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
             <span class="text-center font-display text-[1.4rem] leading-none text-blue/30">{{ forloop.counter|stringformat:"02d" }}</span>
-            <div>{{ f.label }}{% if f.label.errors %}<ul class="mt-1 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.label.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
-            <div>{{ f.unit_note }}{% if f.unit_note.errors %}<ul class="mt-1 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.unit_note.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
-            <div>{{ f.price }}{% if f.price.errors %}<ul class="mt-1 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in f.price.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+            <div>{{ f.label }}{% if f.label.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in f.label.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+            <div>{{ f.unit_note }}{% if f.unit_note.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in f.unit_note.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+            <div>{{ f.price }}{% if f.price.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in f.price.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
           </div>
           {% endfor %}
         </div>
+        <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          {% if price_tier_show_add_button %}
+          <button type="button" id="add-price-tier-focus" class="inline-flex shrink-0 items-center gap-2.5 border border-ink bg-transparent px-[1.4rem] py-[0.65rem] font-body text-[0.72rem] font-medium uppercase tracking-[0.12em] text-ink transition-all duration-200 hover:bg-ink hover:text-paper">
+            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Add another price
+          </button>
+          <p class="max-w-[48ch] font-body text-[0.7rem] font-light leading-relaxed text-muted">Opens the next row so you can enter another rate. Save the step when you are done.</p>
+          {% else %}
+          <p class="font-body text-[0.7rem] font-light text-muted">You have reached the maximum of 10 price options. Edit or clear a row above to change what you offer.</p>
+          {% endif %}
+        </div>
+        <section class="mx-auto mt-12 max-w-4xl space-y-8 border-t border-rule pt-12" aria-labelledby="most-popular-heading">
+          <p id="most-popular-heading" class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">Most popular tier</p>
+          <p class="max-w-[68ch] font-body text-[0.8rem] font-light leading-relaxed text-muted">
+            Your public profile can show one option in a high-contrast panel so visitors see your main offer at a glance. Turn this off if you would rather show every tier the same way.
+          </p>
+          <fieldset class="m-0 space-y-4 border-0 p-0">
+            <legend class="sr-only">{{ meta_form.show_most_popular_tier.label }}</legend>
+            <p class="max-w-[68ch] font-body text-[0.95rem] font-medium leading-snug text-ink" aria-hidden="true">{{ meta_form.show_most_popular_tier.label }}</p>
+            <div class="forma-yes-no">
+              {{ meta_form.show_most_popular_tier }}
+            </div>
+            {% if meta_form.show_most_popular_tier.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in meta_form.show_most_popular_tier.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </fieldset>
+          <div id="most-popular-row-wrap" class="space-y-4 {% with v=meta_form.show_most_popular_tier.value %}{% if v != 'yes' and v != True %}hidden{% endif %}{% endwith %}" {% with v=meta_form.show_most_popular_tier.value %}{% if v != 'yes' and v != True %}aria-hidden="true"{% else %}aria-hidden="false"{% endif %}{% endwith %}>
+            <fieldset class="m-0 space-y-4 border-0 p-0">
+              <legend class="max-w-[68ch] font-body text-[0.95rem] font-medium leading-snug text-ink">{{ meta_form.most_popular_row.label }}</legend>
+              <div class="forma-review-slot-pick forma-review-slot-pick--tier">
+                {{ meta_form.most_popular_row }}
+              </div>
+              {% if meta_form.most_popular_row.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in meta_form.most_popular_row.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </fieldset>
+          </div>
+        </section>
         <hr class="my-10 border-0 border-t border-rule">
         <div class="flex flex-col gap-2">
           <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
             {{ meta_form.free_consultation.label }} <span class="ml-2 font-normal normal-case tracking-normal text-muted">Shown prominently on your profile</span>
           </span>
-          <div class="forma-loc-checks mt-2">
-            <div class="loc-check relative">
-              <input type="checkbox" name="{{ meta_form.free_consultation.html_name }}" id="{{ meta_form.free_consultation.id_for_label }}" value="on" {% if meta_form.free_consultation.value %}checked{% endif %}>
-              <label for="{{ meta_form.free_consultation.id_for_label }}" class="normal-case tracking-normal">Yes — I offer a free initial consultation</label>
+          <div class="forma-check-group forma-check-group--sentence mt-2">
+            <div>
+              <div>
+                <label>
+                  {{ meta_form.free_consultation }}
+                  <span>Yes — I offer a free initial consultation</span>
+                </label>
+              </div>
             </div>
           </div>
-          {% if meta_form.free_consultation.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in meta_form.free_consultation.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if meta_form.free_consultation.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in meta_form.free_consultation.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
 
       {% elif step == 5 %}
-        <div class="mb-10">
-          <p class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
-            Intro video <span class="ml-2 font-normal normal-case tracking-normal text-muted">Optional</span>
-          </p>
-          <div class="forma-loc-checks mb-4">
-            <div class="loc-check relative">
-              <input type="checkbox" name="{{ instagram_form.show_intro_video.html_name }}" id="{{ instagram_form.show_intro_video.id_for_label }}" value="on" {% if instagram_form.show_intro_video.value %}checked{% endif %}>
-              <label for="{{ instagram_form.show_intro_video.id_for_label }}" class="m-0 max-w-[52ch] normal-case tracking-normal">
-                Show intro video on my public profile
-                <span class="mt-1 block font-body text-[0.72rem] font-normal normal-case tracking-normal text-muted">When this is on, the intro block appears on your page like other sections you’ve filled in — if you haven’t uploaded a clip yet, visitors see a “coming soon” style placeholder until you add one.</span>
-              </label>
+        <div class="mx-auto max-w-4xl space-y-12">
+        <section class="space-y-8">
+          <header class="space-y-4">
+            <p class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+              Intro video <span class="ml-2 font-normal normal-case tracking-normal text-muted">Optional</span>
+            </p>
+            <p class="max-w-[68ch] font-body text-[0.82rem] font-light leading-relaxed text-muted">
+              When the intro block is on, it appears on your public page like your other sections. If you have not uploaded a clip yet, visitors still see the block with a simple placeholder until you add a file.
+            </p>
+          </header>
+          <fieldset class="m-0 space-y-4 border-0 p-0">
+            <legend class="max-w-[68ch] font-body text-[0.95rem] font-medium leading-snug text-ink">
+              {{ instagram_form.show_intro_video.label }}?
+            </legend>
+            <div class="forma-yes-no">
+              {{ instagram_form.show_intro_video }}
             </div>
-          </div>
-          {% if instagram_form.show_intro_video.errors %}<ul class="mb-4 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in instagram_form.show_intro_video.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          <div class="mb-3 flex max-w-xl flex-col gap-2">
+            {% if instagram_form.show_intro_video.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in instagram_form.show_intro_video.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </fieldset>
+          <div class="space-y-3 border-t border-rule pt-8">
             <label for="{{ instagram_form.intro_video.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Video file</label>
-            <p class="font-body text-[0.72rem] leading-relaxed text-muted">MP4, WebM, MOV or M4V — keep it short (roughly under a minute works well).</p>
-            {{ instagram_form.intro_video }}
+            <p class="max-w-[68ch] font-body text-[0.75rem] leading-relaxed text-muted">MP4, WebM, MOV or M4V — keep it short (roughly under a minute works well).</p>
+            <div class="max-w-2xl">
+              {{ instagram_form.intro_video }}
+            </div>
             {% if profile.intro_video %}
-            <p class="font-body text-[0.7rem] text-muted">Current file is saved; choose a new file to replace it, or use “Clear” on the file control to remove it.</p>
+            <p class="max-w-[68ch] font-body text-[0.72rem] leading-relaxed text-muted">Current file is saved; choose a new file to replace it, or use “Clear” on the file control to remove it.</p>
             {% endif %}
-            {% if instagram_form.intro_video.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in instagram_form.intro_video.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if instagram_form.intro_video.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in instagram_form.intro_video.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
-        </div>
-        <hr class="my-10 border-0 border-t border-rule">
+        </section>
+        <hr class="border-0 border-t border-rule">
         {{ formset.management_form }}
-        {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-[#CC2A1A]">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-        <div class="mb-10">
+        {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-danger">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        <section class="space-y-6">
           <p class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
             Training photos <span class="ml-2 font-normal normal-case tracking-normal text-muted">Upload 6 — you can change these any time</span>
           </p>
-          <div class="mt-3 grid grid-cols-2 gap-[3px] sm:grid-cols-3">
+          <div class="grid grid-cols-2 gap-[3px] sm:grid-cols-3 lg:grid-cols-6">
             {% for f in formset %}
             <div class="forma-photo-slot relative aspect-square border border-dashed border-rule bg-surface transition-colors hover:border-blue hover:bg-blue-light {% if f.instance.image %}has-image border-solid{% endif %}" data-slot="{{ forloop.counter }}">
               {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
@@ -345,44 +418,45 @@
               <svg class="photo-placeholder-icon pointer-events-none absolute inset-0 m-auto h-6 w-6 text-muted {% if f.instance.image %}hidden{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span class="photo-placeholder-label pointer-events-none absolute bottom-3 left-0 right-0 z-[1] text-center font-body text-[0.6rem] font-medium uppercase tracking-wide-3 text-muted {% if f.instance.image %}hidden{% endif %}">Add photo</span>
               <img src="{% if f.instance.image %}{{ f.instance.image.url }}{% endif %}" alt="" class="gallery-thumb pointer-events-none absolute inset-0 h-full w-full object-cover {% if not f.instance.image %}hidden{% endif %}">
-              {% if f.image.errors %}<ul class="absolute bottom-0 left-0 right-0 z-[2] list-none bg-paper/90 p-1 text-[0.6rem] text-[#CC2A1A]">{% for e in f.image.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+              {% if f.image.errors %}<ul class="absolute bottom-0 left-0 right-0 z-[2] list-none bg-paper/90 p-1 text-[0.6rem] text-danger">{% for e in f.image.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
             </div>
             {% endfor %}
           </div>
-        </div>
-        <hr class="my-10 border-0 border-t border-rule">
+        </section>
+        <hr class="border-0 border-t border-rule">
         {% with field=instagram_form.instagram_handle %}
-        <div class="flex flex-col gap-2">
+        <section class="space-y-4">
           <label for="{{ field.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
             {{ field.label }} <span class="ml-2 font-normal normal-case tracking-normal text-muted">Optional — links directly from your profile</span>
           </label>
-          <div class="relative">
+          <div class="relative max-w-xl">
             <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-body text-[0.92rem] text-muted">@</span>
             {{ field }}
           </div>
-          {% if field.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-        </div>
+          {% if field.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </section>
         {% endwith %}
+        </div>
       {% elif step == 6 %}
         {% if reviews_form.non_field_errors %}
-        <ul class="mb-6 list-none font-body text-[0.8rem] text-[#CC2A1A]">{% for e in reviews_form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        <ul class="mb-6 list-none font-body text-[0.8rem] text-danger">{% for e in reviews_form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
         {% endif %}
         <div class="mb-10 border-b border-rule pb-10">
           <p class="mb-4 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-blue">Review 1</p>
           <div class="mb-4 flex flex-col gap-2">
             <label for="{{ reviews_form.review_0_name.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Reviewer name</label>
             {{ reviews_form.review_0_name }}
-            {% if reviews_form.review_0_name.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_0_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.review_0_name.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_0_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
           <div class="mb-4 flex flex-col gap-2">
             <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Star rating</span>
             {{ reviews_form.review_0_rating }}
-            {% if reviews_form.review_0_rating.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_0_rating.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.review_0_rating.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_0_rating.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
           <div class="mb-4 flex flex-col gap-2">
             <label for="{{ reviews_form.review_0_quote.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">What they said</label>
             {{ reviews_form.review_0_quote }}
-            {% if reviews_form.review_0_quote.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_0_quote.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.review_0_quote.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_0_quote.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
           <div class="mb-4 flex max-w-md flex-col gap-2">
             <label for="{{ reviews_form.review_0_focus.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">{{ reviews_form.review_0_focus.label }}</label>
@@ -392,32 +466,36 @@
               data-forma-combobox
               {% for val, lbl in reviews_form.review_0_focus.field.choices %}{% if forloop.first %}data-combobox-placeholder="{{ lbl|escape }}"{% endif %}{% endfor %}
             >{{ reviews_form.review_0_focus }}</div>
-            {% if reviews_form.review_0_focus.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_0_focus.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.review_0_focus.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_0_focus.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
-          <div class="forma-loc-checks mt-2">
-            <div class="loc-check relative">
-              <input type="checkbox" name="{{ reviews_form.review_0_confirmed.html_name }}" id="{{ reviews_form.review_0_confirmed.id_for_label }}" value="on" {% if reviews_form.review_0_confirmed.value %}checked{% endif %}>
-              <label for="{{ reviews_form.review_0_confirmed.id_for_label }}" class="m-0 max-w-[52ch] normal-case tracking-normal">Tick this to confirm that this is a true review</label>
+          <div class="forma-check-group forma-check-group--sentence mt-2">
+            <div>
+              <div>
+                <label>
+                  {{ reviews_form.review_0_confirmed }}
+                  <span>Tick this to confirm that this is a true review</span>
+                </label>
+              </div>
             </div>
           </div>
-          {% if reviews_form.review_0_confirmed.errors %}<ul class="mt-2 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_0_confirmed.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if reviews_form.review_0_confirmed.errors %}<ul class="mt-2 list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_0_confirmed.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <div class="mb-10 border-b border-rule pb-10">
           <p class="mb-4 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-blue">Review 2</p>
           <div class="mb-4 flex flex-col gap-2">
             <label for="{{ reviews_form.review_1_name.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Reviewer name</label>
             {{ reviews_form.review_1_name }}
-            {% if reviews_form.review_1_name.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_1_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.review_1_name.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_1_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
           <div class="mb-4 flex flex-col gap-2">
             <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Star rating</span>
             {{ reviews_form.review_1_rating }}
-            {% if reviews_form.review_1_rating.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_1_rating.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.review_1_rating.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_1_rating.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
           <div class="mb-4 flex flex-col gap-2">
             <label for="{{ reviews_form.review_1_quote.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">What they said</label>
             {{ reviews_form.review_1_quote }}
-            {% if reviews_form.review_1_quote.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_1_quote.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.review_1_quote.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_1_quote.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
           <div class="mb-4 flex max-w-md flex-col gap-2">
             <label for="{{ reviews_form.review_1_focus.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">{{ reviews_form.review_1_focus.label }}</label>
@@ -427,32 +505,36 @@
               data-forma-combobox
               {% for val, lbl in reviews_form.review_0_focus.field.choices %}{% if forloop.first %}data-combobox-placeholder="{{ lbl|escape }}"{% endif %}{% endfor %}
             >{{ reviews_form.review_1_focus }}</div>
-            {% if reviews_form.review_1_focus.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_1_focus.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.review_1_focus.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_1_focus.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
-          <div class="forma-loc-checks mt-2">
-            <div class="loc-check relative">
-              <input type="checkbox" name="{{ reviews_form.review_1_confirmed.html_name }}" id="{{ reviews_form.review_1_confirmed.id_for_label }}" value="on" {% if reviews_form.review_1_confirmed.value %}checked{% endif %}>
-              <label for="{{ reviews_form.review_1_confirmed.id_for_label }}" class="m-0 max-w-[52ch] normal-case tracking-normal">Tick this to confirm that this is a true review</label>
+          <div class="forma-check-group forma-check-group--sentence mt-2">
+            <div>
+              <div>
+                <label>
+                  {{ reviews_form.review_1_confirmed }}
+                  <span>Tick this to confirm that this is a true review</span>
+                </label>
+              </div>
             </div>
           </div>
-          {% if reviews_form.review_1_confirmed.errors %}<ul class="mt-2 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_1_confirmed.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if reviews_form.review_1_confirmed.errors %}<ul class="mt-2 list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_1_confirmed.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <div class="mb-10">
           <p class="mb-4 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-blue">Review 3</p>
           <div class="mb-4 flex flex-col gap-2">
             <label for="{{ reviews_form.review_2_name.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Reviewer name</label>
             {{ reviews_form.review_2_name }}
-            {% if reviews_form.review_2_name.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_2_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.review_2_name.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_2_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
           <div class="mb-4 flex flex-col gap-2">
             <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Star rating</span>
             {{ reviews_form.review_2_rating }}
-            {% if reviews_form.review_2_rating.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_2_rating.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.review_2_rating.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_2_rating.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
           <div class="mb-4 flex flex-col gap-2">
             <label for="{{ reviews_form.review_2_quote.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">What they said</label>
             {{ reviews_form.review_2_quote }}
-            {% if reviews_form.review_2_quote.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_2_quote.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.review_2_quote.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_2_quote.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
           <div class="mb-4 flex max-w-md flex-col gap-2">
             <label for="{{ reviews_form.review_2_focus.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">{{ reviews_form.review_2_focus.label }}</label>
@@ -462,50 +544,47 @@
               data-forma-combobox
               {% for val, lbl in reviews_form.review_0_focus.field.choices %}{% if forloop.first %}data-combobox-placeholder="{{ lbl|escape }}"{% endif %}{% endfor %}
             >{{ reviews_form.review_2_focus }}</div>
-            {% if reviews_form.review_2_focus.errors %}<ul class="list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_2_focus.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.review_2_focus.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_2_focus.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
-          <div class="forma-loc-checks mt-2">
-            <div class="loc-check relative">
-              <input type="checkbox" name="{{ reviews_form.review_2_confirmed.html_name }}" id="{{ reviews_form.review_2_confirmed.id_for_label }}" value="on" {% if reviews_form.review_2_confirmed.value %}checked{% endif %}>
-              <label for="{{ reviews_form.review_2_confirmed.id_for_label }}" class="m-0 max-w-[52ch] normal-case tracking-normal">Tick this to confirm that this is a true review</label>
+          <div class="forma-check-group forma-check-group--sentence mt-2">
+            <div>
+              <div>
+                <label>
+                  {{ reviews_form.review_2_confirmed }}
+                  <span>Tick this to confirm that this is a true review</span>
+                </label>
+              </div>
             </div>
           </div>
-          {% if reviews_form.review_2_confirmed.errors %}<ul class="mt-2 list-none text-[0.65rem] text-[#CC2A1A]">{% for e in reviews_form.review_2_confirmed.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% if reviews_form.review_2_confirmed.errors %}<ul class="mt-2 list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_2_confirmed.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
+
+        <section class="mx-auto mt-12 max-w-4xl space-y-8 border-t border-rule pt-12" aria-labelledby="standout-heading">
+          <h2 id="standout-heading" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-blue">Standout testimonial</h2>
+          <p class="max-w-[68ch] font-body text-[0.8rem] font-light leading-relaxed text-muted">
+            Your public page can show one review as a large quote at the top of the reviews area. Turn this off if you would rather only show the smaller review cards.
+          </p>
+          <fieldset class="m-0 space-y-4 border-0 p-0">
+            <legend class="sr-only">{{ reviews_form.show_featured_review.label }}</legend>
+            <p class="max-w-[68ch] font-body text-[0.95rem] font-medium leading-snug text-ink" aria-hidden="true">{{ reviews_form.show_featured_review.label }}</p>
+            <div class="forma-yes-no">
+              {{ reviews_form.show_featured_review }}
+            </div>
+            {% if reviews_form.show_featured_review.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in reviews_form.show_featured_review.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </fieldset>
+          <div id="featured-review-slot-wrap" class="space-y-4 {% with v=reviews_form.show_featured_review.value %}{% if v != 'yes' and v != True %}hidden{% endif %}{% endwith %}" {% with v=reviews_form.show_featured_review.value %}{% if v != 'yes' and v != True %}aria-hidden="true"{% else %}aria-hidden="false"{% endif %}{% endwith %}>
+            <fieldset class="m-0 space-y-4 border-0 p-0">
+              <legend class="max-w-[68ch] font-body text-[0.95rem] font-medium leading-snug text-ink">{{ reviews_form.featured_review_slot.label }}</legend>
+              <div class="forma-review-slot-pick forma-review-slot-pick--review-names">
+                {{ reviews_form.featured_review_slot }}
+              </div>
+              {% if reviews_form.featured_review_slot.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in reviews_form.featured_review_slot.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </fieldset>
+          </div>
+        </section>
       {% endif %}
     </form>
   </div>
-
-  <aside class="flex flex-col gap-8 bg-surface px-6 py-10 lg:px-10 lg:py-12">
-    {% for meta in onboarding_steps %}
-    <div class="{% if forloop.counter0 != step %}hidden{% endif %}" data-sidebar-step="{{ forloop.counter0 }}">
-      <p class="mb-4 font-body text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-blue">{{ meta.sidebar_label }}</p>
-      <p class="font-serif text-[0.88rem] font-light italic leading-[1.7] text-slate">{{ meta.sidebar_tip }}</p>
-      {% if meta.sidebar_example_label %}
-      <div class="mt-4 border border-rule border-l-2 border-l-blue bg-paper p-4">
-        <p class="mb-2 font-body text-[0.58rem] font-semibold uppercase tracking-wide-3 text-blue">{{ meta.sidebar_example_label }}</p>
-        <p class="whitespace-pre-line font-serif text-[0.82rem] italic leading-relaxed text-slate">{{ meta.sidebar_example }}</p>
-      </div>
-      {% endif %}
-    </div>
-    {% endfor %}
-
-    <hr class="border-0 border-t border-rule">
-
-    <div>
-      <p class="mb-2 font-body text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-blue">Your progress</p>
-      <div class="mt-2 flex flex-col gap-2">
-        {% for label in tab_labels %}
-        {% with n=forloop.counter %}
-        <div class="flex items-center gap-2.5 font-body text-[0.72rem] {% if n == step_display %}text-ink font-medium{% elif n <= profile.onboarding_step %}text-ink{% else %}text-muted{% endif %}">
-          <span class="h-1.5 w-1.5 shrink-0 rounded-full {% if n == step_display %}bg-blue{% elif n <= profile.onboarding_step %}bg-ink{% else %}bg-rule{% endif %}"></span>
-          {{ label }}
-        </div>
-        {% endwith %}
-        {% endfor %}
-      </div>
-    </div>
-  </aside>
 </div>
 
 <div class="sticky bottom-0 z-[90] flex items-center justify-between gap-4 border-t border-rule bg-paper px-page py-8">
@@ -856,6 +935,114 @@
       reader.readAsDataURL(input.files[0]);
     });
   });
+})();
+</script>
+{% endif %}
+{% if step == 4 %}
+<script>
+(function () {
+  var form = document.getElementById('onboarding-step-form');
+  if (!form) return;
+  var prefix = '{{ formset.prefix|escapejs }}';
+
+  var popWrap = document.getElementById('most-popular-row-wrap');
+  function syncMostPopularPickers() {
+    if (!popWrap) return;
+    var yes = form.querySelector('input[name="show_most_popular_tier"][value="yes"]');
+    var on = yes && yes.checked;
+    popWrap.classList.toggle('hidden', !on);
+    popWrap.setAttribute('aria-hidden', on ? 'false' : 'true');
+  }
+  form.querySelectorAll('input[name="show_most_popular_tier"]').forEach(function (el) {
+    el.addEventListener('change', syncMostPopularPickers);
+  });
+  syncMostPopularPickers();
+
+  function rowCaption(i) {
+    var lab = form.querySelector('[name="' + prefix + '-' + i + '-label"]');
+    var un = form.querySelector('[name="' + prefix + '-' + i + '-unit_note"]');
+    var t = (lab && lab.value && lab.value.trim()) || (un && un.value && un.value.trim()) || '';
+    if (!t) t = 'Row ' + String(i + 1).padStart(2, '0');
+    if (t.length > 56) t = t.slice(0, 55) + '\u2026';
+    return t;
+  }
+  function syncTierRadioCaptions() {
+    form.querySelectorAll('input[name="most_popular_row"]').forEach(function (radio) {
+      var i = parseInt(radio.value, 10);
+      if (isNaN(i)) return;
+      var span = radio.parentNode && radio.parentNode.querySelector('.js-tier-radio-caption');
+      if (span) span.textContent = rowCaption(i);
+    });
+  }
+  var tierRoot = document.getElementById('price-tier-rows');
+  if (tierRoot) {
+    tierRoot.addEventListener('input', function (e) {
+      var n = e.target && e.target.name;
+      if (!n || n.indexOf(prefix + '-') !== 0) return;
+      if (n.slice(-6) === '-label' || n.slice(-10) === '-unit_note') syncTierRadioCaptions();
+    });
+  }
+  syncTierRadioCaptions();
+
+  var addBtn = document.getElementById('add-price-tier-focus');
+  if (addBtn) {
+    addBtn.addEventListener('click', function () {
+      var totalEl = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+      var total = totalEl ? parseInt(totalEl.value, 10) : 0;
+      if (!total) return;
+      var lastIdx = total - 1;
+      var lastRow = document.getElementById('price-tier-row-' + lastIdx);
+      var inp = lastRow ? lastRow.querySelector('input[name$="-label"]') : null;
+      if (inp) {
+        lastRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        inp.focus();
+      }
+    });
+  }
+})();
+</script>
+{% endif %}
+{% if step == 6 %}
+<script>
+(function () {
+  var form = document.getElementById('onboarding-step-form');
+  if (!form) return;
+  var wrap = document.getElementById('featured-review-slot-wrap');
+  function syncStandoutPickers() {
+    if (!wrap) return;
+    var yes = form.querySelector('input[name="show_featured_review"][value="yes"]');
+    var on = yes && yes.checked;
+    wrap.classList.toggle('hidden', !on);
+    wrap.setAttribute('aria-hidden', on ? 'false' : 'true');
+  }
+  form.querySelectorAll('input[name="show_featured_review"]').forEach(function (el) {
+    el.addEventListener('change', syncStandoutPickers);
+  });
+  syncStandoutPickers();
+
+  function featuredSlotCaption(i) {
+    var inp = form.querySelector('input[name="review_' + i + '_name"]');
+    var t = (inp && inp.value && inp.value.trim()) || '';
+    if (!t) t = 'Review ' + String(i + 1);
+    if (t.length > 48) t = t.slice(0, 47) + '\u2026';
+    return t;
+  }
+  function syncFeaturedSlotCaptions() {
+    form.querySelectorAll('input[name="featured_review_slot"]').forEach(function (radio) {
+      var i = parseInt(radio.value, 10);
+      if (isNaN(i)) return;
+      var span = radio.parentNode && radio.parentNode.querySelector('.js-tier-radio-caption');
+      if (span) span.textContent = featuredSlotCaption(i);
+    });
+  }
+  [0, 1, 2].forEach(function (i) {
+    var el = form.querySelector('input[name="review_' + i + '_name"]');
+    if (!el) return;
+    ['input', 'change', 'keyup', 'paste', 'cut'].forEach(function (ev) {
+      el.addEventListener(ev, syncFeaturedSlotCaptions);
+    });
+  });
+  syncFeaturedSlotCaptions();
 })();
 </script>
 {% endif %}

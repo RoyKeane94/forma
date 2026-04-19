@@ -5,6 +5,7 @@
 {% block content_shell_class %}min-h-screen{% endblock %}
 
 {% block body %}
+<div class="pb-24 lg:pb-0">
 <nav class="sticky top-0 z-[200] flex h-[60px] items-stretch border-b border-rule bg-paper">
   <div class="flex shrink-0 items-center border-r border-rule px-8">
     <a class="font-display text-[1.55rem] tracking-wide-4 text-blue no-underline" href="{% url 'home' %}">Forma</a>
@@ -62,7 +63,6 @@
     >
       <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_60%_30%,rgba(26,63,204,0.08),transparent_60%)]" aria-hidden="true"></div>
       {% if profile.portrait %}
-      {# Right column is one-third of the hero on lg; portrait fits that box with object-contain (no crop). Quals wrap inside the same width. #}
       <div class="relative z-[1] flex min-h-0 w-full flex-1 flex-col items-stretch">
         <div class="flex min-h-0 flex-1 flex-col items-stretch">
           <div class="flex min-h-0 flex-1 items-center justify-center lg:items-stretch lg:justify-center lg:w-full">
@@ -101,6 +101,28 @@
   </div>
 </section>
 
+{# Social proof strip — four quick numbers before scroll depth #}
+<section class="border-t border-rule bg-surface" aria-label="At a glance">
+  <div class="grid grid-cols-2 border-b border-rule sm:grid-cols-4">
+    <div class="border-b border-rule py-5 text-center sm:border-b-0 sm:border-r sm:last:border-r-0">
+      <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-blue">{% if review_stats %}{{ review_stats.average }}{% else %}—{% endif %}</div>
+      <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">Avg. rating</div>
+    </div>
+    <div class="border-b border-r-0 border-rule py-5 text-center sm:border-b-0 sm:border-r sm:last:border-r-0">
+      <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-ink">{% if review_stats %}{{ review_stats.count }}{% else %}0{% endif %}</div>
+      <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">Reviews</div>
+    </div>
+    <div class="border-r border-rule py-5 text-center sm:border-r">
+      <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-ink">{% if areas_covered_count %}{{ areas_covered_count }}{% else %}—{% endif %}</div>
+      <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">Areas covered</div>
+    </div>
+    <div class="py-5 text-center">
+      <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-ink">{{ training_location_items|length }}</div>
+      <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">Ways to train</div>
+    </div>
+  </div>
+</section>
+
 {% if profile.show_intro_video %}
 <section class="grid border-t border-rule lg:grid-cols-[1fr_340px]" id="intro">
   <div class="relative flex aspect-video items-center justify-center overflow-hidden bg-ink">
@@ -132,68 +154,69 @@
 </section>
 {% endif %}
 
-<section class="grid border-t border-rule lg:grid-cols-2" id="about">
-  <div class="border-rule px-page py-section lg:border-r lg:px-16">
-    <p class="mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">About</p>
-    <div class="max-w-[52ch] font-serif text-[1.05rem] font-light leading-[1.8] text-slate [&_p+p]:mt-[1.1em]">
+<section class="border-t border-rule bg-paper py-section" id="about">
+  <div class="w-full px-page">
+    <p class="mb-4 flex w-full items-center gap-3 font-body text-label text-blue after:block after:h-px after:min-w-[3rem] after:flex-1 after:bg-rule">About</p>
+    <div class="w-full max-w-none font-serif text-[1.05rem] font-light leading-[1.75] text-slate sm:text-[1.08rem] [&_p+p]:mt-[1em]">
       {{ profile.bio|linebreaks }}
     </div>
   </div>
-  <div class="bg-surface px-page py-section lg:px-16">
-    <p class="mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">Qualifications</p>
-    <div class="flex flex-col">
-      {% if quick_qual_items %}
-      <div class="mb-8 border-b border-rule pb-8 last:mb-0 last:border-b-0 last:pb-0">
-        <p class="mb-3 font-body text-[0.65rem] font-semibold uppercase tracking-wide-3 text-muted">Credentials</p>
-        <ul class="list-none space-y-4">
-          {% for item in quick_qual_items %}
-          <li>
-            <p class="font-body text-[0.85rem] font-medium tracking-[0.04em] text-ink">{{ item.label }}</p>
-            {% if item.note %}
-            <p class="mt-1 max-w-[52ch] font-body text-[0.8rem] font-light leading-relaxed text-slate">{{ item.note }}</p>
-            {% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
-      {% endif %}
-      {% if additional_quals %}
-      <div>
-        {% if quick_qual_items %}
-        <p class="mb-3 font-body text-[0.65rem] font-semibold uppercase tracking-wide-3 text-muted">Also qualified in</p>
-        {% endif %}
-        {% for row in additional_quals %}
-        <div class="flex gap-6 border-b border-rule py-5 last:border-b-0">
-          <span class="min-w-[2ch] shrink-0 font-display text-[1.5rem] leading-none tracking-[0.03em] text-blue">{{ forloop.counter|stringformat:"02d" }}</span>
-          <div>
-            {% if row.name %}<p class="mb-1 font-body text-[0.85rem] font-medium tracking-[0.04em] text-ink">{{ row.name }}</p>{% endif %}
-            {% if row.detail %}<p class="mb-2 font-serif text-[0.8rem] italic text-muted">{{ row.detail }}</p>{% endif %}
-            {% if row.description %}<p class="max-w-[52ch] font-body text-[0.8rem] font-light leading-relaxed text-slate">{{ row.description }}</p>{% endif %}
-          </div>
+  {% if who_i_work_with_items %}
+  <div class="mt-14 w-full border-t border-rule bg-surface px-page py-section">
+    <div class="mb-8 w-full">
+      <p class="mb-2 flex w-full items-center gap-3 font-body text-label text-blue after:block after:h-px after:min-w-[3rem] after:flex-1 after:bg-rule">Who I work with</p>
+      <h2 class="font-display text-[clamp(2rem,4vw,3.25rem)] font-normal uppercase leading-[1.05] tracking-[0.04em] text-ink">Is this you?</h2>
+      <p class="mt-3 max-w-[60ch] font-body text-[0.8rem] font-light leading-relaxed text-muted">If one of these sounds like you, you are in the right place.</p>
+    </div>
+    <div class="grid w-full grid-cols-1 border-t border-rule sm:grid-cols-2 lg:grid-cols-4">
+      {% for item in who_i_work_with_items %}
+      <div class="flex flex-col gap-4 px-5 py-8 ring-1 ring-inset ring-rule sm:px-6 sm:py-10">
+        <div class="text-blue" aria-hidden="true">
+          <svg class="h-8 w-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="6" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="16" cy="16" r="11" stroke="currentColor" stroke-width="1.5" opacity="0.45"/>
+          </svg>
         </div>
-        {% endfor %}
+        <div>
+          <p class="font-body text-[0.95rem] font-semibold uppercase tracking-[0.06em] text-ink">{{ item.title }}</p>
+          {% if item.description %}
+          <p class="mt-3 font-serif text-[0.92rem] font-light italic leading-[1.65] text-slate">{{ item.description }}</p>
+          {% endif %}
+        </div>
       </div>
-      {% endif %}
+      {% endfor %}
     </div>
   </div>
+  {% endif %}
 </section>
+
+{% if featured_review %}
+<section class="border-t border-rule bg-ink px-page py-section" aria-label="Featured testimonial">
+  <blockquote class="mx-auto max-w-[40rem] text-center">
+    <p class="font-serif text-[clamp(1.35rem,3.5vw,2rem)] font-light italic leading-[1.55] text-paper/90">&ldquo;{{ featured_review.quote }}&rdquo;</p>
+    <footer class="mt-6 font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-paper/45">— {{ featured_review.name }}{% if featured_review.focus %} · {{ featured_review.focus }}{% endif %}</footer>
+  </blockquote>
+</section>
+{% endif %}
 
 {% if specialism_items %}
 <section class="border-t border-rule bg-white px-page py-section">
-  <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-    <div>
-      <p class="mb-2 font-body text-label text-blue">Specialisms</p>
-      <h2 class="font-display text-[clamp(2.5rem,4vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink">What I do best</h2>
-    </div>
+  <div class="mb-8 max-w-3xl">
+    <p class="mb-2 font-body text-label text-blue">Specialisms</p>
+    <h2 class="font-display text-[clamp(2.5rem,4vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink">What I do best</h2>
   </div>
-  <div class="grid grid-cols-2 gap-px border border-rule bg-rule md:grid-cols-4">
+  <div class="flex max-w-3xl flex-col border-t border-rule">
     {% for row in specialism_items %}
-    <div class="flex flex-col items-start bg-white p-5 transition-colors hover:bg-paper">
-      <p class="mb-2 font-display text-[1.8rem] leading-none text-blue/35">{{ forloop.counter|stringformat:"02d" }}</p>
-      <p class="font-body text-[0.78rem] font-medium uppercase tracking-[0.06em] text-ink">{{ row.title }}</p>
-      {% if row.description %}
-      <p class="mt-3 max-w-[28ch] font-serif text-[0.82rem] font-light leading-relaxed text-slate">{{ row.description }}</p>
-      {% endif %}
+    <div class="border-b border-rule py-6 last:border-b-0">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-8">
+        <span class="shrink-0 font-display text-[2rem] leading-none tracking-[0.03em] text-blue/35">{{ forloop.counter|stringformat:"02d" }}</span>
+        <div class="min-w-0 flex-1">
+          <p class="font-body text-[0.85rem] font-medium uppercase tracking-[0.06em] text-ink">{{ row.title }}</p>
+          {% if row.description %}
+          <p class="mt-2 line-clamp-2 max-w-[52ch] font-serif text-[0.9rem] font-light leading-relaxed text-slate">{{ row.description }}</p>
+          {% endif %}
+        </div>
+      </div>
     </div>
     {% endfor %}
   </div>
@@ -203,62 +226,81 @@
 <section class="border-t border-rule bg-surface px-page py-section" id="pricing">
   <p class="mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">Pricing</p>
   {% if price_tiers %}
-  <table class="mt-4 w-full border-collapse">
+  <div class="mt-6 grid w-full max-w-6xl gap-3 [grid-template-columns:repeat(auto-fit,minmax(11.5rem,1fr))]">
     {% for tier in price_tiers %}
-    <tr class="border-b border-rule last:border-b-0">
-      <td class="py-3 pr-4 align-middle font-body text-[0.88rem] font-medium tracking-wide-5 text-ink sm:w-1/2">{{ tier.label }}</td>
-      <td class="hidden py-3 align-middle font-body text-[0.72rem] tracking-wide-5 text-muted sm:table-cell sm:w-[30%]">{{ tier.unit_note }}</td>
-      <td class="py-3 text-right align-middle font-display text-[1.6rem] leading-none text-blue">{% if tier.price is not None %}£{{ tier.price }}{% endif %}</td>
-    </tr>
+      {% if tier.is_most_popular %}
+        <div class="flex h-full min-h-[10.5rem] flex-col border border-ink bg-ink px-5 py-6">
+          <p class="mb-2 font-body text-[0.58rem] font-semibold uppercase tracking-[0.2em] text-paper/50">Most popular</p>
+          <div class="flex flex-1 flex-col justify-between gap-4">
+            <div>
+              <p class="font-body text-[0.95rem] font-medium tracking-wide-5 text-paper">{{ tier.label }}</p>
+              {% if tier.unit_note %}<p class="mt-1 font-body text-[0.72rem] text-paper/55">{{ tier.unit_note }}</p>{% endif %}
+            </div>
+            <p class="font-display text-[1.85rem] leading-none text-paper">{% if tier.price is not None %}£{{ tier.price }}{% endif %}</p>
+          </div>
+        </div>
+      {% else %}
+        <div class="flex h-full min-h-[10.5rem] flex-col border border-rule bg-paper px-5 py-6">
+          <div class="flex flex-1 flex-col justify-between gap-4">
+            <div>
+              <p class="font-body text-[0.88rem] font-medium tracking-wide-5 text-ink">{{ tier.label }}</p>
+              {% if tier.unit_note %}<p class="mt-1 font-body text-[0.72rem] text-muted">{{ tier.unit_note }}</p>{% endif %}
+            </div>
+            <p class="font-display text-[1.65rem] leading-none text-blue">{% if tier.price is not None %}£{{ tier.price }}{% endif %}</p>
+          </div>
+        </div>
+      {% endif %}
     {% endfor %}
-  </table>
+  </div>
   {% else %}
   <p class="font-serif text-[0.95rem] italic text-muted">Pricing tiers will show here once added.</p>
   {% endif %}
   {% if profile.free_consultation %}
   <p class="mt-6 inline-block border border-blue/20 bg-blue-light px-3 py-1.5 font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-blue">Free initial consultation offered</p>
   {% endif %}
-</section>
 
-{% if training_location_items or profile.primary_area or profile.other_areas %}
-<section class="flex flex-col flex-wrap items-start gap-6 border-t border-rule bg-surface px-page py-8 sm:flex-row sm:items-center">
-  <span class="shrink-0 font-body text-label text-blue">Where I train</span>
-  {% if training_location_items %}
-  <div class="flex flex-wrap">
-    {% for loc in training_location_items %}
-    <div class="flex items-center gap-2 border-l border-rule px-4 py-1 first:border-l-0 sm:px-6">
-      {% if loc.key == 'gym' %}
-      <svg class="h-4 w-4 shrink-0 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-      {% elif loc.key == 'home' %}
-      <svg class="h-4 w-4 shrink-0 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      {% elif loc.key == 'outdoor' %}
-      <svg class="h-4 w-4 shrink-0 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 000 20M12 2a14.5 14.5 0 010 20M2 12h20"/></svg>
-      {% elif loc.key == 'online' %}
-      <svg class="h-4 w-4 shrink-0 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+  {% if training_location_items or profile.primary_area or profile.other_areas %}
+  <div class="mt-10 max-w-3xl border-t border-rule pt-8">
+    <p class="mb-4 font-body text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-blue">Where I train</p>
+    <div class="flex flex-col flex-wrap gap-4 sm:flex-row sm:items-center">
+      {% if training_location_items %}
+      <div class="flex flex-wrap">
+        {% for loc in training_location_items %}
+        <div class="flex items-center gap-2 border-l border-rule px-4 py-1 first:border-l-0 sm:px-5">
+          {% if loc.key == 'gym' %}
+          <svg class="h-4 w-4 shrink-0 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          {% elif loc.key == 'home' %}
+          <svg class="h-4 w-4 shrink-0 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          {% elif loc.key == 'outdoor' %}
+          <svg class="h-4 w-4 shrink-0 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 000 20M12 2a14.5 14.5 0 010 20M2 12h20"/></svg>
+          {% elif loc.key == 'online' %}
+          <svg class="h-4 w-4 shrink-0 text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          {% endif %}
+          <span class="font-body text-[0.78rem] text-ink">{{ loc.label }}</span>
+        </div>
+        {% endfor %}
+      </div>
       {% endif %}
-      <span class="font-body text-[0.78rem] text-ink">{{ loc.label }}</span>
+      <div class="flex flex-wrap items-center gap-1.5 sm:ml-auto">
+        <span class="mr-1 font-body text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-muted">Covers</span>
+        {% if profile.primary_area %}
+        <span class="border border-blue/20 bg-blue-light px-2 py-0.5 font-body text-[0.68rem] text-blue">{{ profile.primary_area }}</span>
+        {% endif %}
+        {% for name in profile.other_areas %}
+        <span class="border border-rule bg-paper px-2 py-0.5 font-body text-[0.68rem] text-slate">{{ name }}</span>
+        {% endfor %}
+      </div>
     </div>
-    {% endfor %}
   </div>
   {% endif %}
-  <div class="flex flex-wrap items-center gap-1 sm:ml-auto">
-    <span class="mr-1 font-body text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-muted">Covers</span>
-    {% if profile.primary_area %}
-    <span class="border border-blue/20 bg-blue-light px-2 py-0.5 font-body text-[0.68rem] text-blue">{{ profile.primary_area }}</span>
-    {% endif %}
-    {% for name in profile.other_areas %}
-    <span class="border border-rule bg-paper px-2 py-0.5 font-body text-[0.68rem] text-slate">{{ name }}</span>
-    {% endfor %}
-  </div>
 </section>
-{% endif %}
 
-{% if client_reviews %}
+{% if other_reviews %}
 <section class="border-t border-rule bg-white px-page py-section" id="reviews">
   <p class="mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">Reviews</p>
   <h2 class="mb-10 font-display text-[clamp(2.5rem,4vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink">What clients say</h2>
-  <div class="grid gap-6 md:grid-cols-3">
-    {% for rev in client_reviews %}
+  <div class="grid gap-6 md:grid-cols-2">
+    {% for rev in other_reviews %}
     <blockquote class="border border-rule bg-surface p-6">
       <div class="mb-3 flex gap-0.5 text-blue" aria-label="{{ rev.rating }} out of 5 stars">
         {% for _ in "12345" %}
@@ -380,6 +422,10 @@
   </div>
 </section>
 
+<div class="fixed inset-x-0 bottom-0 z-[250] border-t border-rule bg-paper/95 px-4 py-3 backdrop-blur-sm lg:hidden" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
+  <a href="#enquire" class="flex w-full items-center justify-center bg-blue py-3 font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-colors hover:bg-blue-mid">Book a session</a>
+</div>
+
 <script>
 (function () {
   function copyText(text, btn) {
@@ -409,6 +455,7 @@
 })();
 </script>
 
+</div>
 {% endblock %}
 
 {% block site_footer %}

@@ -8,6 +8,7 @@ from .models import (
     TrainerPriceTier,
     TrainerProfile,
     TrainerSpecialism,
+    TrainerWhoIWorkWithItem,
 )
 
 
@@ -39,11 +40,18 @@ class TrainerSpecialismInline(admin.TabularInline):
 class TrainerPriceTierInline(admin.TabularInline):
     model = TrainerPriceTier
     extra = 0
+    fields = ('order', 'label', 'unit_note', 'price', 'is_most_popular')
 
 
 class TrainerGalleryPhotoInline(admin.TabularInline):
     model = TrainerGalleryPhoto
     extra = 0
+
+
+class TrainerWhoIWorkWithInline(admin.TabularInline):
+    model = TrainerWhoIWorkWithItem
+    extra = 0
+    fields = ('order', 'title', 'description')
 
 
 @admin.register(TrainerProfile)
@@ -123,7 +131,7 @@ class TrainerProfileAdmin(admin.ModelAdmin):
         (
             'Client reviews (onboarding)',
             {
-                'fields': ('client_reviews',),
+                'fields': ('client_reviews', 'featured_review_slot'),
             },
         ),
         (
@@ -150,6 +158,7 @@ class TrainerProfileAdmin(admin.ModelAdmin):
         ),
     )
     inlines = (
+        TrainerWhoIWorkWithInline,
         TrainerAdditionalQualificationInline,
         TrainerSpecialismInline,
         TrainerPriceTierInline,

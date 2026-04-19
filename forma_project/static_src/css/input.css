@@ -42,6 +42,24 @@
     @apply px-[0.8rem] py-[0.35rem] text-[0.72rem];
   }
 
+  /* Single onboarding checkbox (e.g. free consultation) — sentence case, full-width friendly */
+  .forma-check-group.forma-check-group--sentence > div > div > label {
+    @apply min-h-[2.75rem] max-w-full items-start justify-start normal-case tracking-normal py-3 pl-4 pr-4 text-left text-[0.75rem] leading-snug;
+  }
+
+  .forma-check-group.forma-check-group--sentence > div > div > label span {
+    @apply block max-w-[52ch] pl-0 font-body font-medium text-slate;
+  }
+
+  .forma-check-group.forma-check-group--sentence > div > div > label:has(input:focus-visible) {
+    @apply outline-none;
+    box-shadow: 0 0 0 3px rgba(26, 63, 204, 0.08);
+  }
+
+  .forma-check-group.forma-check-group--sentence > div > div > label:has(input:checked) span {
+    @apply text-blue;
+  }
+
   /* Logistics pills with leading icon span inside label */
   .forma-loc-checks .loc-check input[type='checkbox'] {
     @apply absolute opacity-0 w-0 h-0;
@@ -57,6 +75,164 @@
 
   .forma-loc-checks {
     @apply flex flex-wrap gap-2 mt-3;
+  }
+
+  /* Step 6: intro video — Yes / No radio pair (full-width friendly) */
+  .forma-yes-no > ul {
+    @apply m-0 flex list-none flex-col gap-3 p-0 sm:flex-row sm:flex-wrap sm:gap-4;
+  }
+
+  .forma-yes-no > ul > li {
+    @apply m-0 flex-1 p-0 sm:min-w-[10rem] sm:flex-none;
+  }
+
+  .forma-yes-no > ul > li > label {
+    @apply relative flex min-h-[2.75rem] w-full cursor-pointer items-center justify-center border border-rule bg-paper px-6 py-3 text-center font-body text-[0.8rem] font-semibold uppercase tracking-wide-5 text-slate transition-colors;
+  }
+
+  .forma-yes-no > ul > li > label input[type='radio'] {
+    @apply absolute h-0 w-0 opacity-0;
+  }
+
+  .forma-yes-no > ul > li > label:has(input:checked),
+  .forma-yes-no > ul > li > label:has(input:focus-visible) {
+    @apply border-blue/40 bg-blue-light text-blue;
+  }
+
+  /* Django 5 RadioSelect: div > div > label (no ul/li) — same as forma-yes-no pills */
+  .forma-yes-no > div {
+    @apply m-0 flex flex-col gap-3 p-0 sm:flex-row sm:flex-wrap sm:gap-4;
+  }
+
+  .forma-yes-no > div > div {
+    @apply m-0 flex-1 p-0 sm:min-w-[10rem] sm:flex-none;
+  }
+
+  .forma-yes-no > div > div > label {
+    @apply relative flex min-h-[2.75rem] w-full cursor-pointer items-center justify-center border border-rule bg-paper px-6 py-3 text-center font-body text-[0.8rem] font-semibold uppercase tracking-wide-5 text-slate transition-colors outline-none;
+  }
+
+  .forma-yes-no > div > div > label input[type='radio'] {
+    @apply absolute h-0 w-0 opacity-0;
+  }
+
+  .forma-yes-no > div > div > label:has(input:checked),
+  .forma-yes-no > div > div > label:has(input:focus-visible) {
+    @apply border-blue/40 bg-blue-light text-blue;
+  }
+
+  .forma-yes-no > div > div > label:has(input:focus-visible) {
+    @apply outline-none;
+    box-shadow: 0 0 0 3px rgba(26, 63, 204, 0.08);
+  }
+
+  .forma-yes-no > ul > li > label:has(input:focus-visible) {
+    @apply outline-none;
+    box-shadow: 0 0 0 3px rgba(26, 63, 204, 0.08);
+  }
+
+  /* Reviews step: pick which slot is the standout (three options) */
+  .forma-review-slot-pick > ul {
+    @apply m-0 flex list-none flex-col gap-3 p-0 sm:flex-row sm:flex-wrap sm:gap-3;
+  }
+
+  .forma-review-slot-pick > ul > li {
+    @apply m-0 flex-1 p-0 sm:min-w-[7.5rem] sm:flex-none;
+  }
+
+  .forma-review-slot-pick > ul > li > label {
+    @apply relative flex min-h-[2.75rem] w-full cursor-pointer items-center justify-center border border-rule bg-paper px-4 py-3 text-center font-body text-[0.72rem] font-semibold uppercase tracking-wide-5 text-slate transition-colors;
+  }
+
+  .forma-review-slot-pick > ul > li > label input[type='radio'] {
+    @apply absolute h-0 w-0 opacity-0;
+  }
+
+  .forma-review-slot-pick > ul > li > label:has(input:checked),
+  .forma-review-slot-pick > ul > li > label:has(input:focus-visible) {
+    @apply border-blue/40 bg-blue-light text-blue;
+  }
+
+  .forma-review-slot-pick > ul > li > label:has(input:focus-visible) {
+    @apply outline-none;
+    box-shadow: 0 0 0 3px rgba(26, 63, 204, 0.08);
+  }
+
+  /* Reviews standout: Django 5 radios use div wrappers */
+  .forma-review-slot-pick:not(.forma-review-slot-pick--tier) > div {
+    @apply m-0 flex flex-col gap-3 p-0 sm:flex-row sm:flex-wrap sm:gap-3;
+  }
+
+  .forma-review-slot-pick:not(.forma-review-slot-pick--tier) > div > div {
+    @apply m-0 flex-1 p-0 sm:min-w-[7.5rem] sm:flex-none;
+  }
+
+  .forma-review-slot-pick:not(.forma-review-slot-pick--tier) > div > div > label {
+    @apply relative flex min-h-[2.75rem] w-full cursor-pointer items-center justify-center border border-rule bg-paper px-4 py-3 text-center font-body text-[0.72rem] font-semibold uppercase tracking-wide-5 text-slate transition-colors outline-none;
+  }
+
+  .forma-review-slot-pick:not(.forma-review-slot-pick--tier) > div > div > label input[type='radio'] {
+    @apply absolute h-0 w-0 opacity-0;
+  }
+
+  .forma-review-slot-pick:not(.forma-review-slot-pick--tier) > div > div > label:has(input:checked),
+  .forma-review-slot-pick:not(.forma-review-slot-pick--tier) > div > div > label:has(input:focus-visible) {
+    @apply border-blue/40 bg-blue-light text-blue;
+  }
+
+  .forma-review-slot-pick:not(.forma-review-slot-pick--tier) > div > div > label:has(input:focus-visible) {
+    @apply outline-none;
+    box-shadow: 0 0 0 3px rgba(26, 63, 204, 0.08);
+  }
+
+  /* Reviews step: standout picker uses reviewer names (sentence case) */
+  .forma-review-slot-pick.forma-review-slot-pick--review-names > div > div > label {
+    @apply min-h-[3rem] items-start justify-start text-left normal-case tracking-normal py-3 text-[0.78rem] font-medium;
+  }
+
+  .forma-review-slot-pick.forma-review-slot-pick--review-names > div > div > label .js-tier-radio-caption {
+    @apply block max-w-full font-body text-[0.78rem] font-medium leading-snug text-slate;
+  }
+
+  .forma-review-slot-pick.forma-review-slot-pick--review-names > div > div > label:has(input:checked) .js-tier-radio-caption,
+  .forma-review-slot-pick.forma-review-slot-pick--review-names > div > div > label:has(input:focus-visible) .js-tier-radio-caption {
+    @apply text-blue;
+  }
+
+  /* Pricing step: Django RadioSelect uses div wrappers (not ul/li) */
+  .forma-review-slot-pick.forma-review-slot-pick--tier > div {
+    @apply m-0 flex flex-col gap-3 p-0 sm:flex-row sm:flex-wrap sm:gap-3;
+  }
+
+  .forma-review-slot-pick.forma-review-slot-pick--tier > div > div {
+    @apply m-0 flex-1 p-0 sm:min-w-[7.5rem] sm:flex-none;
+  }
+
+  .forma-review-slot-pick.forma-review-slot-pick--tier > div > div > label {
+    @apply relative flex min-h-[3.25rem] w-full cursor-pointer flex-col items-stretch justify-start gap-1 border border-rule bg-paper px-4 py-3 text-left normal-case tracking-normal transition-colors;
+  }
+
+  .forma-review-slot-pick.forma-review-slot-pick--tier > div > div > label input[type='radio'] {
+    @apply absolute h-0 w-0 opacity-0;
+  }
+
+  .forma-review-slot-pick.forma-review-slot-pick--tier > div > div > label .js-tier-radio-caption {
+    @apply block max-w-full font-body text-[0.78rem] font-medium leading-snug text-slate;
+  }
+
+  .forma-review-slot-pick.forma-review-slot-pick--tier > div > div > label:has(input:checked),
+  .forma-review-slot-pick.forma-review-slot-pick--tier > div > div > label:has(input:focus-visible) {
+    @apply border-blue/40 bg-blue-light text-blue;
+  }
+
+  .forma-review-slot-pick.forma-review-slot-pick--tier > div > div > label:has(input:focus-visible) {
+    @apply outline-none;
+    box-shadow: 0 0 0 3px rgba(26, 63, 204, 0.08);
+  }
+
+  .forma-review-slot-pick.forma-review-slot-pick--tier > div > div > label:has(input:checked) .js-tier-radio-caption,
+  .forma-review-slot-pick.forma-review-slot-pick--tier > div > div > label:has(input:focus-visible) .js-tier-radio-caption {
+    @apply text-blue;
   }
 
   /* Gallery slots: invisible file input over tile */

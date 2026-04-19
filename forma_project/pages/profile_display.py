@@ -55,6 +55,27 @@ def non_empty_specialisms(profile):
     ]
 
 
+def visible_who_i_work_with_items(profile) -> list[dict]:
+    """Title + description rows for the public profile (non-empty slots only)."""
+    out = []
+    for o in profile.who_i_work_with_items.filter(order__lte=8).order_by('order'):
+        title = (o.title or '').strip()
+        desc = (o.description or '').strip()
+        if title:
+            out.append({'title': title, 'description': desc})
+    return out
+
+
+def areas_covered_count(profile) -> int:
+    """Primary + other service areas for the proof strip."""
+    n = 1 if profile.primary_area_id else 0
+    raw = profile.other_areas or []
+    if not isinstance(raw, list):
+        return n
+    n += sum(1 for x in raw if str(x).strip())
+    return n
+
+
 def specialism_display_items(profile):
     """Titles with optional brief descriptions for public profile / marketing blocks."""
     out = []
@@ -69,7 +90,7 @@ def specialism_display_items(profile):
 
 def visible_price_tiers(profile):
     out = []
-    for t in profile.price_tiers.filter(order__lte=4):
+    for t in profile.price_tiers.filter(order__lte=10):
         label = (t.label or '').strip()
         has_price = t.price is not None
         if label or has_price:
@@ -78,8 +99,9 @@ def visible_price_tiers(profile):
 
 
 def non_empty_client_reviews(profile):
-    """Structured reviews from onboarding (max three); requires rating + confirmation."""
+    """Structured reviews from onboarding (max three); requires rating + confirmation. Each row has slot 0–2."""
     out = []
+    legacy_pos = 0
     for item in profile.client_reviews or []:
         if not isinstance(item, dict):
             continue
@@ -91,8 +113,36 @@ def non_empty_client_reviews(profile):
         confirmed = bool(item.get('confirmed'))
         if name and quote and rating is not None and confirmed:
             focus = (item.get('focus') or '').strip()
-            row = {'name': name, 'quote': quote, 'rating': rating}
+            raw_slot = item.get('slot')
+            if isinstance(raw_slot, int) and 0 <= raw_slot <= 2:
+                slot = raw_slot
+            else:
+                slot = legacy_pos
+                legacy_pos += 1
+            row = {'name': name, 'quote': quote, 'rating': rating, 'slot': slot}
             if focus:
                 row['focus'] = focus
             out.append(row)
     return out
+
+
+def split_featured_client_reviews(profile, review_rows):
+    """
+    Pick the standout review from profile.featured_review_slot (0–2), or no standout if null.
+    Returns (featured_dict | None, list of other rows).
+    """
+    if not review_rows:
+        return None, []
+    slot = getattr(profile, 'featured_review_slot', None)
+    if slot is None:
+        return None, list(review_rows)
+    featured = None
+    others = []
+    for r in review_rows:
+        if r.get('slot') == slot:
+            featured = r
+        else:
+            others.append(r)
+    if featured is None:
+        return None, list(review_rows)
+    return featured, others

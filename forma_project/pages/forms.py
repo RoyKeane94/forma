@@ -1,20 +1,21 @@
 """
 Onboarding forms for PT profile setup (7 steps). Widgets use `.forma-input` (see static_src/css/input.css).
 
-View wiring (after user has a TrainerProfile and `ensure_onboarding_children(profile)` has run):
-  Step 1: OnboardingStep1Form (identity, tagline, bio, client contact email/phone + preference, portrait)
+View wiring (call `ensure_onboarding_children(profile)` before step 0 GET/POST so child rows exist):
+  Step 1: OnboardingStep1Form + TrainerWhoIWorkWithFormSet (identity, tagline, bio, who I work with rows, contact, portrait)
   Step 2: OnboardingStep2QuickForm + TrainerAdditionalQualificationFormSet (up to 10 rows)
   Step 3: TrainerSpecialismFormSet (up to four rows: title + optional brief description)
   Step 4: OnboardingStep4Form (saves training_locations + other_areas JSON on save())
-  Step 5: OnboardingStep5MetaForm + TrainerPriceTierFormSet
+  Step 5: OnboardingStep5MetaForm + TrainerPriceTierFormSet (up to 10 tiers + one blank row to add more)
   Step 6: OnboardingStep6InstagramForm (intro video, show toggle, Instagram) + TrainerGalleryPhotoFormSet
-  Step 7: OnboardingStep7ReviewsForm → TrainerProfile.client_reviews (max 3)
+  Step 7: OnboardingStep7ReviewsForm → TrainerProfile.client_reviews (max 3) + featured_review_slot
 
 Constants: QUICK_QUALIFICATION_CHOICES, TRAINING_LOCATION_CHOICES (from models).
 """
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Max
 from django.forms import inlineformset_factory
 from django.forms.models import BaseInlineFormSet
 
@@ -27,10 +28,22 @@ from .models import (
     TrainerPriceTier,
     TrainerProfile,
     TrainerSpecialism,
+    TrainerWhoIWorkWithItem,
 )
 from .profile_display import non_empty_specialisms
 
 FORMA_INPUT_CLASS = 'forma-input'
+
+# Step 5 — example copy for the first four pricing rows (placeholders); rows 5+ use generics in the form.
+PRICE_TIER_PLACEHOLDER_ROWS = [
+    ('Single session', 'per session', '65'),
+    ('Multiple sessions', '5 sessions', '300'),
+    ('Single group session', 'per session', '50'),
+    ('Multiple group sessions', '10 sessions', '450'),
+]
+PRICE_TIER_MAX_NUM = 10
+
+WHO_I_WORK_WITH_MAX_NUM = 8
 
 
 def _forma_attrs(extra=None):
@@ -138,6 +151,60 @@ class OnboardingStep1Form(forms.ModelForm):
         if pref and not phone:
             self.add_error('contact_phone', 'Enter a phone number, or clear the preferred contact method.')
         return data
+
+
+class TrainerWhoIWorkWithItemForm(forms.ModelForm):
+    class Meta:
+        model = TrainerWhoIWorkWithItem
+        fields = ('title', 'description')
+        widgets = {
+            'title': forms.TextInput(
+                attrs=_forma_attrs({'placeholder': 'e.g. Complete beginners'}),
+            ),
+            'description': forms.Textarea(
+                attrs=_forma_attrs(
+                    {
+                        'rows': 3,
+                        'placeholder': 'Who they are and how you help them…',
+                    }
+                )
+            ),
+        }
+
+
+class TrainerWhoIWorkWithInlineFormSet(BaseInlineFormSet):
+    """Up to WHO_I_WORK_WITH_MAX_NUM rows; one extra blank row to add another."""
+
+    def get_queryset(self):
+        return super().get_queryset().filter(order__lte=WHO_I_WORK_WITH_MAX_NUM).order_by('order')
+
+    def save_new(self, form, commit=True):
+        obj = form.save(commit=False)
+        setattr(obj, self.fk.name, self.instance)
+        next_order = (
+            self.model.objects.filter(**{self.fk.name: self.instance}).aggregate(m=Max('order'))['m']
+            or 0
+        ) + 1
+        if next_order > WHO_I_WORK_WITH_MAX_NUM:
+            raise ValidationError(f'You can add at most {WHO_I_WORK_WITH_MAX_NUM} client types.')
+        obj.order = next_order
+        if commit:
+            obj.save()
+            if hasattr(form, 'save_m2m'):
+                form.save_m2m()
+        return obj
+
+
+TrainerWhoIWorkWithFormSet = inlineformset_factory(
+    TrainerProfile,
+    TrainerWhoIWorkWithItem,
+    form=TrainerWhoIWorkWithItemForm,
+    formset=TrainerWhoIWorkWithInlineFormSet,
+    extra=1,
+    can_delete=False,
+    max_num=WHO_I_WORK_WITH_MAX_NUM,
+    validate_max=True,
+)
 
 
 # ── Step 2 ──────────────────────────────────────────────────────────────────
@@ -285,24 +352,97 @@ class OnboardingStep4Form(forms.ModelForm):
 # ── Step 5 ──────────────────────────────────────────────────────────────────
 
 
+class TierCaptionRadioSelect(forms.RadioSelect):
+    """Radio option label wrapped in .js-tier-radio-caption for live caption updates."""
+
+    option_template_name = 'pages/widgets/tier_radio_option.html'
+
+
+def price_tier_row_captions_for_meta_form(formset) -> list[str]:
+    """One caption per form row for “most popular” radios (label, else unit note, else row number)."""
+    out: list[str] = []
+    for i, form in enumerate(formset.forms):
+        row_ref = f'{i + 1:02d}'
+        raw = ''
+        data = getattr(form, 'data', None)
+        if data is not None:
+            raw = (data.get(form.add_prefix('label')) or '').strip()
+        if not raw:
+            raw = (getattr(form.instance, 'label', None) or '').strip()
+        if not raw and data is not None:
+            raw = (data.get(form.add_prefix('unit_note')) or '').strip()
+        if not raw:
+            raw = (getattr(form.instance, 'unit_note', None) or '').strip()
+        if not raw:
+            display = f'Row {row_ref}'
+        elif len(raw) > 56:
+            display = raw[:55] + '…'
+        else:
+            display = raw
+        out.append(display)
+    return out
+
+
 class TrainerPriceTierForm(forms.ModelForm):
     class Meta:
         model = TrainerPriceTier
         fields = ('label', 'unit_note', 'price')
         widgets = {
-            'label': forms.TextInput(attrs=_forma_attrs({'placeholder': 'e.g. Single session'})),
-            'unit_note': forms.TextInput(attrs=_forma_attrs({'placeholder': 'e.g. per session'})),
-            'price': forms.NumberInput(
-                attrs=_forma_attrs({'placeholder': '65', 'min': '0', 'step': '0.01'}),
-            ),
+            'label': forms.TextInput(attrs=_forma_attrs()),
+            'unit_note': forms.TextInput(attrs=_forma_attrs()),
+            'price': forms.NumberInput(attrs=_forma_attrs({'min': '0', 'step': '0.01'})),
         }
+
+    def _placeholder_row_index(self) -> int:
+        if getattr(self.instance, 'pk', None):
+            return int(self.instance.order)
+        if self.prefix:
+            tail = self.prefix.rsplit('-', 1)[-1]
+            if tail.isdigit():
+                return int(tail) + 1
+        return 1
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        row = self._placeholder_row_index()
+        presets = PRICE_TIER_PLACEHOLDER_ROWS
+        if 1 <= row <= len(presets):
+            label_p, unit_p, price_p = presets[row - 1]
+        else:
+            label_p, unit_p, price_p = (
+                'e.g. Package or bundle',
+                'e.g. per month',
+                '',
+            )
+        self.fields['label'].widget.attrs['placeholder'] = label_p
+        self.fields['unit_note'].widget.attrs['placeholder'] = unit_p
+        if price_p:
+            self.fields['price'].widget.attrs['placeholder'] = price_p
+        else:
+            self.fields['price'].widget.attrs.pop('placeholder', None)
 
 
 class TrainerPriceTierInlineFormSet(BaseInlineFormSet):
-    """Align with max_num=4 when legacy DB rows exist beyond order 4."""
+    """Up to PRICE_TIER_MAX_NUM saved rows; one extra empty form to add another tier."""
 
     def get_queryset(self):
-        return super().get_queryset().filter(order__lte=4)
+        return super().get_queryset().filter(order__lte=PRICE_TIER_MAX_NUM).order_by('order')
+
+    def save_new(self, form, commit=True):
+        obj = form.save(commit=False)
+        setattr(obj, self.fk.name, self.instance)
+        next_order = (
+            self.model.objects.filter(**{self.fk.name: self.instance}).aggregate(m=Max('order'))['m']
+            or 0
+        ) + 1
+        if next_order > PRICE_TIER_MAX_NUM:
+            raise ValidationError(f'You can add at most {PRICE_TIER_MAX_NUM} price options.')
+        obj.order = next_order
+        if commit:
+            obj.save()
+            if hasattr(form, 'save_m2m'):
+                form.save_m2m()
+        return obj
 
 
 TrainerPriceTierFormSet = inlineformset_factory(
@@ -310,19 +450,68 @@ TrainerPriceTierFormSet = inlineformset_factory(
     TrainerPriceTier,
     form=TrainerPriceTierForm,
     formset=TrainerPriceTierInlineFormSet,
-    extra=0,
+    extra=1,
     can_delete=False,
-    max_num=4,
+    max_num=PRICE_TIER_MAX_NUM,
     validate_max=True,
 )
 
 
 class OnboardingStep5MetaForm(forms.ModelForm):
-    """Free consultation flag only; pricing rows come from the formset."""
+    """Free consultation + “most popular” tier (radios); pricing rows come from the formset."""
+
+    show_most_popular_tier = forms.TypedChoiceField(
+        label='Highlight one price option on your public profile as “most popular”?',
+        choices=[('yes', 'Yes'), ('no', 'No')],
+        coerce=lambda v: v == 'yes',
+        widget=forms.RadioSelect,
+        required=True,
+    )
+    most_popular_row = forms.ChoiceField(
+        label='Which option should be highlighted?',
+        choices=[],
+        widget=TierCaptionRadioSelect,
+        required=False,
+    )
 
     class Meta:
         model = TrainerProfile
         fields = ('free_consultation',)
+
+    def __init__(self, *args, tier_row_captions: list[str] | None = None, tier_form_count: int | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if tier_row_captions is not None:
+            captions = list(tier_row_captions)
+        elif tier_form_count is not None:
+            n = int(tier_form_count)
+            captions = [f'Row {i + 1:02d}' for i in range(n)]
+        else:
+            n = self.instance.price_tiers.filter(order__lte=PRICE_TIER_MAX_NUM).count() + 1
+            n = min(max(n, 2), PRICE_TIER_MAX_NUM + 1)
+            captions = [f'Row {i + 1:02d}' for i in range(n)]
+        self._tier_form_count = len(captions)
+        self.fields['most_popular_row'].choices = [(str(i), cap) for i, cap in enumerate(captions)]
+        if not self.is_bound:
+            tiers = list(self.instance.price_tiers.filter(order__lte=PRICE_TIER_MAX_NUM).order_by('order'))
+            any_pop = any(t.is_most_popular for t in tiers)
+            self.initial['show_most_popular_tier'] = 'yes' if any_pop else 'no'
+            if any_pop:
+                max_idx = max(self._tier_form_count - 1, 0)
+                for i, t in enumerate(tiers):
+                    if t.is_most_popular:
+                        self.initial['most_popular_row'] = str(min(i, max_idx))
+                        break
+
+    def clean(self):
+        data = super().clean()
+        want = data.get('show_most_popular_tier')
+        row = (data.get('most_popular_row') or '').strip()
+        n = getattr(self, '_tier_form_count', 0)
+        valid = {str(i) for i in range(n)}
+        if want:
+            if row not in valid:
+                self.add_error('most_popular_row', 'Choose which option to highlight.')
+        return data
 
 
 # ── Step 6 ──────────────────────────────────────────────────────────────────
@@ -354,6 +543,19 @@ TrainerGalleryPhotoFormSet = inlineformset_factory(
 
 
 class OnboardingStep6InstagramForm(forms.ModelForm):
+    """`show_intro_video` as Yes/No radios (clearer than a single checkbox)."""
+
+    show_intro_video = forms.TypedChoiceField(
+        label='Show intro video on your public profile',
+        choices=[
+            ('yes', 'Yes'),
+            ('no', 'No'),
+        ],
+        coerce=lambda v: v == 'yes',
+        widget=forms.RadioSelect,
+        required=True,
+    )
+
     class Meta:
         model = TrainerProfile
         fields = ('intro_video', 'show_intro_video', 'instagram_handle')
@@ -376,6 +578,11 @@ class OnboardingStep6InstagramForm(forms.ModelForm):
                 }
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_bound:
+            self.initial['show_intro_video'] = 'yes' if self.instance.show_intro_video else 'no'
 
     def clean_instagram_handle(self):
         h = (self.cleaned_data.get('instagram_handle') or '').strip().lstrip('@')
@@ -405,6 +612,9 @@ def client_reviews_form_initial(profile: TrainerProfile) -> dict:
             init[f'review_{i}_rating'] = ''
         init[f'review_{i}_confirmed'] = bool(row.get('confirmed'))
         init[f'review_{i}_focus'] = (row.get('focus') or '').strip()
+    fs = getattr(profile, 'featured_review_slot', None)
+    init['show_featured_review'] = 'yes' if fs is not None else 'no'
+    init['featured_review_slot'] = str(fs) if fs is not None else ''
     return init
 
 
@@ -487,6 +697,20 @@ class OnboardingStep7ReviewsForm(forms.Form):
         widget=forms.Select(attrs=_forma_attrs()),
     )
 
+    show_featured_review = forms.TypedChoiceField(
+        label='Show a large standout quote on your public profile?',
+        choices=[('yes', 'Yes'), ('no', 'No')],
+        coerce=lambda v: v == 'yes',
+        widget=forms.RadioSelect,
+        required=True,
+    )
+    featured_review_slot = forms.ChoiceField(
+        label='Which review should be the standout?',
+        choices=[],
+        widget=TierCaptionRadioSelect,
+        required=False,
+    )
+
     def __init__(self, *args, profile=None, **kwargs):
         self._profile = profile
         super().__init__(*args, **kwargs)
@@ -506,6 +730,23 @@ class OnboardingStep7ReviewsForm(forms.Form):
                     )
                 ]
             self.fields[f'review_{i}_focus'].choices = focus_choices
+
+        data = self.data if self.is_bound else None
+        slot_choices = []
+        for i in range(MAX_ONBOARDING_REVIEWS):
+            raw = ''
+            if data is not None:
+                raw = (data.get(f'review_{i}_name') or '').strip()
+            if not raw:
+                raw = (self.initial.get(f'review_{i}_name') or '').strip()
+            if not raw:
+                label = f'Review {i + 1}'
+            elif len(raw) > 48:
+                label = raw[:47] + '…'
+            else:
+                label = raw
+            slot_choices.append((str(i), label))
+        self.fields['featured_review_slot'].choices = slot_choices
 
     def clean(self):
         data = super().clean()
@@ -561,16 +802,43 @@ class OnboardingStep7ReviewsForm(forms.Form):
                         'quote': q,
                         'rating': rating_val,
                         'confirmed': True,
+                        'slot': i,
                     }
                     if fo:
                         row['focus'] = fo
                     out.append(row)
         self._reviews_json = out
+
+        want = self.cleaned_data.get('show_featured_review')
+        choice_raw = (self.cleaned_data.get('featured_review_slot') or '').strip()
+        slots_saved = {r['slot'] for r in out}
+        self._featured_slot = None
+        if want:
+            if not out:
+                self.add_error(
+                    'show_featured_review',
+                    'Add at least one completed review first, or choose No.',
+                )
+            elif choice_raw not in ('0', '1', '2'):
+                self.add_error(
+                    'featured_review_slot',
+                    'Choose which review is the standout.',
+                )
+            else:
+                si = int(choice_raw)
+                if si not in slots_saved:
+                    self.add_error(
+                        'featured_review_slot',
+                        'Pick a review slot you have filled in and confirmed above.',
+                    )
+                else:
+                    self._featured_slot = si
         return data
 
     def save_to_profile(self, profile: TrainerProfile) -> None:
         profile.client_reviews = getattr(self, '_reviews_json', [])
-        profile.save(update_fields=['client_reviews'])
+        profile.featured_review_slot = getattr(self, '_featured_slot', None)
+        profile.save(update_fields=['client_reviews', 'featured_review_slot'])
 
 
 class StaffTrainerCreateForm(forms.Form):

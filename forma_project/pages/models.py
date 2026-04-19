@@ -2,7 +2,7 @@ import secrets
 import string
 
 from django.conf import settings
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
@@ -163,7 +163,13 @@ class TrainerProfile(models.Model):
     client_reviews = models.JSONField(
         default=_empty_list,
         blank=True,
-        help_text='Up to three {name, quote, rating 1–5, confirmed, focus?} objects from onboarding.',
+        help_text='Up to three {name, quote, rating 1–5, confirmed, focus?, slot 0–2} objects from onboarding.',
+    )
+    featured_review_slot = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(2)],
+        help_text='Which review slot (0–2) is shown as the large standout quote; null = none.',
     )
 
     onboarding_step = models.PositiveSmallIntegerField(default=0)
@@ -289,6 +295,33 @@ class TrainerProfile(models.Model):
         return super().save(*args, **kwargs)
 
 
+class TrainerWhoIWorkWithItem(models.Model):
+    """Step 1 — client types (title + optional description) for the public profile grid."""
+
+    profile = models.ForeignKey(
+        TrainerProfile,
+        on_delete=models.CASCADE,
+        related_name='who_i_work_with_items',
+    )
+    order = models.PositiveSmallIntegerField()
+    title = models.CharField(max_length=120, blank=True)
+    description = models.CharField(
+        max_length=600,
+        blank=True,
+        help_text='Shown under the title on your public page.',
+    )
+
+    class Meta:
+        db_table = 'pages_trainer_who_i_work_with'
+        ordering = ['order']
+        constraints = [
+            models.UniqueConstraint(
+                fields=('profile', 'order'),
+                name='pages_who_work_unique_order',
+            ),
+        ]
+
+
 class TrainerAdditionalQualification(models.Model):
     """Step 2 — free-text rows (up to 10)."""
 
@@ -344,7 +377,7 @@ class TrainerSpecialism(models.Model):
 
 
 class TrainerPriceTier(models.Model):
-    """Step 5 — four pricing rows."""
+    """Step 5 — up to ten pricing rows (orders 1–10)."""
 
     profile = models.ForeignKey(
         TrainerProfile,
@@ -363,6 +396,10 @@ class TrainerPriceTier(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
+    )
+    is_most_popular = models.BooleanField(
+        default=False,
+        help_text='Highlight this tier on your public profile (only one should be on).',
     )
 
     class Meta:
@@ -409,14 +446,22 @@ def ensure_onboarding_children(profile: TrainerProfile) -> None:
             order=order,
             defaults={'name': '', 'detail': ''},
         )
-    # Step 5 formset max_num=4; extra price rows break validation ("at most 4 forms").
+    # Step 5 pricing formset: up to 10 rows; four empty slots on new profiles.
     for order in range(1, 5):
         TrainerPriceTier.objects.get_or_create(
             profile=profile,
             order=order,
             defaults={'label': '', 'unit_note': '', 'price': None},
         )
-    TrainerPriceTier.objects.filter(profile=profile, order__gt=4).delete()
+    TrainerPriceTier.objects.filter(profile=profile, order__gt=10).delete()
+    # Step 1 — who I work with (up to 8); four empty rows on new profiles.
+    for order in range(1, 5):
+        TrainerWhoIWorkWithItem.objects.get_or_create(
+            profile=profile,
+            order=order,
+            defaults={'title': '', 'description': ''},
+        )
+    TrainerWhoIWorkWithItem.objects.filter(profile=profile, order__gt=8).delete()
     # Step 3 caps at four specialisms; extra rows break the formset (max_num=4).
     for order in range(1, 5):
         TrainerSpecialism.objects.get_or_create(

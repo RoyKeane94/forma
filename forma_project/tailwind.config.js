@@ -28,6 +28,7 @@ module.exports = {
           mid: '#2952E0',
           light: '#EEF1FB',
         },
+        danger: '#CC2A1A',
       },
       fontSize: {
         label: ['0.62rem', { letterSpacing: '0.25em', fontWeight: '600' }],
