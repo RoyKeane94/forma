@@ -40,11 +40,17 @@
               {% endif %}
             </td>
             <td class="px-4 py-3">
-              {% if row.profile.completed_at %}
-              <a href="{% url 'pages:staff_forma_onboarding_edit' profile_pk=row.profile.pk %}" class="border-b border-rule pb-0.5 font-medium text-blue no-underline hover:border-ink hover:text-ink">Edit profile</a>
-              {% else %}
-              <a href="{% url 'pages:staff_forma_onboarding' profile_pk=row.profile.pk %}" class="border-b border-rule pb-0.5 text-blue no-underline hover:border-ink hover:text-ink">Continue onboarding</a>
-              {% endif %}
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                {% if row.profile.completed_at %}
+                <a href="{% url 'pages:staff_forma_onboarding_edit' profile_pk=row.profile.pk %}" class="border-b border-rule pb-0.5 font-medium text-blue no-underline hover:border-ink hover:text-ink">Edit profile</a>
+                {% else %}
+                <a href="{% url 'pages:staff_forma_onboarding' profile_pk=row.profile.pk %}" class="border-b border-rule pb-0.5 text-blue no-underline hover:border-ink hover:text-ink">Continue onboarding</a>
+                {% endif %}
+                <form method="post" action="{% url 'pages:staff_forma_profile_delete' profile_pk=row.profile.pk %}" class="inline" onsubmit="return confirm('Delete this profile and its login? This cannot be undone.');">
+                  {% csrf_token %}
+                  <button type="submit" class="cursor-pointer border-0 border-b border-transparent bg-transparent pb-0.5 font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-danger underline-offset-2 decoration-transparent transition-colors hover:border-danger hover:underline">Delete</button>
+                </form>
+              </div>
             </td>
             <td class="px-4 py-3 text-muted">
               {% if row.profile.completed_at %}

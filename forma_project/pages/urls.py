@@ -15,6 +15,11 @@ urlpatterns = [
     path('staff/forma-profiles/', views.staff_forma_profile_list, name='staff_forma_profiles'),
     path('staff/forma-profiles/new/', views.staff_forma_profile_create, name='staff_forma_profile_new'),
     path(
+        'staff/forma-profiles/<int:profile_pk>/delete/',
+        views.staff_forma_profile_delete,
+        name='staff_forma_profile_delete',
+    ),
+    path(
         'staff/forma-profiles/<int:profile_pk>/onboarding/edit/',
         views.staff_forma_onboarding_edit_start,
         name='staff_forma_onboarding_edit',

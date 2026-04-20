@@ -450,6 +450,24 @@ def staff_forma_profile_create(request):
 
 
 @user_passes_test(lambda u: u.is_superuser)
+@require_POST
+def staff_forma_profile_delete(request, profile_pk: int):
+    """Remove a Forma-made profile and its placeholder user (superuser-only, own creations)."""
+    profile = get_object_or_404(
+        TrainerProfile,
+        pk=profile_pk,
+        forma_made=True,
+        created_by=request.user,
+    )
+    label = f'{profile.first_name} {profile.last_name}'.strip() or profile.user.get_username()
+    user = profile.user
+    with transaction.atomic():
+        user.delete()
+    messages.success(request, f'Deleted profile for {label}.')
+    return redirect('pages:staff_forma_profiles')
+
+
+@user_passes_test(lambda u: u.is_superuser)
 def staff_forma_onboarding_redirect(request, profile_pk: int):
     profile = get_object_or_404(
         TrainerProfile,
