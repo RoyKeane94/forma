@@ -150,3 +150,20 @@ def split_featured_client_reviews(profile, review_rows):
     if featured is None:
         return None, list(review_rows)
     return featured, list(review_rows)
+
+
+def media_storage_preconnect_origin() -> str:
+    """
+    HTTPS media host from MEDIA_URL for <link rel="preconnect"> (e.g. S3).
+    Empty when media is same-origin (e.g. /media/).
+    """
+    from django.conf import settings
+    from urllib.parse import urlparse
+
+    url = (getattr(settings, 'MEDIA_URL', '') or '').strip()
+    if not url.startswith(('http://', 'https://')):
+        return ''
+    parsed = urlparse(url)
+    if parsed.scheme and parsed.netloc:
+        return f'{parsed.scheme}://{parsed.netloc}'
+    return ''

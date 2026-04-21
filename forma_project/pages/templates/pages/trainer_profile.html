@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 {% block title %}{{ profile.first_name }} {{ profile.last_name }} — Forma{% endblock %}
+{% block extra_head %}
+{% if media_preconnect_origin %}
+<link rel="preconnect" href="{{ media_preconnect_origin }}" crossorigin>
+<link rel="dns-prefetch" href="{{ media_preconnect_origin }}">
+{% endif %}
+{% endblock %}
 {# Global auth nav also shows “Forma”; hide it here so only the profile bar appears. #}
 {% block site_nav %}{% endblock %}
 {% block content_shell_class %}min-h-screen{% endblock %}
@@ -71,6 +77,9 @@
                 src="{{ profile.portrait.url }}"
                 alt=""
                 class="block h-full w-full max-h-[min(100%,70svh)] object-contain object-top lg:max-h-full"
+                fetchpriority="high"
+                decoding="async"
+                sizes="(max-width: 1024px) 100vw, 33vw"
               />
             </div>
           </div>
@@ -339,10 +348,10 @@
       {% if ph.image %}
         {% if instagram_url %}
         <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="block h-full w-full">
-          <img src="{{ ph.image.url }}" alt="" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]">
+          <img src="{{ ph.image.url }}" alt="" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]" loading="lazy" decoding="async" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw">
         </a>
         {% else %}
-        <img src="{{ ph.image.url }}" alt="" class="h-full w-full object-cover">
+        <img src="{{ ph.image.url }}" alt="" class="h-full w-full object-cover" loading="lazy" decoding="async" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw">
         {% endif %}
       {% else %}
       <div class="h-full w-full">{% include "pages/includes/trainer_media_placeholder.html" %}</div>

@@ -202,7 +202,8 @@ if _use_s3_media:
     AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'eu-north-1').strip()
     AWS_DEFAULT_ACL = None
     AWS_S3_OBJECT_PARAMETERS = {
-        'CacheControl': 'max-age=86400',
+        # Long cache speeds repeat visits; omit immutable so replaced uploads at the same key can refresh.
+        'CacheControl': 'public, max-age=2592000',
     }
     STORAGES['default'] = {
         'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',

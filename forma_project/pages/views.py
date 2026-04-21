@@ -47,6 +47,7 @@ from .stripe_keep_profile import (
 from .onboarding_meta import ONBOARDING_STEPS, TAB_LABELS
 from .profile_display import (
     areas_covered_count,
+    media_storage_preconnect_origin,
     non_empty_client_reviews,
     split_featured_client_reviews,
     visible_who_i_work_with_items,
@@ -811,6 +812,7 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
         'instagram_url': instagram_url,
         'who_i_work_with_items': visible_who_i_work_with_items(profile),
         'areas_covered_count': areas_covered_count(profile),
+        'media_preconnect_origin': media_storage_preconnect_origin(),
     }
     return render(request, 'pages/trainer_profile.html', context)
 
