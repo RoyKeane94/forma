@@ -62,6 +62,13 @@ STEP_COUNT = 7
 
 logger = logging.getLogger(__name__)
 
+
+def _review_carousel_pages(reviews: list, page_size: int = 2) -> list:
+    """Pairs of client reviews for the public profile carousel (2 visible at a time)."""
+    if not reviews:
+        return []
+    return [reviews[i : i + page_size] for i in range(0, len(reviews), page_size)]
+
 _QUICK_QUAL_NOTE_MAX_LEN = 600
 
 
@@ -809,6 +816,7 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
         'training_location_items': training_location_items(profile.training_locations),
         'featured_review': featured_review,
         'other_reviews': other_reviews,
+        'review_carousel_pages': _review_carousel_pages(other_reviews),
         'specialism_items': specialism_display_items(profile),
         'price_tiers': price_tiers,
         'pricing_has_featured_tier': pricing_has_featured_tier,

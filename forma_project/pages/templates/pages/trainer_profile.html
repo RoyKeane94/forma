@@ -322,22 +322,67 @@
 {% if other_reviews %}
 <section class="border-t border-rule bg-white px-page py-section" id="reviews">
   <p class="mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">Reviews</p>
-  <h2 class="mb-10 font-display text-[clamp(2.5rem,4vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink">What clients say</h2>
-  <div class="grid gap-6 md:grid-cols-2">
-    {% for rev in other_reviews %}
-    <blockquote class="border border-rule bg-surface p-6">
-      <div class="mb-3 flex gap-0.5 text-blue" aria-label="{{ rev.rating }} out of 5 stars">
-        {% for _ in "12345" %}
-        <span class="font-body text-[0.95rem] leading-none {% if forloop.counter <= rev.rating %}text-blue{% else %}text-rule{% endif %}" aria-hidden="true">★</span>
+  <h2 class="mb-4 font-display text-[clamp(2.5rem,4vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink">What clients say</h2>
+  {% if review_stats %}
+  <p class="mb-10 flex flex-wrap items-center gap-x-3 gap-y-1 font-body text-[0.95rem] tracking-wide-5 text-muted">
+    <span class="inline-flex items-center gap-1 text-blue" aria-label="{{ review_stats.average }} out of 5 average rating">
+      <span class="text-[1.1em] leading-none text-blue" aria-hidden="true">★</span>
+      <span class="font-semibold text-ink">{{ review_stats.average }}</span>
+      <span class="sr-only">out of 5</span>
+    </span>
+    <span class="text-rule" aria-hidden="true">·</span>
+    <span class="text-slate">{{ review_stats.count }} review{{ review_stats.count|pluralize }}</span>
+  </p>
+  {% endif %}
+  <div class="w-full" data-reviews-carousel>
+    <div class="flex w-full items-stretch gap-2 sm:gap-3 md:gap-4">
+      {% if review_carousel_pages|length > 1 %}
+      <div class="flex shrink-0 items-center self-stretch">
+        <button
+          type="button"
+          class="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-rule bg-paper text-ink transition-colors hover:border-ink hover:bg-surface focus:border-blue focus:outline-none focus:ring-[3px] focus:ring-blue/8 md:h-11 md:w-11"
+          data-carousel-prev
+          aria-label="Previous reviews"
+        >
+          <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+      </div>
+      {% endif %}
+      <div class="min-w-0 flex-1 overflow-hidden" data-carousel-viewport>
+      <div class="flex transition-transform duration-300 ease-out will-change-transform" data-carousel-track>
+        {% for page in review_carousel_pages %}
+        <div class="grid w-full min-w-full shrink-0 grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8">
+          {% for rev in page %}
+          <blockquote class="border border-rule bg-surface p-6 {% if page|length == 1 %}sm:col-span-2 sm:mx-auto sm:max-w-2xl{% endif %}">
+            <div class="mb-3 flex gap-0.5 text-blue" aria-label="{{ rev.rating }} out of 5 stars">
+              {% for _ in "12345" %}
+              <span class="font-body text-[0.95rem] leading-none {% if forloop.counter <= rev.rating %}text-blue{% else %}text-rule{% endif %}" aria-hidden="true">★</span>
+              {% endfor %}
+            </div>
+            {% if rev.focus %}
+            <p class="mb-3 font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-blue">Focus: {{ rev.focus }}</p>
+            {% endif %}
+            <p class="mb-4 font-serif text-[0.95rem] font-light italic leading-[1.65] text-slate">&ldquo;{{ rev.quote }}&rdquo;</p>
+            <footer class="font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-muted">— {{ rev.name }}</footer>
+          </blockquote>
+          {% endfor %}
+        </div>
         {% endfor %}
       </div>
-      {% if rev.focus %}
-      <p class="mb-3 font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-blue">Focus: {{ rev.focus }}</p>
+    </div>
+      {% if review_carousel_pages|length > 1 %}
+      <div class="flex shrink-0 items-center self-stretch">
+        <button
+          type="button"
+          class="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-rule bg-paper text-ink transition-colors hover:border-ink hover:bg-surface focus:border-blue focus:outline-none focus:ring-[3px] focus:ring-blue/8 md:h-11 md:w-11"
+          data-carousel-next
+          aria-label="Next reviews"
+        >
+          <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
       {% endif %}
-      <p class="mb-4 font-serif text-[0.95rem] font-light italic leading-[1.65] text-slate">&ldquo;{{ rev.quote }}&rdquo;</p>
-      <footer class="font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-muted">— {{ rev.name }}</footer>
-    </blockquote>
-    {% endfor %}
+    </div>
   </div>
 </section>
 {% endif %}
@@ -476,6 +521,59 @@
       copyText(btn.getAttribute('data-copy-value') || '', btn);
     });
   });
+})();
+
+(function () {
+  var root = document.querySelector('[data-reviews-carousel]');
+  if (!root) return;
+  var viewport = root.querySelector('[data-carousel-viewport]');
+  var track = root.querySelector('[data-carousel-track]');
+  var prev = root.querySelector('[data-carousel-prev]');
+  var next = root.querySelector('[data-carousel-next]');
+  if (!viewport || !track) return;
+  var slides = track.children;
+  var n = slides.length;
+  if (!n) return;
+  var i = 0;
+  function clamp(v) {
+    if (v < 0) return 0;
+    if (v > n - 1) return n - 1;
+    return v;
+  }
+  function measure() {
+    var w = viewport.clientWidth;
+    var j;
+    for (j = 0; j < slides.length; j += 1) {
+      slides[j].style.flex = '0 0 ' + w + 'px';
+      slides[j].style.width = w + 'px';
+      slides[j].style.minWidth = w + 'px';
+    }
+  }
+  function sync() {
+    measure();
+    var w = viewport.clientWidth;
+    track.style.transform = 'translateX(' + -i * w + 'px)';
+    if (prev) {
+      prev.disabled = i <= 0;
+      prev.classList.toggle('opacity-40', i <= 0);
+      prev.classList.toggle('pointer-events-none', i <= 0);
+    }
+    if (next) {
+      next.disabled = i >= n - 1;
+      next.classList.toggle('opacity-40', i >= n - 1);
+      next.classList.toggle('pointer-events-none', i >= n - 1);
+    }
+  }
+  function go(delta) {
+    i = clamp(i + delta);
+    sync();
+  }
+  if (prev) prev.addEventListener('click', function () { go(-1); });
+  if (next) next.addEventListener('click', function () { go(1); });
+  window.addEventListener('resize', function () {
+    sync();
+  });
+  sync();
 })();
 </script>
 
