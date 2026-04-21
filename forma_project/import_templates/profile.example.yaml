@@ -2,7 +2,7 @@
 # Forma — one file per PT (copy this file, rename e.g. jane-smith.yaml, edit).
 # Covers: about you, who I work with, what I do best (specialisms), extras,
 # pricing, reviews, logistics. No photos / portrait / intro video / gallery.
-# Importer: not wired yet — this is the target shape for a superuser upload.
+# Superuser: Staff → Forma-made profiles → “Create profile with YAML” uses this shape.
 # =============================================================================
 
 version: 1

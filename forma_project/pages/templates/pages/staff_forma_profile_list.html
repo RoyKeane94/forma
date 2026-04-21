@@ -11,9 +11,12 @@
       Profiles you created use the same onboarding flow. Public URLs use <span class="font-body not-italic text-ink">/first-last/five-characters</span>.
     </p>
 
-    <p class="mb-6">
+    <p class="mb-6 flex flex-wrap items-center gap-3">
       <a href="{% url 'pages:staff_forma_profile_new' %}" class="inline-flex items-center justify-center bg-blue px-6 py-3 font-body text-[0.75rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-colors hover:bg-blue-mid">
         Create profile
+      </a>
+      <a href="{% url 'pages:staff_forma_profile_new_yaml' %}" class="inline-flex items-center justify-center border border-blue bg-transparent px-6 py-3 font-body text-[0.75rem] font-medium uppercase tracking-wide-2 text-blue no-underline transition-colors hover:bg-blue-light">
+        Create profile with YAML
       </a>
     </p>
 

@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import transaction
 from django.db.models import Prefetch
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -33,6 +34,11 @@ from .forms import (
     TrainerSpecialismFormSet,
     client_reviews_form_initial,
     price_tier_row_captions_for_meta_form,
+)
+from .forma_yaml_import import (
+    apply_forma_profile_yaml,
+    parse_forma_profile_yaml,
+    read_profile_example_template,
 )
 from .models import QUICK_QUALIFICATION_CHOICES, TrainerProfile, TrainerSpecialism, ensure_onboarding_children
 from .stripe_keep_profile import (
@@ -455,6 +461,133 @@ def staff_forma_profile_create(request):
         request,
         'pages/staff_forma_profile_new.html',
         {'form': form},
+    )
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def staff_forma_profile_create_yaml(request):
+    try:
+        example_yaml = read_profile_example_template()
+    except FileNotFoundError:
+        example_yaml = ''
+        if request.method == 'GET':
+            messages.warning(request, 'Example template file is missing from the server.')
+
+    if request.method == 'POST':
+        raw = request.POST.get('yaml_body', '')
+        try:
+            data = parse_forma_profile_yaml(raw)
+        except ValidationError as exc:
+            for msg in exc.messages:
+                messages.error(request, msg)
+            return render(
+                request,
+                'pages/staff_forma_profile_new_yaml.html',
+                {'yaml_body': raw},
+            )
+
+        user_block = data.get('user') or {}
+        if not isinstance(user_block, dict):
+            user_block = {}
+        email = (user_block.get('email') or '').strip()
+        if not email:
+            messages.error(request, 'user.email is required in the YAML.')
+            return render(
+                request,
+                'pages/staff_forma_profile_new_yaml.html',
+                {'yaml_body': raw},
+            )
+
+        User = get_user_model()
+        email_field = User._meta.get_field('email')
+        email_max = getattr(email_field, 'max_length', None) or 254
+        if len(email) > email_max:
+            messages.error(request, f'user.email must be at most {email_max} characters.')
+            return render(
+                request,
+                'pages/staff_forma_profile_new_yaml.html',
+                {'yaml_body': raw},
+            )
+
+        if User.objects.filter(email__iexact=email).exists():
+            messages.error(request, 'A user with this email already exists.')
+            return render(
+                request,
+                'pages/staff_forma_profile_new_yaml.html',
+                {'yaml_body': raw},
+            )
+
+        prof_in = data.get('profile') or {}
+        if not isinstance(prof_in, dict):
+            messages.error(request, 'YAML must include a top-level "profile" mapping.')
+            return render(
+                request,
+                'pages/staff_forma_profile_new_yaml.html',
+                {'yaml_body': raw},
+            )
+        first = (prof_in.get('first_name') or '').strip()
+        last = (prof_in.get('last_name') or '').strip()
+        if not first or not last:
+            messages.error(request, 'profile.first_name and profile.last_name are required.')
+            return render(
+                request,
+                'pages/staff_forma_profile_new_yaml.html',
+                {'yaml_body': raw},
+            )
+
+        try:
+            with transaction.atomic():
+                username_max = User._meta.get_field('username').max_length
+                uname = f'forma_{secrets.token_hex(8)}'
+                while User.objects.filter(username=uname).exists():
+                    uname = f'forma_{secrets.token_hex(8)}'
+                uname = uname[:username_max]
+
+                user = User(
+                    username=uname,
+                    email=email[:email_max],
+                    first_name=first[:150],
+                    last_name=last[:150],
+                    is_active=False,
+                )
+                user.set_unusable_password()
+                user.save()
+                AccountsProfile.objects.get_or_create(user=user)
+                profile = TrainerProfile(
+                    user=user,
+                    first_name=first[:150],
+                    last_name=last[:150],
+                    tagline='',
+                    bio='',
+                    forma_made=True,
+                    created_by=request.user,
+                    is_published=True,
+                )
+                profile.save()
+                ensure_onboarding_children(profile)
+                apply_forma_profile_yaml(profile, data)
+                user.first_name = profile.first_name
+                user.last_name = profile.last_name
+                user.save(update_fields=['first_name', 'last_name'])
+        except ValidationError as exc:
+            for msg in exc.messages:
+                messages.error(request, msg)
+            return render(
+                request,
+                'pages/staff_forma_profile_new_yaml.html',
+                {'yaml_body': raw},
+            )
+
+        messages.success(
+            request,
+            'Profile created from YAML. Complete any remaining onboarding steps (e.g. photos).',
+        )
+        return redirect('pages:staff_forma_onboarding', profile_pk=profile.pk)
+
+    return render(
+        request,
+        'pages/staff_forma_profile_new_yaml.html',
+        {'yaml_body': example_yaml},
     )
 
 

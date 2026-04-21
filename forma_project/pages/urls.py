@@ -13,6 +13,11 @@ urlpatterns = [
     ),
     path('stripe/webhook/', views.stripe_webhook, name='stripe_webhook'),
     path('staff/forma-profiles/', views.staff_forma_profile_list, name='staff_forma_profiles'),
+    path(
+        'staff/forma-profiles/new/yaml/',
+        views.staff_forma_profile_create_yaml,
+        name='staff_forma_profile_new_yaml',
+    ),
     path('staff/forma-profiles/new/', views.staff_forma_profile_create, name='staff_forma_profile_new'),
     path(
         'staff/forma-profiles/<int:profile_pk>/delete/',

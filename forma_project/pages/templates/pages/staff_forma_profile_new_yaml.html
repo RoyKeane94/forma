@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Create profile with YAML — Forma{% endblock %}
+{% block content_shell_class %}min-h-screen{% endblock %}
+
+{% block body %}
+<div class="px-page py-section">
+  <div class="mx-auto max-w-4xl">
+    <p class="mb-3 font-body text-[0.7rem] font-medium uppercase tracking-wide-3 text-blue">Staff</p>
+    <h1 class="mb-4 font-display text-[clamp(2rem,5vw,2.75rem)] leading-none tracking-[0.02em] text-ink">Create profile with YAML</h1>
+    <p class="mb-8 max-w-[60ch] font-serif text-[1rem] font-light italic leading-[1.65] text-slate">
+      The editor starts from the same example as <span class="font-body not-italic text-ink">import_templates/profile.example.yaml</span>. Edit <span class="font-body not-italic text-ink">user.email</span> and the rest, then submit. Photos and gallery are still completed in onboarding.
+    </p>
+
+    <form method="post" class="border-t border-rule pt-8" novalidate>
+      {% csrf_token %}
+      <div class="mb-6">
+        <label for="id_yaml_body" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">YAML</label>
+        <textarea id="id_yaml_body" name="yaml_body" rows="28" class="w-full resize-y border border-rule bg-paper px-3 py-2 font-mono text-[0.78rem] leading-relaxed text-ink outline-none ring-blue focus:border-transparent focus:ring-1" spellcheck="false">{{ yaml_body }}</textarea>
+      </div>
+      <div class="flex flex-wrap items-center gap-4">
+        <button type="submit" class="inline-flex cursor-pointer items-center justify-center border-0 bg-blue px-8 py-[0.85rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white transition-colors hover:bg-blue-mid">
+          Create from YAML
+        </button>
+        <a href="{% url 'pages:staff_forma_profiles' %}" class="border-b border-rule pb-0.5 font-body text-[0.75rem] uppercase tracking-wide-3 text-muted no-underline hover:border-ink hover:text-ink">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
