@@ -4,7 +4,7 @@ Onboarding forms for PT profile setup (7 steps). Widgets use `.forma-input` (see
 View wiring (call `ensure_onboarding_children(profile)` before step 0 GET/POST so child rows exist):
   Step 1: OnboardingStep1Form + TrainerWhoIWorkWithFormSet (identity, tagline, bio, who I work with rows, contact, portrait)
   Step 2: OnboardingStep2QuickForm + TrainerAdditionalQualificationFormSet (up to 10 rows)
-  Step 3: TrainerSpecialismFormSet (up to four rows: title + optional brief description)
+  Step 3: TrainerSpecialismFormSet (up to four rows: catalog dropdown or new name + optional description)
   Step 4: OnboardingStep4Form (saves training_locations + other_areas JSON: catalogue names and/or {name, outward})
   Step 5: OnboardingStep5MetaForm + TrainerPriceTierFormSet (up to 10 tiers + one blank row to add more)
   Step 6: OnboardingStep6InstagramForm (intro video, show toggle, Instagram) + TrainerGalleryPhotoFormSet
@@ -26,6 +26,7 @@ from .models import (
     QUICK_QUALIFICATION_CHOICES,
     TRAINING_LOCATION_CHOICES,
     PrimaryArea,
+    SpecialismCatalog,
     TrainerAdditionalQualification,
     TrainerGalleryPhoto,
     TrainerPriceTier,
@@ -290,25 +291,121 @@ TrainerAdditionalQualificationFormSet = inlineformset_factory(
 
 
 class TrainerSpecialismForm(forms.ModelForm):
+    """Catalog dropdown + optional new name; description stays free text."""
+
+    specialism_choice = forms.ChoiceField(
+        label='Specialism',
+        required=False,
+        widget=forms.Select(attrs=_forma_attrs()),
+    )
+    new_specialism_title = forms.CharField(
+        label='New specialism name',
+        required=False,
+        max_length=120,
+        widget=forms.TextInput(
+            attrs=_forma_attrs(
+                {
+                    'placeholder': 'Type the name if you chose “Add a new specialism”',
+                }
+            )
+        ),
+    )
+
     class Meta:
         model = TrainerSpecialism
-        fields = ('title', 'description')
+        fields = ('description',)
+        labels = {
+            'description': 'Brief description',
+        }
         widgets = {
-            'title': forms.TextInput(
-                attrs=_forma_attrs({'placeholder': 'e.g. Strength Training'}),
-            ),
             'description': forms.Textarea(
                 attrs=_forma_attrs(
                     {
-                        'rows': 2,
-                        'placeholder': 'Optional — one sentence on what this means for clients',
+                        'rows': 4,
+                        'class': f'{FORMA_INPUT_CLASS} min-h-[5.5rem] resize-y leading-relaxed',
+                        'placeholder': 'One sentence on what this means for clients',
                     }
                 )
             ),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        rows = list(
+            SpecialismCatalog.objects.filter(is_active=True)
+            .order_by('title')
+            .values_list('pk', 'title')
+        )
+        self.fields['specialism_choice'].choices = [
+            ('', '— Select a specialism —'),
+            *[(str(pk), title) for pk, title in rows],
+            ('__new__', '+ Add a new specialism'),
+        ]
+        inst = self.instance
+        if inst.pk:
+            if inst.catalog_id:
+                self.initial.setdefault('specialism_choice', str(inst.catalog_id))
+            elif (inst.title or '').strip():
+                t = inst.title.strip()
+                cat = SpecialismCatalog.objects.filter(title__iexact=t).first()
+                if cat:
+                    self.initial.setdefault('specialism_choice', str(cat.pk))
+                else:
+                    self.initial.setdefault('specialism_choice', '__new__')
+                    self.initial.setdefault('new_specialism_title', t)
+
     def clean_description(self):
         return (self.cleaned_data.get('description') or '').strip()
+
+    def clean(self):
+        data = super().clean()
+        choice = (data.get('specialism_choice') or '').strip()
+        new_t = (data.get('new_specialism_title') or '').strip()
+        desc = (data.get('description') or '').strip()
+        if not choice and not new_t:
+            if desc:
+                raise ValidationError(
+                    'Select a specialism from the list (or add a new one) when you add a description.',
+                )
+            data['_empty_row'] = True
+            return data
+        if choice == '__new__':
+            if not new_t:
+                self.add_error('new_specialism_title', 'Enter a name for the new specialism.')
+                return data
+            if len(new_t) > 120:
+                self.add_error('new_specialism_title', 'Keep the name to 120 characters or fewer.')
+                return data
+            cat, _ = SpecialismCatalog.get_or_create_for_title(new_t)
+            data['_catalog'] = cat
+            data['_resolved_catalog_id'] = cat.pk
+            return data
+        try:
+            pk = int(choice)
+        except (TypeError, ValueError):
+            self.add_error('specialism_choice', 'Invalid choice.')
+            return data
+        cat = SpecialismCatalog.objects.filter(pk=pk, is_active=True).first()
+        if cat is None:
+            self.add_error('specialism_choice', 'Invalid choice.')
+            return data
+        data['_catalog'] = cat
+        data['_resolved_catalog_id'] = cat.pk
+        return data
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        cd = self.cleaned_data
+        if cd.get('_empty_row'):
+            obj.catalog_id = None
+            obj.title = ''
+        else:
+            cat = cd['_catalog']
+            obj.catalog = cat
+            obj.title = cat.title[:120]
+        if commit:
+            obj.save()
+        return obj
 
 
 class TrainerSpecialismInlineFormSet(BaseInlineFormSet):
@@ -316,6 +413,20 @@ class TrainerSpecialismInlineFormSet(BaseInlineFormSet):
 
     def get_queryset(self):
         return super().get_queryset().filter(order__lte=4)
+
+    def clean(self):
+        super().clean()
+        seen: set[int] = set()
+        for form in self.forms:
+            cd = getattr(form, 'cleaned_data', None)
+            if not cd or cd.get('_empty_row'):
+                continue
+            pk = cd.get('_resolved_catalog_id')
+            if pk is None:
+                continue
+            if pk in seen:
+                form.add_error('specialism_choice', 'Use a different specialism in each slot.')
+            seen.add(pk)
 
 
 TrainerSpecialismFormSet = inlineformset_factory(
@@ -838,6 +949,7 @@ class OnboardingStep7ReviewsForm(forms.Form):
             if v and v not in slot_titles:
                 slot_titles.append(v)
             if slot_titles:
+                slot_titles.sort(key=str.casefold)
                 focus_choices = [('', 'Choose one of your specialisms')] + [(t, t) for t in slot_titles]
             else:
                 focus_choices = [

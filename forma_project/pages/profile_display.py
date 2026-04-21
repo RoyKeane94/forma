@@ -49,9 +49,9 @@ def non_empty_additional_qualifications(profile):
 
 def non_empty_specialisms(profile):
     return [
-        s.title.strip()
-        for s in profile.specialisms.filter(order__lte=4)
-        if (s.title or '').strip()
+        s.resolved_title
+        for s in profile.specialisms.filter(order__lte=4).select_related('catalog')
+        if s.resolved_title
     ]
 
 
@@ -84,8 +84,8 @@ def areas_covered_count(profile) -> int:
 def specialism_display_items(profile):
     """Titles with optional brief descriptions for public profile / marketing blocks."""
     out = []
-    for s in profile.specialisms.filter(order__lte=4):
-        title = (s.title or '').strip()
+    for s in profile.specialisms.filter(order__lte=4).select_related('catalog'):
+        title = s.resolved_title
         if not title:
             continue
         desc = (s.description or '').strip()

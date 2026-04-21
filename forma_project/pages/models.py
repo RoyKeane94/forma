@@ -369,6 +369,51 @@ class TrainerAdditionalQualification(models.Model):
         ]
 
 
+class SpecialismCatalog(models.Model):
+    """Canonical specialism names for onboarding dropdowns and linking trainer rows."""
+
+    title = models.CharField(max_length=120, unique=True)
+    slug = models.SlugField(max_length=130, unique=True)
+    sort_order = models.PositiveIntegerField(default=0, db_index=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'pages_specialism_catalog'
+        ordering = ['title']
+
+    def __str__(self) -> str:
+        return self.title
+
+    @classmethod
+    def allocate_slug(cls, title: str) -> str:
+        base = (slugify((title or '')[:120]) or 'specialism')[:100]
+        slug = base
+        n = 2
+        while cls.objects.filter(slug=slug).exists():
+            slug = f'{base[:88]}-{n}'
+            n += 1
+        return slug
+
+    @classmethod
+    def get_or_create_for_title(cls, title: str) -> tuple['SpecialismCatalog', bool]:
+        t = (title or '').strip()[:120]
+        if not t:
+            raise ValueError('title required')
+        existing = cls.objects.filter(title__iexact=t).first()
+        if existing:
+            return existing, False
+        return (
+            cls.objects.create(
+                title=t,
+                slug=cls.allocate_slug(t),
+                sort_order=0,
+                is_active=True,
+            ),
+            True,
+        )
+
+
 class TrainerSpecialism(models.Model):
     """Step 3 — up to four short labels plus optional client-facing line each."""
 
@@ -378,6 +423,14 @@ class TrainerSpecialism(models.Model):
         related_name='specialisms',
     )
     order = models.PositiveSmallIntegerField()
+    catalog = models.ForeignKey(
+        SpecialismCatalog,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+        help_text='When set, the public title comes from the catalog entry.',
+    )
     title = models.CharField(max_length=120, blank=True)
     description = models.CharField(
         max_length=280,
@@ -394,6 +447,11 @@ class TrainerSpecialism(models.Model):
                 name='pages_spec_unique_order',
             ),
         ]
+
+    def resolved_title(self) -> str:
+        if self.catalog_id:
+            return (self.catalog.title or '').strip()
+        return (self.title or '').strip()
 
 
 class TrainerPriceTier(models.Model):

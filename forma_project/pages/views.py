@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import transaction
+from django.db.models import Prefetch
 from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -33,7 +34,7 @@ from .forms import (
     client_reviews_form_initial,
     price_tier_row_captions_for_meta_form,
 )
-from .models import QUICK_QUALIFICATION_CHOICES, TrainerProfile, ensure_onboarding_children
+from .models import QUICK_QUALIFICATION_CHOICES, TrainerProfile, TrainerSpecialism, ensure_onboarding_children
 from .stripe_keep_profile import (
     checkout_session_paid,
     create_subscription_checkout_session,
@@ -747,7 +748,10 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
         'primary_area__district',
     ).prefetch_related(
         'additional_qualifications',
-        'specialisms',
+        Prefetch(
+            'specialisms',
+            queryset=TrainerSpecialism.objects.select_related('catalog'),
+        ),
         'price_tiers',
         'gallery_photos',
         'who_i_work_with_items',

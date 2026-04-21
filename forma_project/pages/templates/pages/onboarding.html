@@ -56,7 +56,7 @@
 </div>
 
 <div class="min-h-[calc(100vh-111px)] px-page py-section lg:py-16">
-  <div class="mx-auto max-w-4xl">
+  <div class="mx-auto {% if step == 2 %}max-w-6xl{% else %}max-w-4xl{% endif %}">
     <form id="onboarding-step-form" method="post" action="" enctype="multipart/form-data" class="max-w-none" novalidate>
       {% csrf_token %}
 
@@ -230,22 +230,42 @@
       {% elif step == 2 %}
         {{ formset.management_form }}
         {% if formset.non_form_errors %}<ul class="mb-4 list-none font-body text-[0.65rem] text-danger">{% for e in formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        <hr class="mb-10 border-0 border-t border-rule">
         <div class="flex flex-col">
           {% for f in formset %}
-          <div class="grid grid-cols-1 items-start gap-3 border-b border-rule py-4 first:border-t sm:grid-cols-[2rem_1fr]">
+          <div
+            class="grid grid-cols-1 items-start gap-6 border-b border-rule py-8 first:border-t lg:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-10"
+            data-specialism-row
+          >
             {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
-            <span class="pt-2 text-center font-display text-[1.4rem] leading-none text-blue/30">{{ forloop.counter|stringformat:"02d" }}</span>
-            <div class="flex min-w-0 flex-col gap-3">
+            <div class="flex justify-center pt-0.5 lg:block lg:justify-start">
+              <span class="font-display text-[1.4rem] leading-none text-blue/30">{{ forloop.counter|stringformat:"02d" }}</span>
+            </div>
+            <div class="flex min-w-0 flex-col gap-4 lg:border-r lg:border-rule lg:pr-10">
               <div class="flex flex-col gap-2">
-                <span class="font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-muted">Title</span>
-                {{ f.title }}
-                {% if f.title.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in f.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                <label class="font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink" for="{{ f.specialism_choice.id_for_label }}">{{ f.specialism_choice.label }}</label>
+                <div
+                  class="forma-combobox forma-combobox--fluid forma-combobox--sentence w-full"
+                  data-forma-combobox
+                  {% for val, lbl in f.specialism_choice.field.choices %}{% if val == '' %}data-combobox-placeholder="{{ lbl|escape }}"{% endif %}{% endfor %}
+                >
+                  {{ f.specialism_choice }}
+                </div>
+                {% if f.specialism_choice.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in f.specialism_choice.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
               </div>
-              <div class="flex flex-col gap-2">
-                <span class="font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-muted">Brief description <span class="font-normal normal-case tracking-normal text-very-muted">(optional)</span></span>
-                {{ f.description }}
-                {% if f.description.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in f.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+              <div class="hidden flex-col gap-2" data-new-specialism="{{ forloop.counter0 }}">
+                <label class="font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink" for="{{ f.new_specialism_title.id_for_label }}">{{ f.new_specialism_title.label }}</label>
+                {{ f.new_specialism_title }}
+                {% if f.new_specialism_title.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in f.new_specialism_title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
               </div>
+              {% if f.non_field_errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in f.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="flex min-w-0 flex-col gap-2 lg:pt-0">
+              <label class="font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink" for="{{ f.description.id_for_label }}">
+                {{ f.description.field.label }} <span class="ml-2 font-normal normal-case tracking-normal text-muted">(optional)</span>
+              </label>
+              {{ f.description }}
+              {% if f.description.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in f.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
             </div>
           </div>
           {% endfor %}
@@ -711,7 +731,7 @@
   syncQuickNoteRows();
 })();
 </script>
-{% elif step == 3 or step == 6 %}
+{% elif step == 2 or step == 3 or step == 6 %}
 <script>
 (function () {
   function optionLabel(opt) {
@@ -1033,6 +1053,33 @@
   })();
 
   document.querySelectorAll('#onboarding-step-form [data-forma-combobox]').forEach(enhanceCombobox);
+
+  {% if step == 2 %}
+  (function () {
+    var root = document.getElementById('onboarding-step-form');
+    if (!root) return;
+    var prefix = '{{ formset.prefix|escapejs }}';
+    function syncRow(i) {
+      var sel = root.querySelector('[name="' + prefix + '-' + i + '-specialism_choice"]');
+      var wrap = root.querySelector('[data-new-specialism="' + i + '"]');
+      if (!sel || !wrap) return;
+      wrap.classList.toggle('hidden', sel.value !== '__new__');
+      wrap.classList.toggle('flex', sel.value === '__new__');
+    }
+    function bindRow(i) {
+      var sel = root.querySelector('[name="' + prefix + '-' + i + '-specialism_choice"]');
+      if (!sel) return;
+      sel.addEventListener('change', function () {
+        syncRow(i);
+      });
+      syncRow(i);
+    }
+    var i;
+    for (i = 0; i < 4; i += 1) {
+      bindRow(i);
+    }
+  })();
+  {% endif %}
 })();
 </script>
 {% elif step == 5 %}

@@ -4,6 +4,7 @@ from .models import (
     HttpErrorLog,
     PostcodeDistrict,
     PrimaryArea,
+    SpecialismCatalog,
     TrainerAdditionalQualification,
     TrainerGalleryPhoto,
     TrainerPriceTier,
@@ -32,10 +33,19 @@ class TrainerAdditionalQualificationInline(admin.TabularInline):
     extra = 0
 
 
+@admin.register(SpecialismCatalog)
+class SpecialismCatalogAdmin(admin.ModelAdmin):
+    list_display = ('title', 'slug', 'sort_order', 'is_active', 'created_at')
+    list_editable = ('sort_order', 'is_active')
+    search_fields = ('title', 'slug')
+    ordering = ('title',)
+
+
 class TrainerSpecialismInline(admin.TabularInline):
     model = TrainerSpecialism
     extra = 0
-    fields = ('order', 'title', 'description')
+    fields = ('order', 'catalog', 'title', 'description')
+    autocomplete_fields = ('catalog',)
 
 
 class TrainerPriceTierInline(admin.TabularInline):
