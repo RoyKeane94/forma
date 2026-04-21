@@ -68,6 +68,14 @@ elif _csrf_origins:
 if not DEBUG and not SECRET_KEY:
     raise ImproperlyConfigured('Set DJANGO_SECRET_KEY when DJANGO_DEBUG is off.')
 
+# URL path segment for Django admin (no slashes), default "admin".
+# Set DJANGO_ADMIN_PATH to something else (e.g. forma-staff) if your host or CDN
+# returns 404 for /admin/ and you cannot change the proxy — then open
+# https://yourdomain/<that-segment>/ instead.
+DJANGO_ADMIN_PATH = (os.getenv('DJANGO_ADMIN_PATH', 'admin') or 'admin').strip().strip('/')
+if not DJANGO_ADMIN_PATH:
+    DJANGO_ADMIN_PATH = 'admin'
+
 
 # Application definition
 

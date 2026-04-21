@@ -18,10 +18,29 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-from django.views.generic import TemplateView
+from django.views.generic import RedirectView, TemplateView
+
+_admin_path = getattr(settings, 'DJANGO_ADMIN_PATH', 'admin').strip('/')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path(
+        'admin',
+        RedirectView.as_view(url=f'/{_admin_path}/', permanent=False),
+        name='admin_slash_redirect',
+    ),
+]
+
+# If admin lives on a non-default path, keep /admin/ as a redirect for bookmarks.
+if _admin_path != 'admin':
+    urlpatterns.append(
+        path(
+            'admin/',
+            RedirectView.as_view(url=f'/{_admin_path}/', permanent=False),
+        )
+    )
+
+urlpatterns += [
+    path(f'{_admin_path}/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('', include('pages.urls')),
     path('', TemplateView.as_view(template_name='home.html'), name='home'),

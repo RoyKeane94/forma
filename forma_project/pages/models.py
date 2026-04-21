@@ -46,6 +46,25 @@ CONTACT_PHONE_PREFERENCE_CHOICES = [
 ]
 
 
+def _reserved_public_profile_slugs() -> frozenset[str]:
+    """Single-segment URL paths reserved for the app; self-serve profile slugs must not collide."""
+    admin_seg = (getattr(settings, 'DJANGO_ADMIN_PATH', None) or 'admin').strip('/').lower()
+    out = {
+        'admin',
+        'accounts',
+        'account',
+        'staff',
+        'onboarding',
+        'static',
+        'media',
+        'stripe',
+        'api',
+    }
+    if admin_seg:
+        out.add(admin_seg)
+    return frozenset(out)
+
+
 class PostcodeDistrict(models.Model):
     """Outward postcode district (e.g. SW12) for logistics."""
 
@@ -285,7 +304,12 @@ class TrainerProfile(models.Model):
 
         candidate = base
         n = 2
+        reserved = _reserved_public_profile_slugs()
         while True:
+            if candidate.lower() in reserved:
+                candidate = f'{base}-{n}'
+                n += 1
+                continue
             qs = TrainerProfile.objects.filter(slug=candidate, forma_made=False)
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
