@@ -210,21 +210,19 @@
 
 {% if specialism_items %}
 <section class="border-t border-rule bg-white px-page py-section">
-  <div class="mb-8 max-w-3xl">
+  <div class="mb-8 w-full max-w-none">
     <p class="mb-2 font-body text-label text-blue">Specialisms</p>
     <h2 class="font-display text-[clamp(2.5rem,4vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink">What I do best</h2>
   </div>
-  <div class="flex max-w-3xl flex-col border-t border-rule">
+  <div class="w-full max-w-none border-t border-rule pt-2 grid grid-cols-1 gap-y-8 md:grid-cols-2 md:gap-x-12 md:gap-y-10 lg:gap-x-20 xl:gap-x-28">
     {% for row in specialism_items %}
-    <div class="border-b border-rule py-6 last:border-b-0">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-8">
-        <span class="shrink-0 font-display text-[2rem] leading-none tracking-[0.03em] text-blue/35">{{ forloop.counter|stringformat:"02d" }}</span>
-        <div class="min-w-0 flex-1">
-          <p class="font-body text-[0.85rem] font-medium uppercase tracking-[0.06em] text-ink">{{ row.title }}</p>
-          {% if row.description %}
-          <p class="mt-2 line-clamp-2 max-w-[52ch] font-serif text-[0.9rem] font-light leading-relaxed text-slate">{{ row.description }}</p>
-          {% endif %}
-        </div>
+    <div class="flex flex-col gap-3 border-b border-rule pb-8 last:border-b-0 sm:flex-row sm:items-start sm:gap-6 md:border-b-0 md:pb-0 md:odd:border-r md:odd:border-rule md:odd:pr-8 lg:odd:pr-14 xl:odd:pr-20">
+      <span class="shrink-0 font-display text-[2rem] leading-none tracking-[0.03em] text-blue/35">{{ forloop.counter|stringformat:"02d" }}</span>
+      <div class="min-w-0 flex-1">
+        <p class="font-body text-[0.85rem] font-medium uppercase tracking-[0.06em] text-ink">{{ row.title }}</p>
+        {% if row.description %}
+        <p class="mt-2 line-clamp-3 font-serif text-[0.9rem] font-light leading-relaxed text-slate">{{ row.description }}</p>
+        {% endif %}
       </div>
     </div>
     {% endfor %}
