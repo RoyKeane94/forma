@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Access denied · Forma{% endblock %}
+{% block body %}
+<section class="mx-auto flex min-h-[55vh] max-w-xl flex-col justify-center px-page py-section text-center">
+  <p class="mb-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">403</p>
+  <h1 class="font-display text-[clamp(2.2rem,5vw,3.2rem)] leading-[0.95] tracking-[0.02em] text-ink">You do not have access to this</h1>
+  <p class="mx-auto mt-5 max-w-[40ch] font-serif text-[1rem] font-light leading-relaxed text-slate">If you are signed in, try logging out and back in, or return to the home page.</p>
+  <p class="mt-10">
+    <a href="{% url 'home' %}" class="inline-flex border border-ink bg-ink px-8 py-3 font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-paper no-underline transition-colors hover:bg-paper hover:text-ink">Back to Forma</a>
+  </p>
+</section>
+{% endblock %}

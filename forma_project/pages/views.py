@@ -1011,3 +1011,32 @@ def _load_step_get_forms(context: dict, profile: TrainerProfile, step_idx: int) 
             initial=client_reviews_form_initial(profile),
             profile=profile,
         )
+
+
+# ── HTTP error handlers (ROOT_URLCONF handler400 / 403 / 404 / 500) ─────────
+
+
+def bad_request(request, exception=None):
+    from .models import record_http_error_log
+
+    record_http_error_log(request, 400, exception=exception)
+    return render(request, 'pages/errors/400.html', status=400)
+
+
+def permission_denied(request, exception=None):
+    from .models import record_http_error_log
+
+    record_http_error_log(request, 403, exception=exception)
+    return render(request, 'pages/errors/403.html', status=403)
+
+
+def page_not_found(request, exception=None):
+    from .models import record_http_error_log
+
+    record_http_error_log(request, 404, exception=exception)
+    return render(request, 'pages/errors/404.html', status=404)
+
+
+def server_error(request):
+    """Logged in middleware when an exception caused the 500; this view only renders."""
+    return render(request, 'pages/errors/500.html', status=500)

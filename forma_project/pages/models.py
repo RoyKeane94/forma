@@ -1,5 +1,7 @@
+import logging
 import secrets
 import string
+import traceback
 
 from django.conf import settings
 from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
@@ -452,6 +454,100 @@ class TrainerGalleryPhoto(models.Model):
                 name='pages_gallery_unique_slot',
             ),
         ]
+
+
+class HttpErrorLog(models.Model):
+    """Recorded HTTP errors and unhandled exceptions for staff review (admin)."""
+
+    status_code = models.PositiveSmallIntegerField(db_index=True)
+    path = models.CharField(max_length=2048, blank=True, default='')
+    query_string = models.CharField(max_length=2048, blank=True, default='')
+    method = models.CharField(max_length=16, blank=True, default='')
+    message = models.TextField(blank=True, default='')
+    details = models.TextField(blank=True, default='')
+    exception_type = models.CharField(max_length=255, blank=True, default='')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+    )
+    ip = models.CharField(max_length=45, blank=True, default='')
+    referrer = models.CharField(max_length=2048, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'pages_http_error_log'
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return f'{self.status_code} {self.path[:80]}'
+
+
+def record_http_error_log(
+    request,
+    status_code: int,
+    *,
+    exception: Exception | None = None,
+    message: str = '',
+    details: str = '',
+) -> None:
+    """
+    Persist an HTTP error for review in Django admin (HttpErrorLog).
+    Swallows DB failures so error handlers never crash.
+    """
+    log = logging.getLogger(__name__)
+    try:
+        user = None
+        u = getattr(request, 'user', None)
+        if u is not None and getattr(u, 'is_authenticated', False):
+            user = u
+        path = (getattr(request, 'path', None) or '')[:2048]
+        q = ''
+        meta = getattr(request, 'META', None) or {}
+        if isinstance(meta, dict):
+            q = (meta.get('QUERY_STRING') or '')[:2048]
+        method = (getattr(request, 'method', None) or '')[:16]
+        ip = (meta.get('REMOTE_ADDR') or '')[:45]
+        if not ip:
+            xff = (meta.get('HTTP_X_FORWARDED_FOR') or '').split(',')[0].strip()
+            ip = (xff or '')[:45]
+        ref = (meta.get('HTTP_REFERER') or '')[:2048]
+        exc_type = ''
+        exc_message = (message or '').strip()
+        detail_body = (details or '').strip()
+        if exception is not None:
+            exc_type = type(exception).__name__[:255]
+            if not exc_message:
+                exc_message = str(exception)[:8000]
+            if not detail_body:
+                detail_body = ''.join(
+                    traceback.format_exception(
+                        type(exception),
+                        exception,
+                        exception.__traceback__,
+                    )
+                )[:50000]
+        if not exc_message:
+            exc_message = {400: 'Bad request', 403: 'Forbidden', 404: 'Not found', 500: 'Server error'}.get(
+                status_code,
+                'HTTP error',
+            )
+        HttpErrorLog.objects.create(
+            status_code=status_code,
+            path=path,
+            query_string=q,
+            method=method,
+            message=exc_message[:8000],
+            details=detail_body[:50000],
+            exception_type=exc_type,
+            user=user,
+            ip=ip,
+            referrer=ref,
+        )
+    except Exception:
+        log.exception('HttpErrorLog.record_http_error_log failed')
 
 
 def ensure_onboarding_children(profile: TrainerProfile) -> None:

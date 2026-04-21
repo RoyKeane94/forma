@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import (
+    HttpErrorLog,
     PostcodeDistrict,
     PrimaryArea,
     TrainerAdditionalQualification,
@@ -164,3 +165,39 @@ class TrainerProfileAdmin(admin.ModelAdmin):
         TrainerPriceTierInline,
         TrainerGalleryPhotoInline,
     )
+
+
+@admin.register(HttpErrorLog)
+class HttpErrorLogAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'status_code', 'path', 'exception_type', 'message_short', 'user', 'ip')
+    list_filter = ('status_code',)
+    search_fields = ('path', 'message', 'exception_type', 'details', 'referrer')
+    date_hierarchy = 'created_at'
+    ordering = ('-created_at',)
+    readonly_fields = (
+        'status_code',
+        'path',
+        'query_string',
+        'method',
+        'message',
+        'details',
+        'exception_type',
+        'user',
+        'ip',
+        'referrer',
+        'created_at',
+    )
+
+    @admin.display(description='Message')
+    def message_short(self, obj):
+        text = (obj.message or '').replace('\n', ' ')
+        return (text[:120] + '…') if len(text) > 120 else text
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_staff
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_staff
