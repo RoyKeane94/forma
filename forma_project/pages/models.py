@@ -228,7 +228,7 @@ class TrainerProfile(models.Model):
         return ''
 
     def other_areas_display_labels(self) -> list[str]:
-        """Human-readable chips for public profile (catalogue names or custom name + outward)."""
+        """Human-readable chips for public profile (catalogue names or custom area names only)."""
         out: list[str] = []
         raw = self.other_areas or []
         if not isinstance(raw, list):
@@ -236,10 +236,9 @@ class TrainerProfile(models.Model):
         for x in raw:
             if isinstance(x, dict):
                 name = (x.get('name') or '').strip()
-                ow = (x.get('outward') or '').strip().upper()
                 if not name:
                     continue
-                out.append(f'{name} ({ow})' if ow else name)
+                out.append(name)
             else:
                 s = str(x).strip()
                 if s:
