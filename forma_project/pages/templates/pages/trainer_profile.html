@@ -217,26 +217,15 @@
   <div class="w-full max-w-none border-t border-rule pt-2 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 md:gap-y-8 lg:gap-x-20 xl:gap-x-28">
     {% for row in specialism_items %}
     <div class="min-w-0 border-b border-rule pb-6 last:border-b-0 md:border-b-0 md:pb-0 md:odd:border-r md:odd:border-rule md:odd:pr-8 lg:odd:pr-14 xl:odd:pr-20">
-      {% if row.description %}
-      <details class="group">
-        <summary class="flex cursor-pointer list-none items-start gap-4 outline-none [&::-webkit-details-marker]:hidden">
-          <span class="shrink-0 pt-0.5 font-display text-[2rem] leading-none tracking-[0.03em] text-blue/35">{{ forloop.counter|stringformat:"02d" }}</span>
-          <div class="min-w-0 flex-1 border-b border-transparent pb-1 group-open:border-rule">
-            <span class="block font-body text-[0.85rem] font-medium uppercase tracking-[0.06em] text-ink">{{ row.title }}</span>
-            <span class="mt-2 block font-body text-[0.62rem] font-medium uppercase tracking-wide-3 text-blue group-open:hidden">Show description</span>
-            <span class="mt-2 hidden font-body text-[0.62rem] font-medium uppercase tracking-wide-3 text-muted group-open:block">Hide</span>
-          </div>
-        </summary>
-        <div class="mt-4 border-t border-rule pt-4 sm:pl-[3.25rem]">
-          <p class="font-serif text-[0.9rem] font-light italic leading-relaxed text-slate">{{ row.description }}</p>
-        </div>
-      </details>
-      {% else %}
       <div class="flex items-start gap-4">
-        <span class="shrink-0 font-display text-[2rem] leading-none tracking-[0.03em] text-blue/35">{{ forloop.counter|stringformat:"02d" }}</span>
-        <p class="min-w-0 font-body text-[0.85rem] font-medium uppercase tracking-[0.06em] text-ink">{{ row.title }}</p>
+        <span class="shrink-0 pt-0.5 font-display text-[2rem] leading-none tracking-[0.03em] text-blue/35">{{ forloop.counter|stringformat:"02d" }}</span>
+        <div class="min-w-0 flex-1">
+          <p class="font-body text-[0.85rem] font-medium uppercase tracking-[0.06em] text-ink">{{ row.title }}</p>
+          {% if row.description %}
+          <p class="mt-3 font-serif text-[0.9rem] font-light italic leading-relaxed text-slate">{{ row.description }}</p>
+          {% endif %}
+        </div>
       </div>
-      {% endif %}
     </div>
     {% endfor %}
   </div>
