@@ -796,6 +796,7 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
         }
 
     price_tiers = visible_price_tiers(profile)
+    pricing_has_featured_tier = any(getattr(t, 'is_most_popular', False) for t in price_tiers)
 
     context = {
         'profile': profile,
@@ -805,6 +806,7 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
         'other_reviews': other_reviews,
         'specialism_items': specialism_display_items(profile),
         'price_tiers': price_tiers,
+        'pricing_has_featured_tier': pricing_has_featured_tier,
         'review_stats': review_stats,
         'instagram_url': instagram_url,
         'who_i_work_with_items': visible_who_i_work_with_items(profile),

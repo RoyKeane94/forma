@@ -225,6 +225,25 @@ class TrainerProfile(models.Model):
             return self.primary_area.district.code
         return ''
 
+    def other_areas_display_labels(self) -> list[str]:
+        """Human-readable chips for public profile (catalogue names or custom name + outward)."""
+        out: list[str] = []
+        raw = self.other_areas or []
+        if not isinstance(raw, list):
+            return out
+        for x in raw:
+            if isinstance(x, dict):
+                name = (x.get('name') or '').strip()
+                ow = (x.get('outward') or '').strip().upper()
+                if not name:
+                    continue
+                out.append(f'{name} ({ow})' if ow else name)
+            else:
+                s = str(x).strip()
+                if s:
+                    out.append(s)
+        return out
+
     def get_absolute_url(self) -> str:
         if self.forma_made and self.public_url_key:
             return reverse(

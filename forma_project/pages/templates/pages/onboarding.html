@@ -302,6 +302,17 @@
           <div class="forma-check-group forma-area-grid">{{ form.other_areas }}</div>
           {% if form.other_areas.errors %}<ul class="mt-2 list-none text-[0.65rem] text-danger">{% for e in form.other_areas.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
+        <div class="mt-10 border-t border-rule pt-10" id="custom-other-areas-block">
+          <p class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Other areas not in the list</p>
+          <p class="mt-2 max-w-[62ch] font-body text-[0.7rem] font-light leading-relaxed text-muted">Add the area name and the postcode district only (for example <span class="font-medium text-slate">TW10</span> or <span class="font-medium text-slate">W4</span>). Do not enter a full postcode.</p>
+          <div id="custom-areas-rows" class="mt-5 flex flex-col gap-4"></div>
+          <button type="button" id="custom-area-add" class="mt-4 inline-flex items-center gap-2 border border-ink bg-transparent px-[1.2rem] py-[0.55rem] font-body text-[0.68rem] font-medium uppercase tracking-[0.12em] text-ink transition-colors duration-200 hover:bg-ink hover:text-paper">
+            <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Add another area
+          </button>
+          {{ form.other_areas_custom }}
+          {% if form.other_areas_custom.errors %}<ul class="mt-3 list-none text-[0.65rem] text-danger">{% for e in form.other_areas_custom.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
 
       {% elif step == 4 %}
         {{ formset.management_form }}
@@ -907,6 +918,119 @@
       close();
     });
   }
+
+  (function initCustomOtherAreas() {
+    var form = document.getElementById('onboarding-step-form');
+    var hid = form ? form.querySelector('input[data-custom-other-areas]') : null;
+    var rowsRoot = document.getElementById('custom-areas-rows');
+    var addBtn = document.getElementById('custom-area-add');
+    if (!form || !hid || !rowsRoot || !addBtn) return;
+
+    function readList() {
+      try {
+        var v = JSON.parse((hid.value || '').trim() || '[]');
+        return Array.isArray(v) ? v : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function writeList(list) {
+      hid.value = JSON.stringify(list);
+    }
+
+    function syncFromInputs() {
+      var rows = rowsRoot.querySelectorAll('[data-custom-area-row]');
+      var out = [];
+      rows.forEach(function (row) {
+        var ni = row.querySelector('[data-field="name"]');
+        var oi = row.querySelector('[data-field="outward"]');
+        var name = ni ? ni.value.trim() : '';
+        var outward = oi ? oi.value.trim() : '';
+        if (!name && !outward) return;
+        out.push({ name: name, outward: outward });
+      });
+      writeList(out);
+    }
+
+    function addRow(initialName, initialOutward) {
+      var wrap = document.createElement('div');
+      wrap.setAttribute('data-custom-area-row', '1');
+      wrap.className = 'grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px_auto] sm:items-end';
+
+      var nameLab = document.createElement('label');
+      nameLab.className = 'flex flex-col gap-1.5';
+      var nspan = document.createElement('span');
+      nspan.className = 'font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-ink';
+      nspan.textContent = 'Area name';
+      var ni = document.createElement('input');
+      ni.type = 'text';
+      ni.className = 'forma-input';
+      ni.setAttribute('data-field', 'name');
+      ni.setAttribute('maxlength', '128');
+      ni.placeholder = 'e.g. Acton';
+      ni.value = initialName || '';
+      nameLab.appendChild(nspan);
+      nameLab.appendChild(ni);
+
+      var outLab = document.createElement('label');
+      outLab.className = 'flex flex-col gap-1.5';
+      var ospan = document.createElement('span');
+      ospan.className = 'font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-ink';
+      ospan.textContent = 'Postcode district';
+      var oi = document.createElement('input');
+      oi.type = 'text';
+      oi.className = 'forma-input';
+      oi.setAttribute('data-field', 'outward');
+      oi.setAttribute('maxlength', '8');
+      oi.setAttribute('spellcheck', 'false');
+      oi.placeholder = 'e.g. W3';
+      oi.value = initialOutward || '';
+      outLab.appendChild(ospan);
+      outLab.appendChild(oi);
+
+      var rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'justify-self-start border border-rule px-3 py-2 font-body text-[0.62rem] font-medium uppercase tracking-wide-3 text-muted transition-colors hover:border-danger hover:text-danger sm:justify-self-end';
+      rm.textContent = 'Remove';
+      rm.addEventListener('click', function () {
+        wrap.remove();
+        syncFromInputs();
+      });
+
+      ni.addEventListener('input', syncFromInputs);
+      oi.addEventListener('input', syncFromInputs);
+
+      wrap.appendChild(nameLab);
+      wrap.appendChild(outLab);
+      wrap.appendChild(rm);
+      rowsRoot.appendChild(wrap);
+    }
+
+    function rebuildFromHidden() {
+      rowsRoot.innerHTML = '';
+      var list = readList();
+      if (!list.length) {
+        writeList([]);
+        return;
+      }
+      list.forEach(function (item) {
+        addRow(item && item.name, item && item.outward);
+      });
+      syncFromInputs();
+    }
+
+    addBtn.addEventListener('click', function () {
+      addRow('', '');
+      syncFromInputs();
+    });
+
+    form.addEventListener('submit', function () {
+      syncFromInputs();
+    });
+
+    rebuildFromHidden();
+  })();
 
   document.querySelectorAll('#onboarding-step-form [data-forma-combobox]').forEach(enhanceCombobox);
 })();

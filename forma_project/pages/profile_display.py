@@ -72,7 +72,12 @@ def areas_covered_count(profile) -> int:
     raw = profile.other_areas or []
     if not isinstance(raw, list):
         return n
-    n += sum(1 for x in raw if str(x).strip())
+    for x in raw:
+        if isinstance(x, dict):
+            if (x.get('name') or '').strip():
+                n += 1
+        elif str(x).strip():
+            n += 1
     return n
 
 
@@ -129,7 +134,8 @@ def non_empty_client_reviews(profile):
 def split_featured_client_reviews(profile, review_rows):
     """
     Pick the standout review from profile.featured_review_slot (0–2), or no standout if null.
-    Returns (featured_dict | None, list of other rows).
+    Returns (featured_dict | None, list of rows for the “What clients say” grid). The featured
+    review is still included in that list so it appears both in the hero block and below.
     """
     if not review_rows:
         return None, []
@@ -137,12 +143,10 @@ def split_featured_client_reviews(profile, review_rows):
     if slot is None:
         return None, list(review_rows)
     featured = None
-    others = []
     for r in review_rows:
         if r.get('slot') == slot:
             featured = r
-        else:
-            others.append(r)
+            break
     if featured is None:
         return None, list(review_rows)
-    return featured, others
+    return featured, list(review_rows)

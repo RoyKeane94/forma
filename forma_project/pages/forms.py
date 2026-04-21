@@ -5,13 +5,16 @@ View wiring (call `ensure_onboarding_children(profile)` before step 0 GET/POST s
   Step 1: OnboardingStep1Form + TrainerWhoIWorkWithFormSet (identity, tagline, bio, who I work with rows, contact, portrait)
   Step 2: OnboardingStep2QuickForm + TrainerAdditionalQualificationFormSet (up to 10 rows)
   Step 3: TrainerSpecialismFormSet (up to four rows: title + optional brief description)
-  Step 4: OnboardingStep4Form (saves training_locations + other_areas JSON on save())
+  Step 4: OnboardingStep4Form (saves training_locations + other_areas JSON: catalogue names and/or {name, outward})
   Step 5: OnboardingStep5MetaForm + TrainerPriceTierFormSet (up to 10 tiers + one blank row to add more)
   Step 6: OnboardingStep6InstagramForm (intro video, show toggle, Instagram) + TrainerGalleryPhotoFormSet
   Step 7: OnboardingStep7ReviewsForm → TrainerProfile.client_reviews (max 3) + featured_review_slot
 
 Constants: QUICK_QUALIFICATION_CHOICES, TRAINING_LOCATION_CHOICES (from models).
 """
+
+import json
+import re
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -61,6 +64,45 @@ def other_area_choices():
     """All catalogue names; primary is de-duplicated in clean() / save, not excluded from the UI."""
     names = list(_primary_area_queryset().values_list('name', flat=True))
     return [(n, n) for n in names]
+
+
+_UK_POSTCODE_OUTWARD_RE = re.compile(r'^[A-Z]{1,2}\d[A-Z0-9]{0,2}$')
+
+
+def validate_uk_postcode_outward(value: str) -> str:
+    """Accept UK postcode outward part only (e.g. TW10, W4, SW1A), not a full postcode."""
+    raw_in = (value or '').strip()
+    if not raw_in:
+        raise ValidationError('Enter the postcode district (for example TW10 or W4).')
+    parts = raw_in.upper().split()
+    if len(parts) > 1:
+        raise ValidationError('Enter only the postcode district (e.g. TW10), not a full postcode.')
+    code = parts[0]
+    if len(code) > 4:
+        raise ValidationError('That does not look like a valid postcode district.')
+    if not _UK_POSTCODE_OUTWARD_RE.fullmatch(code):
+        raise ValidationError('Enter a valid UK postcode district (for example TW10 or W4).')
+    return code
+
+
+def _split_stored_other_areas(raw: list, catalogue_names: frozenset[str]) -> tuple[list[str], list[dict]]:
+    """Split JSON `other_areas` into catalogue names and {name, outward} custom rows."""
+    cat: list[str] = []
+    custom: list[dict] = []
+    for x in raw or []:
+        if isinstance(x, dict):
+            name = (x.get('name') or '').strip()
+            outward = (x.get('outward') or '').strip().upper()
+            if not name:
+                continue
+            custom.append({'name': name, 'outward': outward})
+        elif isinstance(x, str) and (x or '').strip():
+            s = x.strip()
+            if s in catalogue_names:
+                cat.append(s)
+            else:
+                custom.append({'name': s, 'outward': ''})
+    return cat, custom
 
 
 # ── Step 1 ──────────────────────────────────────────────────────────────────
@@ -303,6 +345,10 @@ class OnboardingStep4Form(forms.ModelForm):
         required=False,
         widget=forms.CheckboxSelectMultiple,
     )
+    other_areas_custom = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(attrs={'data-custom-other-areas': '1'}),
+    )
 
     class Meta:
         model = TrainerProfile
@@ -321,7 +367,13 @@ class OnboardingStep4Form(forms.ModelForm):
 
         if self.instance.pk:
             self.fields['training_locations'].initial = self.instance.training_locations or []
-            self.fields['other_areas'].initial = self.instance.other_areas or []
+            valid = frozenset(_primary_area_queryset().values_list('name', flat=True))
+            cat_init, custom_init = _split_stored_other_areas(
+                list(self.instance.other_areas or []),
+                valid,
+            )
+            self.fields['other_areas'].initial = cat_init
+            self.fields['other_areas_custom'].initial = json.dumps(custom_init)
 
     def clean_other_areas(self):
         selected = self.cleaned_data.get('other_areas') or []
@@ -331,13 +383,78 @@ class OnboardingStep4Form(forms.ModelForm):
                 raise ValidationError('Invalid area selected.')
         return list(selected)
 
+    def _parse_custom_other_areas_json(self) -> list[dict] | None:
+        raw = (self.data.get('other_areas_custom') if self.data is not None else '') or ''
+        if len(raw) > 10000:
+            self.add_error('other_areas_custom', 'Too many custom areas.')
+            return None
+        try:
+            payload = json.loads(raw.strip() or '[]')
+        except json.JSONDecodeError:
+            self.add_error('other_areas_custom', 'Could not read the extra areas you added. Please try again.')
+            return None
+        if not isinstance(payload, list):
+            self.add_error('other_areas_custom', 'Invalid extra areas data.')
+            return None
+        if len(payload) > 20:
+            self.add_error('other_areas_custom', 'You can add at most 20 areas that are not in the list.')
+            return None
+
+        out: list[dict] = []
+        for item in payload:
+            if not isinstance(item, dict):
+                continue
+            name = (item.get('name') or '').strip()
+            outward_raw = (item.get('outward') or '').strip()
+            if not name and not outward_raw:
+                continue
+            if len(name) > 128:
+                self.add_error('other_areas_custom', 'Each area name must be 128 characters or fewer.')
+                return None
+            if not name:
+                self.add_error('other_areas_custom', 'Give each extra area a name.')
+                return None
+            try:
+                outward = validate_uk_postcode_outward(outward_raw)
+            except ValidationError as e:
+                self.add_error('other_areas_custom', e)
+                return None
+            out.append({'name': name, 'outward': outward})
+
+        seen: set[str] = set()
+        for row in out:
+            k = row['name'].casefold()
+            if k in seen:
+                self.add_error('other_areas_custom', 'You have the same extra area more than once.')
+                return None
+            seen.add(k)
+        return out
+
     def clean(self):
         data = super().clean()
+        catalogue = list(self.cleaned_data.get('other_areas') or [])
+        custom_rows = self._parse_custom_other_areas_json()
+        if custom_rows is None:
+            return data
+
+        cat_cf = {n.casefold() for n in catalogue}
+        for row in custom_rows:
+            if row['name'].casefold() in cat_cf:
+                self.add_error(
+                    'other_areas_custom',
+                    f'“{row["name"]}” is already selected above; remove it from extra areas or untick it.',
+                )
+                return data
+
         primary = data.get('primary_area')
-        others = list(data.get('other_areas') or [])
-        if primary is not None:
-            others = [n for n in others if n != primary.name]
-        data['other_areas'] = others
+        primary_name_cf = (primary.name.casefold() if primary is not None else '') or ''
+        if primary_name_cf:
+            catalogue = [n for n in catalogue if n.casefold() != primary_name_cf]
+            custom_rows = [r for r in custom_rows if r['name'].casefold() != primary_name_cf]
+
+        merged: list = [*catalogue, *custom_rows]
+        data['other_areas'] = merged
+        self.cleaned_data['other_areas'] = merged
         return data
 
     def save(self, commit=True):
