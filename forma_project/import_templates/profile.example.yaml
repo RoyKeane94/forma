@@ -1,0 +1,107 @@
+# =============================================================================
+# Forma — one file per PT (copy this file, rename e.g. jane-smith.yaml, edit).
+# Covers: about you, who I work with, what I do best (specialisms), extras,
+# pricing, reviews, logistics. No photos / portrait / intro video / gallery.
+# Importer: not wired yet — this is the target shape for a superuser upload.
+# =============================================================================
+
+version: 1
+
+# Used to create or attach the Django User (TrainerProfile.user).
+user:
+  email: pt@example.com
+
+profile:
+  first_name: Jane
+  last_name: Smith
+  tagline: One line — what you do and for whom (max 80 characters).
+  bio: |
+    First paragraph of bio.
+
+    Second paragraph — who you are and how you train.
+  contact_email: bookings@example.com
+  contact_phone: "+44 7700 900000"
+  # Optional: call | whatsapp | text
+  contact_phone_preference: whatsapp
+
+  # Subset of: gym, home, outdoor, online
+  training_locations:
+    - gym
+    - outdoor
+
+  # Must match an existing PrimaryArea.name in the database (or leave null).
+  primary_area: Clapham
+
+  # Catalogue picks: use the area name string only.
+  # Custom areas: { name: "Area label", outward: "SW12" } — district only, no full postcode.
+  other_areas:
+    - Battersea
+    - name: Acton
+      outward: W3
+
+  free_consultation: true
+  instagram_handle: janetrains
+  show_intro_video: true
+  is_published: true
+  # Forma-made public URL uses /first-last/KEY/ ; importer can set forma_made + key.
+  forma_made: true
+
+# Preset keys from QUICK_QUALIFICATION_CHOICES in code: reps3, reps4, first_aid,
+# insured, pn1, pn2, pre_postnatal, sports_massage
+quick_qualifications:
+  - reps3
+  - insured
+
+# Optional short line per preset key (shown on profile chips area).
+quick_qualification_notes:
+  reps3: Active registration since 2019
+
+# Who I work with — order is list order (up to 8). Empty title rows skipped on import.
+who_i_work_with:
+  - title: New to training
+    description: Short paragraph for this client type (optional).
+  - title: Returning after injury
+    description: ""
+
+# What I do best — up to 4. title must match SpecialismCatalog.title (after your
+# canonical list) OR be a custom label; importer resolves or creates catalog row.
+specialisms:
+  - title: Strength & Conditioning
+    description: One optional sentence for clients.
+  - title: Boxing
+    description: ""
+
+# Extra qualification rows (up to 10), optional.
+additional_qualifications:
+  - name: BSc Sports Science
+    detail: University of Example
+    description: Optional client-facing line.
+
+# Pricing (up to 10). Only one row should have is_most_popular true.
+price_tiers:
+  - label: Single session
+    unit_note: per session
+    price: 65
+    is_most_popular: false
+  - label: Block of 10
+    unit_note: prepaid
+    price: 580
+    is_most_popular: true
+
+# Up to three reviews. rating 1–5; confirmed must be true to show publicly.
+# focus optional — should match one of this PT’s specialism titles if set.
+client_reviews:
+  - name: Alex M.
+    quote: Short testimonial text.
+    rating: 5
+    confirmed: true
+    focus: Strength & Conditioning
+    slot: 0
+  - name: Sam K.
+    quote: Another quote.
+    rating: 5
+    confirmed: true
+    slot: 1
+
+# 0, 1, or 2 — which client_reviews entry is the large hero quote; omit or null for none.
+featured_review_slot: 0
