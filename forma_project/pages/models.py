@@ -5,7 +5,7 @@ import traceback
 
 from django.conf import settings
 from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import IntegrityError, models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.text import slugify
@@ -94,6 +94,42 @@ class PrimaryArea(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    @classmethod
+    def ensure_for_custom_entry(
+        cls,
+        name: str,
+        outward: str,
+        *,
+        fallback_district: 'PostcodeDistrict | None' = None,
+    ) -> 'PrimaryArea | None':
+        """
+        For onboarding (or import) "extra" areas: create a catalogue row so the name
+        appears in the shared list, or return the existing row (matched case-insensitively).
+
+        Requires a UK outward postcode; if missing, uses `fallback_district` (e.g. primary area).
+        Returns None if there is no district to attach and no matching row already exists.
+        """
+        name_clean = (name or '').strip()[:128]
+        if not name_clean:
+            return None
+
+        found = cls.objects.filter(name__iexact=name_clean).first()
+        if found:
+            return found
+
+        code = (outward or '').strip().upper()
+        if code:
+            district, _ = PostcodeDistrict.objects.get_or_create(code=code)
+        elif fallback_district is not None:
+            district = fallback_district
+        else:
+            return None
+
+        try:
+            return cls.objects.create(name=name_clean, district=district)
+        except IntegrityError:
+            return cls.objects.filter(name__iexact=name_clean).first()
 
 
 class TrainerProfile(models.Model):
@@ -264,6 +300,59 @@ class TrainerProfile(models.Model):
                     out.append(s)
         return out
 
+    def _sync_custom_other_areas_into_primary_catalog(self) -> None:
+        """
+        Promote custom `other_areas` entries ({name, outward}) to `PrimaryArea` rows and
+        replace them with the canonical area name string so they appear in the shared list
+        for all trainers. Catalogue entries (plain strings) are left as-is, de-duplicated.
+        """
+        raw = self.other_areas
+        if not raw or not isinstance(raw, list):
+            return
+        fallback = self.primary_area.district if self.primary_area_id else None
+        out: list = []
+        seen: set[str] = set()
+        for x in raw:
+            if isinstance(x, str):
+                s = (x or '').strip()
+                if not s:
+                    continue
+                k = s.casefold()
+                if k in seen:
+                    continue
+                seen.add(k)
+                out.append(s)
+                continue
+            if not isinstance(x, dict):
+                continue
+            name = (x.get('name') or '').strip()
+            if not name:
+                continue
+            outward = (x.get('outward') or '').strip()
+            pa = PrimaryArea.ensure_for_custom_entry(
+                name,
+                outward,
+                fallback_district=fallback,
+            )
+            if pa is not None:
+                k = pa.name.casefold()
+                if k in seen:
+                    continue
+                seen.add(k)
+                out.append(pa.name)
+            else:
+                k = name.casefold()
+                if k in seen:
+                    continue
+                seen.add(k)
+                out.append(
+                    {
+                        'name': name[:128],
+                        'outward': (outward or '').strip().upper(),
+                    }
+                )
+        self.other_areas = out
+
     def get_absolute_url(self) -> str:
         if self.forma_made and self.public_url_key:
             return reverse(
@@ -322,6 +411,8 @@ class TrainerProfile(models.Model):
 
     def save(self, *args, **kwargs):
         update_fields = kwargs.get('update_fields')
+        if update_fields is None or 'other_areas' in update_fields:
+            self._sync_custom_other_areas_into_primary_catalog()
         if update_fields is None:
             self.assign_public_slug()
         elif (
