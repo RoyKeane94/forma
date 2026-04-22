@@ -6,42 +6,50 @@
 <link rel="preconnect" href="{{ media_preconnect_origin }}" crossorigin>
 <link rel="dns-prefetch" href="{{ media_preconnect_origin }}">
 {% endif %}
+{# Kill horizontal sliver from subpixel overflow (mobile) on this page only. #}
+<style>
+  body:has([data-trainer-profile]) { max-width: 100%; overflow-x: clip; }
+</style>
 {% endblock %}
 {# Global auth nav also shows “Forma”; hide it here so only the profile bar appears. #}
 {% block site_nav %}{% endblock %}
 {% block content_shell_class %}min-h-screen{% endblock %}
 
 {% block body %}
-<div class="pb-24 lg:pb-0">
-<nav class="sticky top-0 z-[200] flex h-[60px] items-stretch border-b border-rule bg-paper">
-  <div class="flex shrink-0 items-center border-r border-rule px-8">
-    <a class="font-display text-[1.55rem] tracking-wide-4 text-blue no-underline" href="{% url 'home' %}">Forma</a>
+{# Fixed CTA must sit outside any overflow-x-* wrapper or it can be clipped / not paint above the page. #}
+<div class="w-full min-w-0 max-w-[100%]" data-trainer-profile>
+  <div class="max-w-full min-w-0 overflow-x-clip {% if profile.forma_made and profile.public_url_key and not request.user.is_authenticated %}pb-28{% else %}pb-24{% endif %} lg:pb-0">
+<nav class="sticky top-0 z-[200] flex w-full min-w-0 border-b border-rule bg-paper">
+  <div class="flex min-h-[52px] w-full min-w-0 items-stretch sm:min-h-[60px]">
+  <div class="flex min-w-0 shrink-0 items-center border-r border-rule px-4 sm:px-6 lg:px-8">
+    <a class="font-display text-[1.4rem] tracking-wide-4 text-blue no-underline sm:text-[1.55rem]" href="{% url 'home' %}">Forma</a>
   </div>
-  <div class="flex min-w-0 flex-1 items-center px-6 sm:px-8">
-    <span class="truncate font-body text-[0.8rem] font-medium tracking-wide-5 text-ink">{{ profile.first_name }} {{ profile.last_name }}</span>
+  <div class="flex min-w-0 flex-1 items-center px-3 sm:px-6 lg:px-8">
+    <span class="min-w-0 truncate font-body text-[0.72rem] font-medium tracking-wide-5 text-ink sm:text-[0.8rem]">{{ profile.first_name }} {{ profile.last_name }}</span>
   </div>
-  <div class="flex shrink-0 items-center gap-4 border-l border-rule px-6 sm:px-8">
+  <div class="flex min-w-0 shrink-0 items-center gap-1.5 border-l border-rule px-2.5 sm:gap-3 sm:px-6 lg:px-8">
     {% if instagram_url %}
-    <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="hidden items-center gap-2 text-muted transition-colors hover:text-ink sm:inline-flex">
+    <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="hidden min-w-0 max-w-[8rem] items-center gap-1.5 text-muted transition-colors hover:text-ink sm:inline-flex">
       <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>
-      <span class="font-body text-[0.7rem] tracking-wide-5">@{{ profile.instagram_handle }}</span>
+      <span class="min-w-0 truncate font-body text-[0.65rem] tracking-wide-5 sm:text-[0.7rem]">@{{ profile.instagram_handle }}</span>
     </a>
     {% endif %}
     {% if profile.forma_made and profile.public_url_key and not request.user.is_authenticated %}
-    <a href="{% url 'pages:keep_forma_profile' profile_slug=profile.slug url_key=profile.public_url_key %}" class="inline-flex items-center border border-blue bg-transparent px-3 py-2 font-body text-[0.68rem] font-medium uppercase tracking-wide-3 text-blue no-underline transition-colors hover:bg-blue-light sm:px-4">Keep your profile</a>
+    <a href="{% url 'pages:keep_forma_profile' profile_slug=profile.slug url_key=profile.public_url_key %}" class="inline-flex min-h-[2.5rem] max-w-[7.5rem] shrink-0 items-center justify-center border border-blue bg-transparent px-2 py-1.5 text-center font-body text-[0.58rem] font-medium uppercase leading-tight tracking-wide-3 text-blue no-underline transition-colors hover:bg-blue-light sm:max-w-none sm:px-3 sm:py-2 sm:text-[0.68rem]" title="Keep your profile on Forma"><span class="sm:hidden">Keep</span><span class="hidden sm:inline">Keep your profile</span></a>
     {% endif %}
-    <a href="#enquire" class="inline-flex items-center bg-blue px-4 py-2 font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-white no-underline transition-colors hover:bg-blue-mid sm:px-5">Book</a>
+    <a href="#enquire" class="inline-flex min-h-[2.5rem] shrink-0 items-center bg-blue px-2.5 py-1.5 font-body text-[0.64rem] font-medium uppercase tracking-wide-3 text-white no-underline transition-colors hover:bg-blue-mid sm:px-4 sm:py-2 sm:text-[0.72rem] sm:px-5">Book</a>
+  </div>
   </div>
 </nav>
 
-<section class="flex min-h-0 flex-col overflow-visible border-b border-rule max-lg:min-h-screen lg:min-h-0 lg:flex-row lg:items-stretch">
-  <div class="relative flex h-full w-full max-lg:min-h-screen max-lg:flex-1 flex-col overflow-visible border-rule bg-paper px-page pt-page lg:min-h-0 lg:min-w-0 lg:flex-1 lg:border-r">
-    <div class="pointer-events-none absolute inset-0 z-0 opacity-[0.35] bg-[linear-gradient(#DDDBD4_1px,transparent_1px),linear-gradient(90deg,#DDDBD4_1px,transparent_1px)] [background-size:80px_80px]" aria-hidden="true"></div>
-    <div class="relative z-[1] mt-auto flex w-full max-w-[52rem] flex-col gap-y-6 pb-16 lg:gap-y-7">
+<section class="flex w-full min-w-0 max-w-full flex-col border-b border-rule lg:flex-row lg:items-stretch">
+  <div class="relative flex w-full min-w-0 max-w-full flex-col border-rule bg-paper px-3 pt-4 sm:px-page sm:pt-6 lg:min-h-0 lg:min-w-0 lg:flex-1 lg:px-page lg:pt-page lg:border-r">
+    <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden opacity-[0.35] bg-[linear-gradient(#DDDBD4_1px,transparent_1px),linear-gradient(90deg,#DDDBD4_1px,transparent_1px)] [background-size:80px_80px]" aria-hidden="true"></div>
+    <div class="relative z-[1] flex w-full max-w-[52rem] flex-col gap-y-4 pb-10 pt-0 sm:gap-y-5 sm:pb-12 lg:mt-auto lg:gap-y-7 lg:pb-16">
       <p class="font-body text-[clamp(0.8rem,1.25vw,0.95rem)] font-medium leading-snug tracking-wide-2 text-blue">
         Personal Trainer{% if profile.primary_area %} · {{ profile.primary_area }}{% endif %}{% if profile.postcode_district %} · {{ profile.postcode_district }}{% endif %}
       </p>
-      <h1 class="font-display text-[clamp(3.5rem,11vw,10rem)] leading-[0.88] tracking-[0.01em] text-ink">
+      <h1 class="font-display text-[clamp(2.75rem,9vw,10rem)] sm:text-[clamp(3.5rem,11vw,10rem)] leading-[0.88] tracking-[0.01em] text-ink">
         {{ profile.first_name }}<br>{{ profile.last_name }}
       </h1>
       {% if review_stats %}
@@ -64,7 +72,7 @@
     </div>
   </div>
 
-  <div class="flex min-h-0 w-full flex-col bg-surface max-lg:flex-1 {% if profile.portrait %}lg:w-1/3 lg:min-w-0 lg:shrink-0{% endif %}">
+  <div class="flex min-h-0 w-full min-w-0 max-w-full flex-col bg-surface max-lg:flex-1 {% if profile.portrait %}lg:w-1/3 lg:shrink-0{% endif %}">
     <div
       class="relative z-[1] flex min-h-0 flex-1 flex-col overflow-hidden bg-gradient-to-b from-blue-light to-surface {% if not profile.portrait %}min-h-[280px] items-stretch lg:min-h-[380px]{% endif %}"
     >
@@ -320,66 +328,70 @@
 </section>
 
 {% if other_reviews %}
-<section class="border-t border-rule bg-white px-page py-section" id="reviews">
-  <p class="mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">Reviews</p>
-  <h2 class="mb-4 font-display text-[clamp(2.5rem,4vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink">What clients say</h2>
-  {% if review_stats %}
-  <p class="mb-10 flex flex-wrap items-center gap-x-3 gap-y-1 font-body text-[0.95rem] tracking-wide-5 text-muted">
-    <span class="inline-flex items-center gap-1 text-blue" aria-label="{{ review_stats.average }} out of 5 average rating">
-      <span class="text-[1.1em] leading-none text-blue" aria-hidden="true">★</span>
-      <span class="font-semibold text-ink">{{ review_stats.average }}</span>
-      <span class="sr-only">out of 5</span>
-    </span>
-    <span class="text-rule" aria-hidden="true">·</span>
-    <span class="text-slate">{{ review_stats.count }} review{{ review_stats.count|pluralize }}</span>
-  </p>
-  {% endif %}
-  <div class="w-full" data-reviews-carousel>
-    <div class="flex w-full items-stretch gap-2 sm:gap-3 md:gap-4">
+<section class="w-full min-w-0 max-w-full border-t border-rule bg-white py-6 sm:py-10 md:py-section" id="reviews">
+  <div class="w-full min-w-0 max-w-full px-3 sm:px-6 md:px-page">
+    <p class="mb-2 sm:mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">Reviews</p>
+    <h2 class="mb-3 sm:mb-4 font-display text-[clamp(2.5rem,4vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink">What clients say</h2>
+    {% if review_stats %}
+    <p class="mb-4 sm:mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 font-body text-[0.95rem] tracking-wide-5 text-muted sm:mb-10">
+      <span class="inline-flex items-center gap-1 text-blue" aria-label="{{ review_stats.average }} out of 5 average rating">
+        <span class="text-[1.1em] leading-none text-blue" aria-hidden="true">★</span>
+        <span class="font-semibold text-ink">{{ review_stats.average }}</span>
+        <span class="sr-only">out of 5</span>
+      </span>
+      <span class="text-rule" aria-hidden="true">·</span>
+      <span class="text-slate">{{ review_stats.count }} review{{ review_stats.count|pluralize }}</span>
+    </p>
+    {% endif %}
+  </div>
+  <div class="w-full min-w-0 max-w-full" data-reviews-carousel>
+    <div class="w-full min-w-0 max-w-full px-0 sm:px-1 md:px-6 lg:px-page">
       {% if review_carousel_pages|length > 1 %}
-      <div class="flex shrink-0 items-center self-stretch">
-        <button
-          type="button"
-          class="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-rule bg-paper text-ink transition-colors hover:border-ink hover:bg-surface focus:border-blue focus:outline-none focus:ring-[3px] focus:ring-blue/8 md:h-11 md:w-11"
-          data-carousel-prev
-          aria-label="Previous reviews"
-        >
-          <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-      </div>
+      <div class="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1.25rem)_minmax(0,1fr)_minmax(0,1.25rem)] items-center gap-x-1 sm:grid-cols-[1.5rem_1fr_1.5rem] sm:gap-x-1.5">
+        <div class="flex min-h-0 min-w-0 items-center justify-center pl-0.5">
+          <button
+            type="button"
+            class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-rule bg-paper text-ink transition-colors hover:border-ink hover:bg-surface focus:outline-none focus:ring-2 focus:ring-blue/20 sm:h-6 sm:w-6"
+            data-carousel-prev
+            aria-label="Previous reviews"
+          >
+            <svg class="h-2 w-2 sm:h-2.5 sm:w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+        </div>
       {% endif %}
-      <div class="min-w-0 flex-1 overflow-hidden" data-carousel-viewport>
-      <div class="flex transition-transform duration-300 ease-out will-change-transform" data-carousel-track>
-        {% for page in review_carousel_pages %}
-        <div class="grid w-full min-w-full shrink-0 grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8">
-          {% for rev in page %}
-          <blockquote class="border border-rule bg-surface p-6 {% if page|length == 1 %}sm:col-span-2 sm:mx-auto sm:max-w-2xl{% endif %}">
-            <div class="mb-3 flex gap-0.5 text-blue" aria-label="{{ rev.rating }} out of 5 stars">
-              {% for _ in "12345" %}
-              <span class="font-body text-[0.95rem] leading-none {% if forloop.counter <= rev.rating %}text-blue{% else %}text-rule{% endif %}" aria-hidden="true">★</span>
-              {% endfor %}
-            </div>
-            {% if rev.focus %}
-            <p class="mb-3 font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-blue">Focus: {{ rev.focus }}</p>
-            {% endif %}
-            <p class="mb-4 font-serif text-[0.95rem] font-light italic leading-[1.65] text-slate">&ldquo;{{ rev.quote }}&rdquo;</p>
-            <footer class="font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-muted">— {{ rev.name }}</footer>
-          </blockquote>
+      <div class="min-w-0 w-full max-w-full overflow-hidden" data-carousel-viewport>
+        <div class="flex w-full min-w-0 max-w-full transition-transform duration-300 ease-out will-change-transform" data-carousel-track>
+          {% for page in review_carousel_pages %}
+          <div class="grid w-full min-w-full max-w-full shrink-0 grid-cols-1">
+            {% for rev in page %}
+            <blockquote class="w-full min-w-0 max-w-full border border-rule bg-surface p-2.5 text-left sm:p-5 md:p-6">
+              <div class="mb-2 flex gap-0.5 text-blue sm:mb-3" aria-label="{{ rev.rating }} out of 5 stars">
+                {% for _ in "12345" %}
+                <span class="font-body text-[0.95rem] leading-none {% if forloop.counter <= rev.rating %}text-blue{% else %}text-rule{% endif %}" aria-hidden="true">★</span>
+                {% endfor %}
+              </div>
+              {% if rev.focus %}
+              <p class="mb-2 font-body text-[0.6rem] font-semibold uppercase tracking-wide-3 text-blue sm:mb-3 sm:text-[0.62rem]">Focus: {{ rev.focus }}</p>
+              {% endif %}
+              <p class="mb-3 text-pretty font-serif text-[0.95rem] font-light italic leading-[1.6] text-slate sm:mb-4 sm:text-[1rem] sm:leading-[1.65]">&ldquo;{{ rev.quote }}&rdquo;</p>
+              <footer class="font-body text-[0.7rem] font-medium uppercase tracking-wide-3 text-muted sm:text-[0.72rem]">— {{ rev.name }}</footer>
+            </blockquote>
+            {% endfor %}
+          </div>
           {% endfor %}
         </div>
-        {% endfor %}
       </div>
-    </div>
       {% if review_carousel_pages|length > 1 %}
-      <div class="flex shrink-0 items-center self-stretch">
-        <button
-          type="button"
-          class="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-rule bg-paper text-ink transition-colors hover:border-ink hover:bg-surface focus:border-blue focus:outline-none focus:ring-[3px] focus:ring-blue/8 md:h-11 md:w-11"
-          data-carousel-next
-          aria-label="Next reviews"
-        >
-          <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
+        <div class="flex min-h-0 min-w-0 items-center justify-center pr-0.5">
+          <button
+            type="button"
+            class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-rule bg-paper text-ink transition-colors hover:border-ink hover:bg-surface focus:outline-none focus:ring-2 focus:ring-blue/20 sm:h-6 sm:w-6"
+            data-carousel-next
+            aria-label="Next reviews"
+          >
+            <svg class="h-2 w-2 sm:h-2.5 sm:w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
       </div>
       {% endif %}
     </div>
@@ -387,20 +399,20 @@
 </section>
 {% endif %}
 
-<section class="border-t border-rule bg-paper px-page py-section" id="instagram">
-  <div class="mb-8 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-    <div class="flex items-center gap-4">
-      <svg class="h-9 w-9 shrink-0 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>
-      <div>
+<section class="w-full min-w-0 max-w-full border-t border-rule bg-paper px-3 py-10 sm:px-6 md:px-page md:py-section" id="instagram">
+  <div class="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+    <div class="flex min-w-0 items-center gap-2.5 sm:gap-4">
+      <svg class="h-5 w-5 shrink-0 text-ink sm:h-9 sm:w-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>
+      <div class="min-w-0">
         {% if instagram_url %}
-        <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="font-display text-[2.2rem] leading-none tracking-[0.03em] text-ink no-underline transition-colors hover:text-blue">@{{ profile.instagram_handle }}</a>
+        <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="block min-w-0 break-words font-display text-[0.9rem] leading-[1.35] tracking-wide-4 text-ink no-underline transition-colors hover:text-blue sm:text-[1.2rem] md:text-[1.5rem] lg:text-[2.1rem] [overflow-wrap:anywhere]">@{{ profile.instagram_handle }}</a>
         {% else %}
-        <span class="font-display text-[2.2rem] leading-none tracking-[0.03em] text-very-muted">Instagram</span>
+        <span class="font-display text-[1.4rem] leading-none tracking-[0.03em] text-very-muted sm:text-[2.2rem]">Instagram</span>
         {% endif %}
       </div>
     </div>
     {% if instagram_url %}
-    <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center border border-ink px-5 py-2.5 font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-ink no-underline transition-colors hover:bg-ink hover:text-paper">Follow on Instagram</a>
+    <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit min-w-0 items-center self-start border border-ink px-4 py-2 font-body text-[0.65rem] font-medium uppercase tracking-wide-3 text-ink no-underline transition-colors hover:bg-ink hover:text-paper sm:px-5 sm:py-2.5 sm:text-[0.72rem]">Follow on Instagram</a>
     {% endif %}
   </div>
   <div class="grid grid-cols-2 gap-[3px] sm:grid-cols-3 lg:grid-cols-6">
@@ -490,9 +502,15 @@
     {% endif %}
   </div>
 </section>
+  </div>
 
-<div class="fixed inset-x-0 bottom-0 z-[250] border-t border-rule bg-paper/95 px-4 py-3 backdrop-blur-sm lg:hidden" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
-  <a href="#enquire" class="flex w-full items-center justify-center bg-blue py-3 font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-colors hover:bg-blue-mid">Book a session</a>
+<div class="fixed left-0 right-0 z-[500] border-t border-rule bg-paper/95 px-3 py-2.5 backdrop-blur-sm lg:hidden" style="padding-bottom: max(0.65rem, env(safe-area-inset-bottom)); bottom: 0;" role="region" aria-label="Profile actions">
+  <div class="flex w-full min-w-0 items-stretch gap-2 sm:gap-3">
+    {% if profile.forma_made and profile.public_url_key and not request.user.is_authenticated %}
+    <a href="{% url 'pages:keep_forma_profile' profile_slug=profile.slug url_key=profile.public_url_key %}" class="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center border border-blue bg-transparent px-2 py-2 text-center font-body text-[0.62rem] font-medium uppercase leading-tight tracking-wide-2 text-blue no-underline transition-colors hover:bg-blue-light sm:px-3 sm:text-[0.7rem]">Keep your profile</a>
+    {% endif %}
+    <a href="#enquire" class="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center bg-blue px-2 py-2.5 text-center font-body text-[0.7rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-colors hover:bg-blue-mid sm:px-4 sm:text-[0.78rem]">Book</a>
+  </div>
 </div>
 
 <script>
