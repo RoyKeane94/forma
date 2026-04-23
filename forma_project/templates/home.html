@@ -1,261 +1,115 @@
 {% extends "base.html" %}
 {% block title %}Forma{% endblock %}
-{# Landing page uses a full-bleed dark footer instead of the default base footer. #}
 {% block site_footer %}{% endblock %}
 {% block content_shell_class %}pt-[60px] min-h-screen flex flex-col{% endblock %}
 
 {% block extra_head %}
   <style>
-    .home-landing {
-      --ink:     #1A1A18;
-      --paper:   #F5F3EE;
-      --surface: #EDEAE3;
-      --rule:    #DDDBD4;
-      --muted:   #8A8880;
-      --slate:   #4A4845;
-      --blue:    #1A3FCC;
-      --blue-mid:#1535B0;
-    }
-
-    html { scroll-behavior: smooth; }
-
-    .home-landing {
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 auto;
-      min-width: 0;
-      min-height: 0;
-    }
-
-    .home-landing main {
-      /* No flex-grow — avoids a tall empty band between the value strip and the footer. */
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    /* ── Hero: content height only (no empty block below the CTA) ── */
-    .home-landing .hero {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      padding: 1.5rem 3rem 0;
-      overflow: hidden;
-    }
-
-    .home-landing .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      opacity: 0.35;
+    /* Grid background only — line colour matches border-rule token */
+    .home-hero-grid {
       background-image:
-        linear-gradient(var(--rule) 1px, transparent 1px),
-        linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+        linear-gradient(#dddbd4 1px, transparent 1px),
+        linear-gradient(90deg, #dddbd4 1px, transparent 1px);
       background-size: 80px 80px;
-      pointer-events: none;
-      z-index: 0;
     }
-
-    .home-landing .hero-inner {
-      position: relative;
-      z-index: 1;
-      max-width: 62rem;
-    }
-
-    .home-landing .hero-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(5rem, 22vw, 18rem);
-      line-height: 0.88;
-      letter-spacing: 0.01em;
-      color: var(--ink);
-    }
-
-    .home-landing .hero-title .accent { color: var(--blue); }
-
-    .home-landing .hero-rule {
-      width: 3rem;
-      height: 2px;
-      background: var(--blue);
-      margin: 2rem 0;
-    }
-
-    .home-landing .hero-sub {
-      font-family: 'Fraunces', serif;
-      font-size: clamp(1.1rem, 2.2vw, 1.5rem);
-      font-weight: 300;
-      line-height: 1.6;
-      color: var(--slate);
-      max-width: 38ch;
-    }
-
-    .home-landing .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 1.25rem;
-      margin-top: 2.5rem;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-
-    .home-landing .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: var(--blue);
-      color: white;
-      font-family: 'Barlow', sans-serif;
-      font-size: 0.78rem;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      text-decoration: none;
-      padding: 0.9rem 2.2rem;
-      transition: background 0.15s, transform 0.15s;
-    }
-    .home-landing .btn-primary:hover { background: var(--blue-mid); transform: translateY(-1px); }
-
-    .home-landing .btn-ghost {
-      font-family: 'Barlow', sans-serif;
-      font-size: 0.75rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--muted);
-      text-decoration: none;
-      border-bottom: 1px solid var(--rule);
-      padding-bottom: 2px;
-      transition: color 0.15s, border-color 0.15s;
-    }
-    .home-landing .btn-ghost:hover { color: var(--ink); border-color: var(--ink); }
-
-    .home-landing .stats {
-      background: var(--surface);
-      border-top: 1px solid var(--rule);
-      border-bottom: 1px solid var(--rule);
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-    }
-    .home-landing .stat {
-      padding: 1.5rem 2rem;
-      text-align: center;
-      border-right: 1px solid var(--rule);
-    }
-    .home-landing .stat:last-child { border-right: none; }
-    .home-landing .stat-num {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 2.25rem;
-      line-height: 1;
-      letter-spacing: 0.03em;
-      color: var(--blue);
-    }
-    .home-landing .stat-label {
-      margin-top: 0.3rem;
-      font-family: 'Barlow', sans-serif;
-      font-size: 0.58rem;
-      font-weight: 500;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .home-landing .value-strip {
-      background: var(--ink);
-      padding: 4rem 3rem;
-    }
-    .home-landing .value-strip blockquote {
-      font-family: 'Fraunces', serif;
-      font-size: clamp(1.3rem, 3vw, 2rem);
-      font-weight: 300;
-      font-style: italic;
-      line-height: 1.55;
-      color: rgba(245,243,238,0.9);
-      max-width: 38rem;
-      margin: 0 auto;
-      text-align: center;
-    }
-    .home-landing footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 2rem 3rem;
-      background: var(--ink);
-      border-top: 1px solid rgba(255,255,255,0.06);
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .home-landing .footer-logo {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.4rem;
-      letter-spacing: 0.04em;
-      color: var(--paper);
-      text-decoration: none;
-    }
-    .home-landing .footer-note {
-      font-family: 'Barlow', sans-serif;
-      font-size: 0.65rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: rgba(245,243,238,0.3);
-    }
-
     @keyframes homeFadeUp {
       from { opacity: 0; transform: translateY(18px); }
-      to   { opacity: 1; transform: translateY(0); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .home-landing .hero-title   { animation: homeFadeUp 0.6s ease both; animation-delay: 0.05s; }
-    .home-landing .hero-rule    { animation: homeFadeUp 0.5s ease both; animation-delay: 0.15s; }
-    .home-landing .hero-sub     { animation: homeFadeUp 0.5s ease both; animation-delay: 0.25s; }
-    .home-landing .hero-actions { animation: homeFadeUp 0.5s ease both; animation-delay: 0.35s; }
-
-    @media (max-width: 600px) {
-      .home-landing .hero { padding: 1.25rem 1.5rem 0; }
-      .home-landing .stat { padding: 1.25rem 0.75rem; }
-      .home-landing .value-strip { padding: 3rem 1.5rem; }
-      .home-landing footer { padding: 1.5rem; }
-    }
+    .home-anim-1 { animation: homeFadeUp 0.6s ease both; animation-delay: 0.05s; }
+    .home-anim-2 { animation: homeFadeUp 0.55s ease both; animation-delay: 0.2s; }
+    .home-anim-3 { animation: homeFadeUp 0.55s ease both; animation-delay: 0.32s; }
   </style>
 {% endblock %}
 
 {% block body %}
-<div class="home-landing flex min-h-0 w-full min-w-0 flex-1 flex-col">
-  <main>
-    <section class="hero">
-      <div class="hero-inner">
-        <h1 class="hero-title">Forma</h1>
-        <div class="hero-rule"></div>
-        <p class="hero-sub">Professional profiles for personal trainers</p>
-        <div class="hero-actions">
-          <a href="{% url 'pages:profile_enquiry' %}" class="btn-primary">Enquire about a profile →</a>
+<div class="flex min-h-0 w-full min-w-0 flex-1 flex-col">
+  <main class="flex min-h-0 w-full min-w-0 flex-1 flex-col">
+    <section
+      class="relative flex shrink-0 flex-col items-start overflow-hidden border-b border-rule bg-paper px-3 pb-10 pt-6 sm:px-page sm:pb-12 sm:pt-8"
+      aria-label="Forma"
+    >
+      <div
+        class="home-hero-grid pointer-events-none absolute inset-0 z-0 opacity-30"
+        aria-hidden="true"
+      ></div>
+      <div class="relative z-[1] w-full max-w-[62rem]">
+        <h1
+          class="home-anim-1 font-display text-[clamp(5.5rem,20vw,14rem)] leading-[0.86] tracking-[0.01em] text-blue"
+        >
+          Forma
+        </h1>
+        <p
+          class="home-anim-2 mt-5 max-w-[40ch] font-serif text-[clamp(1.05rem,2.2vw,1.35rem)] font-light italic leading-serif text-slate"
+        >
+          The only question is whether your profile does justice to what you actually do.
+        </p>
+        <div class="home-anim-3 mt-10">
+          <a
+            href="{% url 'pages:profile_enquiry' %}"
+            class="inline-flex items-center gap-2.5 bg-blue font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white transition-transform duration-200 hover:-translate-y-0.5 hover:bg-blue-mid px-8 py-[0.9rem] no-underline"
+          >
+            Enquire about a profile →
+          </a>
         </div>
       </div>
     </section>
 
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-num">£29</div>
-        <div class="stat-label">Per month</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">SW</div>
-        <div class="stat-label">London first</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">0</div>
-        <div class="stat-label">Commission fees</div>
-      </div>
-    </div>
+    <div
+      class="min-h-[3rem] w-full flex-1 sm:min-h-[5rem]"
+      aria-hidden="true"
+    ></div>
 
-    <div class="value-strip" id="claim">
-      <blockquote>
-        &ldquo;People check you out before they reach out. Give them something worth finding.&rdquo;
-      </blockquote>
+    <div class="grid shrink-0 grid-cols-1 border-b border-t border-rule bg-surface sm:grid-cols-3">
+      <div
+        class="border-b border-rule px-4 py-8 text-center sm:border-b-0 sm:border-r sm:px-8 sm:py-10"
+      >
+        <div class="font-display text-[clamp(2.2rem,5vw,3.5rem)] leading-none tracking-[0.03em] text-blue">
+          £29
+        </div>
+        <div
+          class="mt-1.5 font-body text-[0.58rem] font-medium uppercase leading-none tracking-[0.18em] text-muted"
+        >
+          Per month
+        </div>
+      </div>
+      <div class="border-b border-rule px-4 py-8 text-center sm:border-b-0 sm:border-r sm:px-8 sm:py-10">
+        <div
+          class="font-display text-[clamp(1.6rem,4.5vw,2.5rem)] leading-tight tracking-[0.02em] text-blue"
+        >
+          London
+        </div>
+        <div
+          class="mt-1.5 font-body text-[0.58rem] font-medium uppercase leading-none tracking-[0.18em] text-muted"
+        >
+          First
+        </div>
+      </div>
+      <div class="px-4 py-8 text-center sm:px-8 sm:py-10">
+        <div class="font-display text-[clamp(2.2rem,5vw,3.5rem)] leading-none tracking-[0.03em] text-blue">
+          0%
+        </div>
+        <div
+          class="mt-1.5 font-body text-[0.58rem] font-medium uppercase leading-none tracking-[0.18em] text-muted"
+        >
+          Commission taken
+        </div>
+      </div>
     </div>
   </main>
 
-  <footer>
-    <a class="footer-logo" href="{% url 'home' %}">Forma</a>
-    <span class="footer-note">Professional profiles for personal trainers</span>
+  <footer
+    class="mt-auto flex flex-wrap items-center justify-between gap-4 border-t border-white/5 bg-ink px-3 py-6 sm:px-page"
+  >
+    <a
+      href="{% url 'home' %}"
+      class="font-display text-[1.4rem] tracking-wide-4 text-paper no-underline"
+      >Forma</a
+    >
+    <span
+      class="font-body text-[0.6rem] font-medium uppercase leading-none tracking-[0.16em] text-white/30"
+      >Professional profiles for personal trainers</span
+    >
   </footer>
 </div>
 {% endblock %}
