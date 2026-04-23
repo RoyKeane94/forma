@@ -4,6 +4,7 @@ from .models import (
     HttpErrorLog,
     PostcodeDistrict,
     PrimaryArea,
+    ProfileEnquiry,
     SpecialismCatalog,
     TrainerAdditionalQualification,
     TrainerGalleryPhoto,
@@ -175,6 +176,21 @@ class TrainerProfileAdmin(admin.ModelAdmin):
         TrainerPriceTierInline,
         TrainerGalleryPhotoInline,
     )
+
+
+@admin.register(ProfileEnquiry)
+class ProfileEnquiryAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'name', 'email', 'message_preview')
+    list_filter = ('created_at',)
+    search_fields = ('name', 'email', 'message')
+    date_hierarchy = 'created_at'
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at',)
+
+    @admin.display(description='Message')
+    def message_preview(self, obj):
+        text = (obj.message or '').replace('\n', ' ')
+        return (text[:100] + '…') if len(text) > 100 else (text or '—')
 
 
 @admin.register(HttpErrorLog)

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Enquire about a profile — Forma{% endblock %}
+{% block content_shell_class %}pt-[60px] min-h-screen{% endblock %}
+{% block body %}
+<section class="min-h-[calc(100vh-8rem)] border-t border-rule bg-surface px-page py-section">
+  <div class="mx-auto w-full max-w-md">
+    <p class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+      Enquiry
+    </p>
+    <h1 class="mb-4 font-display text-[clamp(2.8rem,4.5vw,4.5rem)] leading-heading tracking-[0.02em] text-ink">
+      Enquire about a profile
+    </h1>
+    <p class="mb-10 font-serif text-[1.05rem] font-light italic leading-serif text-slate">
+      Tell us a little about you and we&apos;ll get back to you.
+    </p>
+
+    <form method="post" class="border-t border-rule pt-10" novalidate>
+      {% csrf_token %}
+
+      {% if form.errors %}
+      <div role="alert" class="mb-8 border border-rule bg-blue-light px-4 py-4">
+        <p class="mb-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">
+          Please check the form
+        </p>
+        <ul class="m-0 list-none space-y-2 p-0 font-body text-[0.8rem] font-light leading-[1.7] text-slate">
+          {% for field in form %}
+            {% for error in field.errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+          {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="mb-6">
+        <label for="{{ form.name.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">
+          {{ form.name.label }}
+        </label>
+        {{ form.name }}
+        {% if form.name.errors %}
+        <ul class="mt-2 m-0 list-none p-0 font-body text-[0.68rem] font-light normal-case tracking-normal text-muted">
+          {% for error in form.name.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <div class="mb-6">
+        <label for="{{ form.email.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">
+          {{ form.email.label }}
+        </label>
+        {{ form.email }}
+        {% if form.email.errors %}
+        <ul class="mt-2 m-0 list-none p-0 font-body text-[0.68rem] font-light normal-case tracking-normal text-muted">
+          {% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <div class="mb-10">
+        <label for="{{ form.message.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">
+          {{ form.message.label }} <span class="ml-2 font-normal normal-case tracking-normal text-muted">(optional)</span>
+        </label>
+        {{ form.message }}
+        {% if form.message.errors %}
+        <ul class="mt-2 m-0 list-none p-0 font-body text-[0.68rem] font-light normal-case tracking-normal text-muted">
+          {% for error in form.message.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+        <p class="mt-1 text-right font-body text-[0.62rem] text-ink/22">Up to 5,000 characters</p>
+      </div>
+
+      <button
+        type="submit"
+        class="inline-flex border-0 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] text-white transition-transform hover:-translate-y-0.5 hover:bg-blue-mid"
+      >
+        Send message
+      </button>
+    </form>
+
+    <p class="mt-10 font-body text-[0.8rem] font-light text-muted">
+      <a href="{% url 'home' %}" class="text-blue no-underline hover:underline">← Back to home</a>
+    </p>
+  </div>
+</section>
+{% endblock %}

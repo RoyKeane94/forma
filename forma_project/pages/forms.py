@@ -27,6 +27,7 @@ from .models import (
     QUICK_QUALIFICATION_CHOICES,
     TRAINING_LOCATION_CHOICES,
     PrimaryArea,
+    ProfileEnquiry,
     SpecialismCatalog,
     TrainerAdditionalQualification,
     TrainerGalleryPhoto,
@@ -56,6 +57,29 @@ def _forma_attrs(extra=None):
     if extra:
         attrs.update(extra)
     return attrs
+
+
+class ProfileEnquiryForm(forms.ModelForm):
+    """Public marketing form — name, email, optional message (see ProfileEnquiry)."""
+
+    class Meta:
+        model = ProfileEnquiry
+        fields = ('name', 'email', 'message')
+        labels = {
+            'name': 'Name',
+            'email': 'Email',
+            'message': 'Anything else we should know?',
+        }
+        widgets = {
+            'name': forms.TextInput(attrs=_forma_attrs({'autocomplete': 'name'})),
+            'email': forms.EmailInput(attrs=_forma_attrs({'autocomplete': 'email'})),
+            'message': forms.Textarea(
+                attrs={
+                    'rows': 6,
+                    'class': f'{FORMA_INPUT_CLASS} min-h-[5.5rem] resize-y font-body text-[0.92rem] font-light normal-case tracking-normal text-ink',
+                }
+            ),
+        }
 
 
 def _primary_area_queryset():

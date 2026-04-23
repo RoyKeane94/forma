@@ -628,6 +628,30 @@ class TrainerGalleryPhoto(models.Model):
         ]
 
 
+class ProfileEnquiry(models.Model):
+    """Public landing-page enquiry: interest in a Forma profile (staff read in admin)."""
+
+    name = models.CharField(max_length=150)
+    email = models.EmailField(max_length=254)
+    message = models.TextField(
+        'Additional information',
+        blank=True,
+        default='',
+        max_length=5000,
+        help_text='Optional context — goals, area, timing, etc.',
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'pages_profile_enquiry'
+        ordering = ['-created_at']
+        verbose_name = 'profile enquiry'
+        verbose_name_plural = 'profile enquiries'
+
+    def __str__(self) -> str:
+        return f'{self.name} <{self.email}>'
+
+
 class HttpErrorLog(models.Model):
     """Recorded HTTP errors and unhandled exceptions for staff review (admin)."""
 

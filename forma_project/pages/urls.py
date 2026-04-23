@@ -5,6 +5,7 @@ from . import views
 app_name = 'pages'
 
 urlpatterns = [
+    path('enquire/', views.profile_enquiry, name='profile_enquiry'),
     path('account/', views.my_account, name='my_account'),
     path(
         'keep-profile-return/',

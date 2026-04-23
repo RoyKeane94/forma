@@ -26,6 +26,7 @@ from .forms import (
     OnboardingStep5MetaForm,
     OnboardingStep6InstagramForm,
     OnboardingStep7ReviewsForm,
+    ProfileEnquiryForm,
     StaffTrainerCreateForm,
     TrainerAdditionalQualificationFormSet,
     TrainerGalleryPhotoFormSet,
@@ -1158,6 +1159,28 @@ def _load_step_get_forms(context: dict, profile: TrainerProfile, step_idx: int) 
             initial=client_reviews_form_initial(profile),
             profile=profile,
         )
+
+
+# ── Public marketing ───────────────────────────────────────────────────────
+
+
+def profile_enquiry(request):
+    if request.method == 'POST':
+        form = ProfileEnquiryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                'Thanks — we’ve received your message and will be in touch soon.',
+            )
+            return redirect('pages:profile_enquiry')
+    else:
+        form = ProfileEnquiryForm()
+    return render(
+        request,
+        'pages/profile_enquiry.html',
+        {'form': form},
+    )
 
 
 # ── HTTP error handlers (ROOT_URLCONF handler400 / 403 / 404 / 500) ─────────

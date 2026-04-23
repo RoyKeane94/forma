@@ -1,27 +1,360 @@
-{% extends "base.html" %}
-{% block title %}Forma{% endblock %}
-{% block body %}
-<section class="border-t border-rule bg-paper min-h-[calc(100vh-60px)] px-page py-section">
-  <div class="max-w-3xl">
-    <p class="flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue mb-6 after:block after:h-px after:bg-rule after:max-w-[3rem] after:flex-1">
-      Home
-    </p>
-    <h1 class="font-display text-[clamp(2.8rem,4.5vw,4.5rem)] leading-heading tracking-[0.02em] text-ink mb-6">
-      Forma
-    </h1>
-    {% if user.is_authenticated %}
-    <p class="font-body text-[0.88rem] font-light text-ink leading-[1.7]">
-      Signed in as <span class="font-medium">{{ user.get_username }}</span>.
-    </p>
-    {% else %}
-    <p class="font-serif text-[1.05rem] font-light italic text-slate leading-serif mb-8">
-      Professional PT profiles and directory — sign in or register to continue.
-    </p>
-    <div class="flex flex-wrap gap-6 items-baseline">
-      <a href="{% url 'accounts:login' %}" class="inline-block bg-blue hover:bg-blue-mid text-white font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] px-8 py-[0.9rem] no-underline hover:-translate-y-0.5">Sign in</a>
-      <a href="{% url 'accounts:register' %}" class="text-muted border-b border-rule pb-0.5 no-underline font-body text-[0.78rem] font-medium uppercase tracking-wide-2 hover:text-ink hover:border-ink">Register</a>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forma</title>
+  <link rel="icon" href="{% static 'css/forma-favicon.svg' %}" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Flush to viewport: kill UA html/body offset (visible gap above nav) */
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    html {
+      height: 100%;
+    }
+
+    :root {
+      --ink:     #1A1A18;
+      --paper:   #F5F3EE;
+      --surface: #EDEAE3;
+      --rule:    #DDDBD4;
+      --muted:   #8A8880;
+      --slate:   #4A4845;
+      --blue:    #1A3FCC;
+      --blue-mid:#1535B0;
+      --blue-light: #EBF0FF;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'Barlow', sans-serif;
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100%;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      /* Space for fixed nav; nav sits at y=0 with no document gap above it */
+      padding-top: 60px;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      display: flex;
+      align-items: stretch;
+      height: 60px;
+      border-bottom: 1px solid var(--rule);
+      background: var(--paper);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      padding: 0 2rem;
+      border-right: 1px solid var(--rule);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.55rem;
+      letter-spacing: 0.04em;
+      color: var(--blue);
+      text-decoration: none;
+    }
+    .nav-spacer { flex: 1; }
+    .nav-cta {
+      display: flex;
+      align-items: center;
+      padding: 0 2rem;
+      border-left: 1px solid var(--rule);
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: white;
+      background: var(--blue);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .nav-cta:hover { background: var(--blue-mid); }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 3rem 3rem 5rem;
+      overflow: hidden;
+      min-height: calc(100svh - 60px);
+    }
+
+    /* Grid background */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.35;
+      background-image:
+        linear-gradient(var(--rule) 1px, transparent 1px),
+        linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+      background-size: 80px 80px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 62rem;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(5rem, 22vw, 18rem);
+      line-height: 0.88;
+      letter-spacing: 0.01em;
+      color: var(--ink);
+    }
+
+    .hero-title .accent { color: var(--blue); }
+
+    .hero-rule {
+      width: 3rem;
+      height: 2px;
+      background: var(--blue);
+      margin: 2rem 0;
+    }
+
+    .hero-sub {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+      font-weight: 300;
+      line-height: 1.6;
+      color: var(--slate);
+      max-width: 38ch;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1.25rem;
+      margin-top: 2.5rem;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--blue);
+      color: white;
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 0.9rem 2.2rem;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .btn-primary:hover { background: var(--blue-mid); transform: translateY(-1px); }
+
+    .btn-ghost {
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-ghost:hover { color: var(--ink); border-color: var(--ink); }
+
+    /* ── Stats bar ── */
+    .stats {
+      background: var(--surface);
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .stat {
+      padding: 1.5rem 2rem;
+      text-align: center;
+      border-right: 1px solid var(--rule);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.25rem;
+      line-height: 1;
+      letter-spacing: 0.03em;
+      color: var(--blue);
+    }
+    .stat-label {
+      margin-top: 0.3rem;
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.58rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── Value strip ── */
+    .value-strip {
+      background: var(--ink);
+      padding: 4rem 3rem;
+    }
+    .value-strip blockquote {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(1.3rem, 3vw, 2rem);
+      font-weight: 300;
+      font-style: italic;
+      line-height: 1.55;
+      color: rgba(245,243,238,0.9);
+      max-width: 38rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .value-strip p {
+      margin-top: 1.5rem;
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(245,243,238,0.4);
+      text-align: center;
+    }
+
+    /* ── Footer ── */
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2rem 3rem;
+      background: var(--ink);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.04em;
+      color: var(--paper);
+      text-decoration: none;
+    }
+    .footer-note {
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(245,243,238,0.3);
+    }
+
+    /* ── Fade-in on load ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero-eyebrow { animation: fadeUp 0.5s ease both; animation-delay: 0.05s; }
+    .hero-title   { animation: fadeUp 0.6s ease both; animation-delay: 0.15s; }
+    .hero-rule    { animation: fadeUp 0.5s ease both; animation-delay: 0.3s; }
+    .hero-sub     { animation: fadeUp 0.5s ease both; animation-delay: 0.4s; }
+    .hero-actions { animation: fadeUp 0.5s ease both; animation-delay: 0.5s; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .hero { padding: 2rem 1.5rem 4rem; }
+      .stats { grid-template-columns: repeat(3, 1fr); }
+      .stat { padding: 1.25rem 0.75rem; }
+      .value-strip { padding: 3rem 1.5rem; }
+      footer { padding: 1.5rem; }
+      .nav-cta { padding: 0 1.25rem; }
+      .nav-logo { padding: 0 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-logo" href="{% url 'home' %}">Forma</a>
+    <div class="nav-spacer"></div>
+    <a class="nav-cta" href="{% url 'pages:profile_enquiry' %}">Enquire about a profile →</a>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div class="hero-inner">
+        <p class="hero-eyebrow">London · SW</p>
+        <h1 class="hero-title">Forma</h1>
+        <div class="hero-rule"></div>
+        <p class="hero-sub">People check you out before they reach out. Give them something worth finding.</p>
+      </div>
+    </section>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">£29</div>
+        <div class="stat-label">Per month</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">SW</div>
+        <div class="stat-label">London first</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">0</div>
+        <div class="stat-label">Commission fees</div>
+      </div>
     </div>
-    {% endif %}
-  </div>
-</section>
-{% endblock %}
+
+    <div class="value-strip" id="claim">
+      <blockquote>
+        &ldquo;People check you out before they reach out. Give them something worth finding.&rdquo;
+      </blockquote>
+      <p>Professional profiles for personal trainers · SW London</p>
+    </div>
+  </main>
+
+  <footer>
+    <a class="footer-logo" href="{% url 'home' %}">Forma</a>
+    <span class="footer-note">Professional profiles for personal trainers</span>
+  </footer>
+
+</body>
+</html>
