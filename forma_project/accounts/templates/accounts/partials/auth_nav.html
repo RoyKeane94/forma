@@ -2,20 +2,20 @@
   <div class="flex items-center px-8 border-r border-rule shrink-0">
     <a href="{% url 'home' %}" class="font-display text-[1.55rem] tracking-[0.1em] text-blue no-underline leading-none">Forma</a>
   </div>
-  <div class="flex-1 flex items-center justify-end px-8 gap-10">
+  <div class="flex-1 flex items-center justify-end flex-wrap gap-x-6 gap-y-1 px-6 sm:px-8 min-w-0 sm:gap-x-8 sm:gap-y-0">
     {% if user.is_authenticated %}
     <span class="font-body text-[0.8rem] font-medium tracking-wide-5 text-muted hidden sm:inline">{{ user.get_username }}</span>
     {% if user.is_superuser %}
-    <a href="{% url 'pages:staff_forma_profiles' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-blue border-b border-blue/30 pb-0.5 no-underline hover:text-ink hover:border-ink">Forma profiles</a>
+    <a href="{% url 'pages:staff_forma_profiles' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-blue border-b border-blue/30 pb-0.5 no-underline hover:text-ink hover:border-ink shrink-0">Forma profiles</a>
     {% endif %}
-    <a href="{% url 'pages:my_account' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 no-underline hover:text-ink hover:border-ink">My Account</a>
+    <a href="{% url 'pages:my_account' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 no-underline hover:text-ink hover:border-ink shrink-0">My Account</a>
     <form method="post" action="{% url 'accounts:logout' %}" class="inline m-0">
       {% csrf_token %}
       <button type="submit" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 bg-transparent cursor-pointer hover:text-ink hover:border-ink">Log out</button>
     </form>
     {% else %}
-    <a href="{% url 'accounts:login' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 no-underline hover:text-ink hover:border-ink">Log in</a>
-    <a href="{% url 'accounts:register' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-ink border-b border-ink pb-0.5 no-underline hover:text-blue hover:border-blue">Register</a>
+    <a href="{% url 'pages:profile_enquiry' %}" class="font-body text-[0.75rem] sm:text-[0.78rem] font-medium uppercase tracking-wide-2 text-blue border-b border-blue/30 pb-0.5 no-underline hover:border-blue shrink-0">Enquire about a profile</a>
+    <a href="{% url 'accounts:login' %}" class="font-body text-[0.75rem] sm:text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 no-underline hover:text-ink hover:border-ink shrink-0">Log in</a>
     {% endif %}
   </div>
 </nav>

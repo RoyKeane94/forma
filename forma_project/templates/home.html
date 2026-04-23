@@ -1,26 +1,12 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Forma</title>
-  <link rel="icon" href="{% static 'css/forma-favicon.svg' %}" type="image/svg+xml">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+{% extends "base.html" %}
+{% block title %}Forma{% endblock %}
+{# Landing page uses a full-bleed dark footer instead of the default base footer. #}
+{% block site_footer %}{% endblock %}
+{% block content_shell_class %}pt-[60px] min-h-screen flex flex-col{% endblock %}
+
+{% block extra_head %}
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    /* Flush to viewport: kill UA html/body offset (visible gap above nav) */
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-    }
-    html {
-      height: 100%;
-    }
-
-    :root {
+    .home-landing {
       --ink:     #1A1A18;
       --paper:   #F5F3EE;
       --surface: #EDEAE3;
@@ -29,88 +15,36 @@
       --slate:   #4A4845;
       --blue:    #1A3FCC;
       --blue-mid:#1535B0;
-      --blue-light: #EBF0FF;
     }
 
     html { scroll-behavior: smooth; }
 
-    body {
-      background: var(--paper);
-      color: var(--ink);
-      font-family: 'Barlow', sans-serif;
-      font-weight: 300;
-      -webkit-font-smoothing: antialiased;
-      min-height: 100%;
-      min-height: 100svh;
+    .home-landing {
       display: flex;
       flex-direction: column;
-      /* Space for fixed nav; nav sits at y=0 with no document gap above it */
-      padding-top: 60px;
+      flex: 1 1 auto;
+      min-width: 0;
+      min-height: 0;
     }
 
-    /* ── Nav ── */
-    nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 200;
-      display: flex;
-      align-items: stretch;
-      height: 60px;
-      border-bottom: 1px solid var(--rule);
-      background: var(--paper);
-    }
-    .nav-logo {
-      display: flex;
-      align-items: center;
-      padding: 0 2rem;
-      border-right: 1px solid var(--rule);
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.55rem;
-      letter-spacing: 0.04em;
-      color: var(--blue);
-      text-decoration: none;
-    }
-    .nav-spacer { flex: 1; }
-    .nav-cta {
-      display: flex;
-      align-items: center;
-      padding: 0 2rem;
-      border-left: 1px solid var(--rule);
-      font-family: 'Barlow', sans-serif;
-      font-size: 0.72rem;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: white;
-      background: var(--blue);
-      text-decoration: none;
-      transition: background 0.15s;
-    }
-    .nav-cta:hover { background: var(--blue-mid); }
-
-    main {
-      flex: 1;
+    .home-landing main {
+      /* No flex-grow — avoids a tall empty band between the value strip and the footer. */
       display: flex;
       flex-direction: column;
       min-width: 0;
     }
 
-    /* ── Hero ── */
-    .hero {
-      flex: 1;
+    /* ── Hero: content height only (no empty block below the CTA) ── */
+    .home-landing .hero {
       position: relative;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      padding: 3rem 3rem 5rem;
+      justify-content: flex-start;
+      padding: 1.5rem 3rem 0;
       overflow: hidden;
-      min-height: calc(100svh - 60px);
     }
 
-    /* Grid background */
-    .hero::before {
+    .home-landing .hero::before {
       content: '';
       position: absolute;
       inset: 0;
@@ -123,23 +57,13 @@
       z-index: 0;
     }
 
-    .hero-inner {
+    .home-landing .hero-inner {
       position: relative;
       z-index: 1;
       max-width: 62rem;
     }
 
-    .hero-eyebrow {
-      font-family: 'Barlow', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 500;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--blue);
-      margin-bottom: 1.25rem;
-    }
-
-    .hero-title {
+    .home-landing .hero-title {
       font-family: 'Bebas Neue', sans-serif;
       font-size: clamp(5rem, 22vw, 18rem);
       line-height: 0.88;
@@ -147,16 +71,16 @@
       color: var(--ink);
     }
 
-    .hero-title .accent { color: var(--blue); }
+    .home-landing .hero-title .accent { color: var(--blue); }
 
-    .hero-rule {
+    .home-landing .hero-rule {
       width: 3rem;
       height: 2px;
       background: var(--blue);
       margin: 2rem 0;
     }
 
-    .hero-sub {
+    .home-landing .hero-sub {
       font-family: 'Fraunces', serif;
       font-size: clamp(1.1rem, 2.2vw, 1.5rem);
       font-weight: 300;
@@ -165,15 +89,17 @@
       max-width: 38ch;
     }
 
-    .hero-actions {
+    .home-landing .hero-actions {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 1.25rem;
       margin-top: 2.5rem;
+      margin-bottom: 0;
+      padding-bottom: 0;
     }
 
-    .btn-primary {
+    .home-landing .btn-primary {
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
@@ -188,9 +114,9 @@
       padding: 0.9rem 2.2rem;
       transition: background 0.15s, transform 0.15s;
     }
-    .btn-primary:hover { background: var(--blue-mid); transform: translateY(-1px); }
+    .home-landing .btn-primary:hover { background: var(--blue-mid); transform: translateY(-1px); }
 
-    .btn-ghost {
+    .home-landing .btn-ghost {
       font-family: 'Barlow', sans-serif;
       font-size: 0.75rem;
       letter-spacing: 0.16em;
@@ -201,30 +127,29 @@
       padding-bottom: 2px;
       transition: color 0.15s, border-color 0.15s;
     }
-    .btn-ghost:hover { color: var(--ink); border-color: var(--ink); }
+    .home-landing .btn-ghost:hover { color: var(--ink); border-color: var(--ink); }
 
-    /* ── Stats bar ── */
-    .stats {
+    .home-landing .stats {
       background: var(--surface);
       border-top: 1px solid var(--rule);
       border-bottom: 1px solid var(--rule);
       display: grid;
       grid-template-columns: repeat(3, 1fr);
     }
-    .stat {
+    .home-landing .stat {
       padding: 1.5rem 2rem;
       text-align: center;
       border-right: 1px solid var(--rule);
     }
-    .stat:last-child { border-right: none; }
-    .stat-num {
+    .home-landing .stat:last-child { border-right: none; }
+    .home-landing .stat-num {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 2.25rem;
       line-height: 1;
       letter-spacing: 0.03em;
       color: var(--blue);
     }
-    .stat-label {
+    .home-landing .stat-label {
       margin-top: 0.3rem;
       font-family: 'Barlow', sans-serif;
       font-size: 0.58rem;
@@ -234,12 +159,11 @@
       color: var(--muted);
     }
 
-    /* ── Value strip ── */
-    .value-strip {
+    .home-landing .value-strip {
       background: var(--ink);
       padding: 4rem 3rem;
     }
-    .value-strip blockquote {
+    .home-landing .value-strip blockquote {
       font-family: 'Fraunces', serif;
       font-size: clamp(1.3rem, 3vw, 2rem);
       font-weight: 300;
@@ -250,19 +174,7 @@
       margin: 0 auto;
       text-align: center;
     }
-    .value-strip p {
-      margin-top: 1.5rem;
-      font-family: 'Barlow', sans-serif;
-      font-size: 0.72rem;
-      font-weight: 500;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: rgba(245,243,238,0.4);
-      text-align: center;
-    }
-
-    /* ── Footer ── */
-    footer {
+    .home-landing footer {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -272,14 +184,14 @@
       gap: 1rem;
       flex-wrap: wrap;
     }
-    .footer-logo {
+    .home-landing .footer-logo {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 1.4rem;
       letter-spacing: 0.04em;
       color: var(--paper);
       text-decoration: none;
     }
-    .footer-note {
+    .home-landing .footer-note {
       font-family: 'Barlow', sans-serif;
       font-size: 0.65rem;
       letter-spacing: 0.16em;
@@ -287,44 +199,35 @@
       color: rgba(245,243,238,0.3);
     }
 
-    /* ── Fade-in on load ── */
-    @keyframes fadeUp {
+    @keyframes homeFadeUp {
       from { opacity: 0; transform: translateY(18px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .hero-eyebrow { animation: fadeUp 0.5s ease both; animation-delay: 0.05s; }
-    .hero-title   { animation: fadeUp 0.6s ease both; animation-delay: 0.15s; }
-    .hero-rule    { animation: fadeUp 0.5s ease both; animation-delay: 0.3s; }
-    .hero-sub     { animation: fadeUp 0.5s ease both; animation-delay: 0.4s; }
-    .hero-actions { animation: fadeUp 0.5s ease both; animation-delay: 0.5s; }
+    .home-landing .hero-title   { animation: homeFadeUp 0.6s ease both; animation-delay: 0.05s; }
+    .home-landing .hero-rule    { animation: homeFadeUp 0.5s ease both; animation-delay: 0.15s; }
+    .home-landing .hero-sub     { animation: homeFadeUp 0.5s ease both; animation-delay: 0.25s; }
+    .home-landing .hero-actions { animation: homeFadeUp 0.5s ease both; animation-delay: 0.35s; }
 
-    /* ── Responsive ── */
     @media (max-width: 600px) {
-      .hero { padding: 2rem 1.5rem 4rem; }
-      .stats { grid-template-columns: repeat(3, 1fr); }
-      .stat { padding: 1.25rem 0.75rem; }
-      .value-strip { padding: 3rem 1.5rem; }
-      footer { padding: 1.5rem; }
-      .nav-cta { padding: 0 1.25rem; }
-      .nav-logo { padding: 0 1.25rem; }
+      .home-landing .hero { padding: 1.25rem 1.5rem 0; }
+      .home-landing .stat { padding: 1.25rem 0.75rem; }
+      .home-landing .value-strip { padding: 3rem 1.5rem; }
+      .home-landing footer { padding: 1.5rem; }
     }
   </style>
-</head>
-<body>
+{% endblock %}
 
-  <nav>
-    <a class="nav-logo" href="{% url 'home' %}">Forma</a>
-    <div class="nav-spacer"></div>
-    <a class="nav-cta" href="{% url 'pages:profile_enquiry' %}">Enquire about a profile →</a>
-  </nav>
-
+{% block body %}
+<div class="home-landing flex min-h-0 w-full min-w-0 flex-1 flex-col">
   <main>
     <section class="hero">
       <div class="hero-inner">
-        <p class="hero-eyebrow">London · SW</p>
         <h1 class="hero-title">Forma</h1>
         <div class="hero-rule"></div>
-        <p class="hero-sub">People check you out before they reach out. Give them something worth finding.</p>
+        <p class="hero-sub">Professional profiles for personal trainers</p>
+        <div class="hero-actions">
+          <a href="{% url 'pages:profile_enquiry' %}" class="btn-primary">Enquire about a profile →</a>
+        </div>
       </div>
     </section>
 
@@ -347,7 +250,6 @@
       <blockquote>
         &ldquo;People check you out before they reach out. Give them something worth finding.&rdquo;
       </blockquote>
-      <p>Professional profiles for personal trainers · SW London</p>
     </div>
   </main>
 
@@ -355,6 +257,5 @@
     <a class="footer-logo" href="{% url 'home' %}">Forma</a>
     <span class="footer-note">Professional profiles for personal trainers</span>
   </footer>
-
-</body>
-</html>
+</div>
+{% endblock %}
