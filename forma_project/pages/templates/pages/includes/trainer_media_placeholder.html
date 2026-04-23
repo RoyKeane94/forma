@@ -1,5 +1,5 @@
-{# Stylish placeholder when portrait / gallery slot has no image yet. #}
-<div class="flex h-full min-h-0 w-full flex-col items-center justify-center gap-2 border border-dashed border-rule bg-gradient-to-br from-blue-light/70 via-surface to-paper px-4 py-8 text-center">
+{# Fills the parent (e.g. portrait frame, gallery cell) when no image yet. #}
+<div class="flex h-full min-h-0 w-full flex-1 flex-col items-center justify-center gap-2 border border-dashed border-rule bg-gradient-to-br from-blue-light/70 via-surface to-paper px-4 py-8 text-center self-stretch">
   <span class="font-display text-[clamp(1.35rem,3.5vw,2.25rem)] leading-none tracking-[0.14em] text-blue/25 select-none" aria-hidden="true">◇</span>
   <span class="font-body text-[0.58rem] font-semibold uppercase tracking-[0.26em] text-muted">Coming soon</span>
   {% if caption %}
