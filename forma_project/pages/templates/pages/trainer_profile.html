@@ -473,7 +473,6 @@
       <h2 class="mb-6 font-display text-[clamp(3rem,6vw,5.5rem)] leading-[0.9] tracking-[0.02em] text-ink">Start<br>for <span class="text-blue">real</span><br>this time.</h2>
       <div class="flex flex-wrap gap-1">
         {% if profile.primary_area %}<span class="border border-rule bg-paper px-2 py-1 font-body text-[0.62rem] font-medium uppercase tracking-wide-3 text-slate">{{ profile.primary_area }}</span>{% endif %}
-        {% if profile.postcode_district %}<span class="border border-rule bg-paper px-2 py-1 font-body text-[0.62rem] font-medium uppercase tracking-wide-3 text-slate">{{ profile.postcode_district }}</span>{% endif %}
         {% for name in profile.other_areas_display_labels %}
         <span class="border border-rule bg-paper px-2 py-1 font-body text-[0.62rem] font-medium uppercase tracking-wide-3 text-slate">{{ name }}</span>
         {% endfor %}
