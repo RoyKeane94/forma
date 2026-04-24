@@ -230,7 +230,7 @@
 
 {% if featured_review %}
 <section class="border-t border-rule bg-ink px-page py-section" aria-label="Featured testimonial">
-  <blockquote class="mx-auto max-w-[40rem] text-center">
+  <blockquote class="mx-auto w-full max-w-5xl text-center">
     <p class="font-serif text-[clamp(1.35rem,3.5vw,2rem)] font-light italic leading-[1.55] text-paper/90">&ldquo;{{ featured_review.quote }}&rdquo;</p>
     <footer class="mt-6 font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-paper/45">— {{ featured_review.name }}{% if featured_review.focus %} · {{ featured_review.focus }}{% endif %}</footer>
   </blockquote>
