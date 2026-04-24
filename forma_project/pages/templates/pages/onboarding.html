@@ -308,25 +308,81 @@
           class="mb-10 rounded-sm border border-rule/80 bg-surface/50 p-5 sm:p-6 {% if not form.training_locations.value or 'gym' not in form.training_locations.value %}hidden{% endif %}"
         >
           <p class="mb-1 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Gyms you use <span class="ml-1 font-normal normal-case tracking-normal text-muted">(optional)</span></p>
-          <p class="mb-4 max-w-[60ch] font-body text-[0.7rem] text-muted">If you train in commercial gyms, add the name and a rough area. You can leave rows blank.</p>
+          <p class="mb-4 max-w-[60ch] font-body text-[0.7rem] text-muted">Add each gym, pick its <span class="font-medium text-ink">area</span> from the list, or add a new area with the button on that row.</p>
           {{ gym_formset.management_form }}
-          {% if gym_formset.non_form_errors %}
-          <ul class="mb-3 list-none text-[0.65rem] text-danger">{% for e in gym_formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+          {% if gym_formset.non_field_errors %}
+          <ul class="mb-3 list-none text-[0.65rem] text-danger">{% for e in gym_formset.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
           {% endif %}
-          <div class="flex flex-col gap-4">
+          <div id="gym-form-rows" class="flex flex-col gap-0">
             {% for gf in gym_formset %}
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {% for h in gf.hidden_fields %}{{ h }}{% endfor %}
-              <div>
-                <label class="block font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-ink" for="{{ gf.name.id_for_label }}">{{ gf.name.label }}</label>
-                {{ gf.name }}{% if gf.name.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in gf.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            <div
+              class="gym-form-row border-b border-rule/80 py-5 first:pt-0 last:border-b-0 last:pb-0 {% if forloop.counter0 >= gym_visible_forms|default:1 %}hidden{% endif %}"
+              data-gym-form-row
+            >
+              <p class="mb-3 font-body text-[0.58rem] font-semibold uppercase tracking-[0.15em] text-muted">Gym {{ forloop.counter }}</p>
+              {% if gf.non_field_errors %}
+              <ul class="mb-3 list-none text-[0.65rem] text-danger">{% for e in gf.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+              {% endif %}
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {% for h in gf.hidden_fields %}{{ h }}{% endfor %}
+                <div>
+                  <label class="block font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-ink" for="{{ gf.name.id_for_label }}">{{ gf.name.label }}</label>
+                  {{ gf.name }}{% if gf.name.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in gf.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                <div>
+                  <label class="block font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-ink" for="{{ gf.location_area.id_for_label }}">{{ gf.location_area.label }}</label>
+                  <div
+                    class="forma-combobox"
+                    data-forma-combobox
+                    data-combobox-placeholder="{{ gf.location_area.field.empty_label|default:'Select an area'|escape }}"
+                  >
+                    {{ gf.location_area }}
+                  </div>
+                  {% if gf.location_area.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in gf.location_area.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
               </div>
-              <div>
-                <label class="block font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-ink" for="{{ gf.location.id_for_label }}">{{ gf.location.label }}</label>
-                {{ gf.location }}{% if gf.location.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in gf.location.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+              <div class="mt-3 sm:mt-4">
+                <button
+                  type="button"
+                  class="gym-toggle-add-area font-body text-[0.64rem] font-medium uppercase tracking-wide-3 text-blue underline decoration-blue/30 underline-offset-2 transition-colors hover:text-ink hover:decoration-ink"
+                  data-gym-add-toggle
+                  data-panel-id="gym-add-area-panel-{{ forloop.counter0 }}"
+                  aria-expanded="{% if gf.location_add_name.errors or gf.location_add_outward.errors %}true{% else %}false{% endif %}"
+                >
+                  <span class="gym-toggle-add-label-open{% if gf.location_add_name.errors or gf.location_add_outward.errors %} hidden{% endif %}">My area is not in the list</span>
+                  <span class="gym-toggle-add-label-close{% if not gf.location_add_name.errors and not gf.location_add_outward.errors %} hidden{% endif %}">Hide “add an area” fields</span>
+                </button>
+              </div>
+              <div
+                id="gym-add-area-panel-{{ forloop.counter0 }}"
+                class="gym-add-area-panel mt-3 rounded-sm border border-dashed border-rule bg-paper/40 px-3 py-3 sm:px-4{% if not gf.location_add_name.errors and not gf.location_add_outward.errors %} hidden{% endif %}"
+                data-gym-add-panel
+              >
+                <p class="mb-2 font-body text-[0.6rem] font-semibold uppercase tracking-wide-3 text-muted">Add a new area to the catalogue</p>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label class="block font-body text-[0.6rem] font-medium uppercase tracking-wide-3 text-ink" for="{{ gf.location_add_name.id_for_label }}">{{ gf.location_add_name.label }}</label>
+                    {{ gf.location_add_name }}{% if gf.location_add_name.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in gf.location_add_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                  </div>
+                  <div>
+                    <label class="block font-body text-[0.6rem] font-medium uppercase tracking-wide-3 text-ink" for="{{ gf.location_add_outward.id_for_label }}">{{ gf.location_add_outward.label }}</label>
+                    {{ gf.location_add_outward }}{% if gf.location_add_outward.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in gf.location_add_outward.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                    <p class="mt-1 font-body text-[0.6rem] font-light text-muted">UK outward only (e.g. TW10). We use this to file the new area; if you have set a primary area above, you can leave this blank and we will use that district.</p>
+                  </div>
+                </div>
               </div>
             </div>
             {% endfor %}
+          </div>
+          <div class="mt-4" id="gym-add-another-wrap">
+            <button
+              type="button"
+              id="gym-add-another-btn"
+              class="inline-flex w-full sm:w-auto items-center justify-center gap-2 border border-ink bg-transparent px-[1.1rem] py-2.5 font-body text-[0.65rem] font-medium uppercase tracking-[0.1em] text-ink transition-colors duration-200 hover:bg-ink hover:text-paper sm:py-2{% if gym_visible_forms|default:1 >= gym_max_forms|default:5 %} hidden{% endif %}"
+            >
+              <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              Add another gym
+            </button>
           </div>
         </div>
         {% endif %}
@@ -1114,18 +1170,72 @@
     var form = document.getElementById('onboarding-step-form');
     if (!form) return;
     var block = document.getElementById('trainer-gym-block');
-    if (!block) return;
-    function hasGymChecked() {
-      var g = form.querySelector('input[name="training_locations"][value="gym"]');
-      return g && g.checked;
+    if (block) {
+      function hasGymChecked() {
+        var g = form.querySelector('input[name="training_locations"][value="gym"]');
+        return g && g.checked;
+      }
+      function syncGymBlock() {
+        block.classList.toggle('hidden', !hasGymChecked());
+      }
+      form.querySelectorAll('input[name="training_locations"]').forEach(function (el) {
+        el.addEventListener('change', syncGymBlock);
+      });
+      syncGymBlock();
     }
-    function syncGymBlock() {
-      block.classList.toggle('hidden', !hasGymChecked());
+    function syncGymAddAnotherVisibility() {
+      var btn = document.getElementById('gym-add-another-btn');
+      if (!btn) return;
+      var hidden = form.querySelectorAll('[data-gym-form-row].hidden');
+      btn.classList.toggle('hidden', hidden.length === 0);
     }
-    form.querySelectorAll('input[name="training_locations"]').forEach(function (el) {
-      el.addEventListener('change', syncGymBlock);
+    var addGymBtn = document.getElementById('gym-add-another-btn');
+    if (addGymBtn) {
+      addGymBtn.addEventListener('click', function () {
+        var list = form.querySelectorAll('[data-gym-form-row].hidden');
+        if (!list || !list.length) return;
+        list[0].classList.remove('hidden');
+        list[0].querySelectorAll('[data-forma-combobox]:not(.forma-combobox--enhanced)').forEach(function (wrap) {
+          enhanceCombobox(wrap);
+        });
+        syncGymAddAnotherVisibility();
+      });
+      syncGymAddAnotherVisibility();
+    }
+    function syncGymAddToggleState(btn) {
+      var id = btn.getAttribute('data-panel-id');
+      var p = id ? document.getElementById(id) : null;
+      if (!p) return;
+      var open = !p.classList.contains('hidden');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      var lo = btn.querySelector('.gym-toggle-add-label-open');
+      var lc = btn.querySelector('.gym-toggle-add-label-close');
+      if (lo) lo.classList.toggle('hidden', open);
+      if (lc) lc.classList.toggle('hidden', !open);
+    }
+    form.querySelectorAll('[data-gym-add-toggle]').forEach(function (btn) {
+      syncGymAddToggleState(btn);
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-panel-id');
+        var p = id ? document.getElementById(id) : null;
+        if (!p) return;
+        p.classList.toggle('hidden');
+        syncGymAddToggleState(btn);
+      });
     });
-    syncGymBlock();
+    form.querySelectorAll('[data-gym-add-panel] input').forEach(function (inp) {
+      var n = inp.getAttribute('name') || '';
+      if (n.indexOf('location_add_name') < 0 && n.indexOf('location_add_outward') < 0) return;
+      if (!(inp.value || '').trim()) return;
+      var p = inp.closest('[data-gym-add-panel]');
+      if (!p) return;
+      p.classList.remove('hidden');
+      var id = p.getAttribute('id');
+      if (id) {
+        var b = form.querySelector('[data-panel-id="' + id + '"]');
+        if (b) syncGymAddToggleState(b);
+      }
+    });
   })();
   {% endif %}
 })();

@@ -903,7 +903,7 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
         'price_tiers',
         'gallery_photos',
         'who_i_work_with_items',
-        'gyms',
+        Prefetch('gyms', queryset=TrainerGym.objects.select_related('location_area__district')),
     )
     if url_key is not None:
         profile = get_object_or_404(
@@ -954,7 +954,7 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
     trainer_gyms = [
         g
         for g in profile.gyms.all()
-        if (g.name or '').strip() or (g.location or '').strip()
+        if (g.name or '').strip() or g.location_area_id
     ]
 
     context = {
@@ -1010,6 +1010,34 @@ def _pricing_most_popular_row_ok(meta, pfs) -> bool:
 
 def _pricing_step_show_add_button(formset) -> bool:
     return len(formset.forms) < PRICE_TIER_MAX_NUM
+
+
+GYM_FORM_MAX = 5
+
+
+def _gym_forms_visible_count(forms, post_data) -> int:
+    """How many gym form rows to show (1–GYM_FORM_MAX). GET: from saved instance only. POST: data + errors."""
+    n = 1
+    for i, f in enumerate(forms):
+        if post_data is not None:
+            if f.errors:
+                n = max(n, i + 1)
+            pfx = f.add_prefix('name')
+            if (post_data.get(pfx) or '').strip():
+                n = max(n, i + 1)
+            pfx = f.add_prefix('location_area')
+            if post_data.get(pfx):
+                n = max(n, i + 1)
+            for suffix in ('location_add_name', 'location_add_outward'):
+                pfx = f.add_prefix(suffix)
+                if (post_data.get(pfx) or '').strip():
+                    n = max(n, i + 1)
+        else:
+            inst = getattr(f, 'instance', None)
+            if inst and getattr(inst, 'pk', None):
+                if (getattr(inst, 'name', None) or '').strip() or getattr(inst, 'location_area_id', None):
+                    n = max(n, i + 1)
+    return max(1, min(GYM_FORM_MAX, n))
 
 
 def _apply_pricing_most_popular(profile: TrainerProfile, meta_cleaned: dict) -> None:
@@ -1094,12 +1122,22 @@ def _process_step_post(
             prefix='gyms',
         )
         if not form.is_valid():
-            return False, {'form': form, 'gym_formset': gym_formset}
+            return False, {
+                'form': form,
+                'gym_formset': gym_formset,
+                'gym_visible_forms': _gym_forms_visible_count(gym_formset.forms, request.POST),
+                'gym_max_forms': GYM_FORM_MAX,
+            }
         gym_locs = list(form.cleaned_data.get('training_locations') or [])
         gym_in = 'gym' in gym_locs
         if gym_in:
             if not gym_formset.is_valid():
-                return False, {'form': form, 'gym_formset': gym_formset}
+                return False, {
+                    'form': form,
+                    'gym_formset': gym_formset,
+                    'gym_visible_forms': _gym_forms_visible_count(gym_formset.forms, request.POST),
+                    'gym_max_forms': GYM_FORM_MAX,
+                }
             with transaction.atomic():
                 form.save()
                 gym_formset.save()
@@ -1107,7 +1145,7 @@ def _process_step_post(
             return True, {}
         with transaction.atomic():
             form.save()
-            TrainerGym.objects.filter(profile=profile).update(name='', location='')
+            TrainerGym.objects.filter(profile=profile).update(name='', location_area_id=None)
         _advance_if_needed()
         return True, {}
 
@@ -1176,10 +1214,13 @@ def _load_step_get_forms(context: dict, profile: TrainerProfile, step_idx: int) 
     elif step_idx == 3:
         ensure_onboarding_children(profile)
         context['form'] = OnboardingStep4Form(instance=profile)
-        context['gym_formset'] = TrainerGymFormSet(
+        gfs = TrainerGymFormSet(
             instance=profile,
             prefix='gyms',
         )
+        context['gym_formset'] = gfs
+        context['gym_visible_forms'] = _gym_forms_visible_count(gfs.forms, None)
+        context['gym_max_forms'] = GYM_FORM_MAX
     elif step_idx == 4:
         fs = TrainerPriceTierFormSet(instance=profile)
         context['formset'] = fs

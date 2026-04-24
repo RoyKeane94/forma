@@ -5,7 +5,7 @@ View wiring (call `ensure_onboarding_children(profile)` before step 0 GET/POST s
   Step 1: OnboardingStep1Form + TrainerWhoIWorkWithFormSet (identity, tagline, bio, who I work with rows, contact, portrait)
   Step 2: OnboardingStep2QuickForm + TrainerAdditionalQualificationFormSet (up to 10 rows)
   Step 3: TrainerSpecialismFormSet (up to four rows: catalog dropdown or new name + optional description)
-  Step 4: OnboardingStep4Form + TrainerGymFormSet (saves training_locations, other_areas, and up to 5 optional gym name/location rows when "Gym" is selected;
+  Step 4: OnboardingStep4Form + TrainerGymFormSet (saves training_locations, other_areas, and up to 5 optional gym rows: name + PrimaryArea location when "Gym" is selected, or new area via ensure_for_custom_entry;
   other_areas: catalogue names and/or {name, outward}; custom entries are copied into PrimaryArea on save)
   Step 5: OnboardingStep5MetaForm + TrainerPriceTierFormSet (up to 10 tiers + one blank row to add more)
   Step 6: OnboardingStep6InstagramForm (intro video, show toggle, Instagram) + TrainerGalleryPhotoFormSet
@@ -604,12 +604,39 @@ class OnboardingStep4Form(forms.ModelForm):
 
 
 class TrainerGymForm(forms.ModelForm):
+    """Gym name + area from shared PrimaryArea catalogue, or add a new area (like other areas)."""
+
+    location_add_name = forms.CharField(
+        required=False,
+        label='New area name',
+        widget=forms.TextInput(
+            attrs=_forma_attrs(
+                {
+                    'placeholder': 'If your area is not in the list above',
+                    'autocomplete': 'off',
+                }
+            )
+        ),
+    )
+    location_add_outward = forms.CharField(
+        required=False,
+        label='Postcode district',
+        widget=forms.TextInput(
+            attrs=_forma_attrs(
+                {
+                    'placeholder': 'e.g. SW12 or TW10',
+                    'autocomplete': 'off',
+                }
+            )
+        ),
+    )
+
     class Meta:
         model = TrainerGym
-        fields = ('name', 'location')
+        fields = ('name', 'location_area')
         labels = {
             'name': 'Gym name',
-            'location': 'Location',
+            'location_area': 'Location (area)',
         }
         widgets = {
             'name': forms.TextInput(
@@ -620,15 +647,75 @@ class TrainerGymForm(forms.ModelForm):
                     }
                 )
             ),
-            'location': forms.TextInput(
+            'location_area': forms.Select(
                 attrs=_forma_attrs(
                     {
-                        'placeholder': 'e.g. Battersea, near the power station',
-                        'autocomplete': 'off',
+                        'data-gym-area-select': '1',
                     }
                 )
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        f = self.fields['location_area']
+        f.queryset = _primary_area_queryset()
+        f.required = False
+        f.empty_label = 'Select an area from the list'
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.errors:
+            return cleaned
+        name = (cleaned.get('name') or '').strip()
+        area = cleaned.get('location_area')
+        add_n = (cleaned.get('location_add_name') or '').strip()
+        add_o = (cleaned.get('location_add_outward') or '').strip()
+        if not name and not area and not add_n and not add_o:
+            return cleaned
+        if add_n and area:
+            self.add_error(
+                None,
+                'For each row, use either a location from the list or the “add area” fields — not both.',
+            )
+            return cleaned
+        profile = None
+        if self.instance and getattr(self.instance, 'profile_id', None):
+            if getattr(self.instance, 'profile', None) is not None:
+                profile = self.instance.profile
+            else:
+                profile = TrainerProfile.objects.filter(pk=self.instance.profile_id).first()
+        if add_n:
+            outward_val = add_o
+            if outward_val:
+                try:
+                    validated_outward = validate_uk_postcode_outward(outward_val)
+                except ValidationError as e:
+                    self.add_error('location_add_outward', e)
+                    return cleaned
+            else:
+                validated_outward = ''
+            fallback = None
+            if profile and profile.primary_area_id:
+                fallback = profile.primary_area.district
+            if not validated_outward and not fallback:
+                self.add_error(
+                    'location_add_outward',
+                    'Enter a postcode district for this new area, or set your primary area above and try again with an empty district.',
+                )
+                return cleaned
+            created = PrimaryArea.ensure_for_custom_entry(
+                add_n,
+                validated_outward,
+                fallback_district=fallback,
+            )
+            if not created:
+                self.add_error('location_add_name', 'We could not add that area. Check the name and district, then try again.')
+                return cleaned
+            cleaned['location_area'] = created
+        if name and not cleaned.get('location_area'):
+            self.add_error('location_area', 'Select a location, or add a new one below the dropdown.')
+        return cleaned
 
 
 class _TrainerGymFormSetBase(BaseInlineFormSet):

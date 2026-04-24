@@ -60,7 +60,8 @@ class TrainerGymInline(admin.TabularInline):
     model = TrainerGym
     extra = 0
     max_num = 5
-    fields = ('order', 'name', 'location')
+    fields = ('order', 'name', 'location_area')
+    autocomplete_fields = ('location_area',)
 
 
 class TrainerGalleryPhotoInline(admin.TabularInline):

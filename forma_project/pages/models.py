@@ -583,10 +583,13 @@ class TrainerGym(models.Model):
         blank=True,
         help_text="Venue or chain name, e.g. a specific gym’s name",
     )
-    location = models.CharField(
-        max_length=300,
+    location_area = models.ForeignKey(
+        PrimaryArea,
+        null=True,
         blank=True,
-        help_text='e.g. neighbourhood, area, or part of the city (not a full address required)',
+        on_delete=models.SET_NULL,
+        related_name='trainer_gyms',
+        help_text='Coverage area for this venue (from the shared catalogue, or add one in onboarding).',
     )
 
     class Meta:
@@ -822,6 +825,6 @@ def ensure_onboarding_children(profile: TrainerProfile) -> None:
         TrainerGym.objects.get_or_create(
             profile=profile,
             order=order,
-            defaults={'name': '', 'location': ''},
+            defaults={'name': ''},
         )
     TrainerGym.objects.filter(profile=profile, order__gt=5).delete()

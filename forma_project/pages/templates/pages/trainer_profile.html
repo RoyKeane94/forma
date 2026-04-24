@@ -348,7 +348,7 @@
         <ul class="m-0 flex list-none flex-col gap-2 p-0">
           {% for g in trainer_gyms %}
           <li class="font-body text-[0.8rem] leading-relaxed text-slate">
-            {% if g.name %}<span class="font-medium text-ink">{{ g.name }}</span>{% endif %}{% if g.name and g.location %}<span class="text-muted"> · </span>{% endif %}{% if g.location %}{{ g.location }}{% endif %}
+            {% if g.name %}<span class="font-medium text-ink">{{ g.name }}</span>{% endif %}{% if g.name and g.location_area %}<span class="text-muted"> · </span>{% endif %}{% if g.location_area %}{{ g.location_area.name }}{% if g.location_area.district %} <span class="text-muted">({{ g.location_area.district.code }})</span>{% endif %}{% endif %}
           </li>
           {% endfor %}
         </ul>
