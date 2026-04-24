@@ -302,6 +302,34 @@
           </div>
           {% if form.training_locations.errors %}<ul class="mt-2 list-none text-[0.65rem] text-danger">{% for e in form.training_locations.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
+        {% if gym_formset %}
+        <div
+          id="trainer-gym-block"
+          class="mb-10 rounded-sm border border-rule/80 bg-surface/50 p-5 sm:p-6 {% if not form.training_locations.value or 'gym' not in form.training_locations.value %}hidden{% endif %}"
+        >
+          <p class="mb-1 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Gyms you use <span class="ml-1 font-normal normal-case tracking-normal text-muted">(optional)</span></p>
+          <p class="mb-4 max-w-[60ch] font-body text-[0.7rem] text-muted">If you train in commercial gyms, add the name and a rough area. You can leave rows blank.</p>
+          {{ gym_formset.management_form }}
+          {% if gym_formset.non_form_errors %}
+          <ul class="mb-3 list-none text-[0.65rem] text-danger">{% for e in gym_formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+          {% endif %}
+          <div class="flex flex-col gap-4">
+            {% for gf in gym_formset %}
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {% for h in gf.hidden_fields %}{{ h }}{% endfor %}
+              <div>
+                <label class="block font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-ink" for="{{ gf.name.id_for_label }}">{{ gf.name.label }}</label>
+                {{ gf.name }}{% if gf.name.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in gf.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+              </div>
+              <div>
+                <label class="block font-body text-[0.62rem] font-semibold uppercase tracking-wide-3 text-ink" for="{{ gf.location.id_for_label }}">{{ gf.location.label }}</label>
+                {{ gf.location }}{% if gf.location.errors %}<ul class="mt-1 list-none text-[0.65rem] text-danger">{% for e in gf.location.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
         <hr class="my-10 border-0 border-t border-rule">
         <div class="mb-10 flex max-w-md flex-col gap-2">
           <label class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink" for="{{ form.primary_area.id_for_label }}">{{ form.primary_area.label }}</label>
@@ -1078,6 +1106,26 @@
     for (i = 0; i < 4; i += 1) {
       bindRow(i);
     }
+  })();
+  {% endif %}
+
+  {% if step == 3 %}
+  (function () {
+    var form = document.getElementById('onboarding-step-form');
+    if (!form) return;
+    var block = document.getElementById('trainer-gym-block');
+    if (!block) return;
+    function hasGymChecked() {
+      var g = form.querySelector('input[name="training_locations"][value="gym"]');
+      return g && g.checked;
+    }
+    function syncGymBlock() {
+      block.classList.toggle('hidden', !hasGymChecked());
+    }
+    form.querySelectorAll('input[name="training_locations"]').forEach(function (el) {
+      el.addEventListener('change', syncGymBlock);
+    });
+    syncGymBlock();
   })();
   {% endif %}
 })();

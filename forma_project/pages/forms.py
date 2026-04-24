@@ -5,8 +5,8 @@ View wiring (call `ensure_onboarding_children(profile)` before step 0 GET/POST s
   Step 1: OnboardingStep1Form + TrainerWhoIWorkWithFormSet (identity, tagline, bio, who I work with rows, contact, portrait)
   Step 2: OnboardingStep2QuickForm + TrainerAdditionalQualificationFormSet (up to 10 rows)
   Step 3: TrainerSpecialismFormSet (up to four rows: catalog dropdown or new name + optional description)
-  Step 4: OnboardingStep4Form (saves training_locations + other_areas JSON: catalogue names and/or {name, outward};
-  custom entries are copied into PrimaryArea on save so they join the shared catalogue)
+  Step 4: OnboardingStep4Form + TrainerGymFormSet (saves training_locations, other_areas, and up to 5 optional gym name/location rows when "Gym" is selected;
+  other_areas: catalogue names and/or {name, outward}; custom entries are copied into PrimaryArea on save)
   Step 5: OnboardingStep5MetaForm + TrainerPriceTierFormSet (up to 10 tiers + one blank row to add more)
   Step 6: OnboardingStep6InstagramForm (intro video, show toggle, Instagram) + TrainerGalleryPhotoFormSet
   Step 7: OnboardingStep7ReviewsForm → TrainerProfile.client_reviews (max 3) + featured_review_slot
@@ -31,6 +31,7 @@ from .models import (
     SpecialismCatalog,
     TrainerAdditionalQualification,
     TrainerGalleryPhoto,
+    TrainerGym,
     TrainerPriceTier,
     TrainerProfile,
     TrainerSpecialism,
@@ -600,6 +601,51 @@ class OnboardingStep4Form(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class TrainerGymForm(forms.ModelForm):
+    class Meta:
+        model = TrainerGym
+        fields = ('name', 'location')
+        labels = {
+            'name': 'Gym name',
+            'location': 'Location',
+        }
+        widgets = {
+            'name': forms.TextInput(
+                attrs=_forma_attrs(
+                    {
+                        'placeholder': 'e.g. Third Space, Virgin Active',
+                        'autocomplete': 'organization',
+                    }
+                )
+            ),
+            'location': forms.TextInput(
+                attrs=_forma_attrs(
+                    {
+                        'placeholder': 'e.g. Battersea, near the power station',
+                        'autocomplete': 'off',
+                    }
+                )
+            ),
+        }
+
+
+class _TrainerGymFormSetBase(BaseInlineFormSet):
+    pass
+
+
+TrainerGymFormSet = inlineformset_factory(
+    TrainerProfile,
+    TrainerGym,
+    form=TrainerGymForm,
+    formset=_TrainerGymFormSetBase,
+    extra=0,
+    can_delete=False,
+    max_num=5,
+    min_num=0,
+    validate_max=True,
+)
 
 
 # ── Step 5 ──────────────────────────────────────────────────────────────────

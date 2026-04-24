@@ -9,6 +9,7 @@ from .models import (
     TrainerAdditionalQualification,
     TrainerGalleryPhoto,
     TrainerPriceTier,
+    TrainerGym,
     TrainerProfile,
     TrainerSpecialism,
     TrainerWhoIWorkWithItem,
@@ -53,6 +54,13 @@ class TrainerPriceTierInline(admin.TabularInline):
     model = TrainerPriceTier
     extra = 0
     fields = ('order', 'label', 'unit_note', 'price', 'is_most_popular')
+
+
+class TrainerGymInline(admin.TabularInline):
+    model = TrainerGym
+    extra = 0
+    max_num = 5
+    fields = ('order', 'name', 'location')
 
 
 class TrainerGalleryPhotoInline(admin.TabularInline):
@@ -173,6 +181,7 @@ class TrainerProfileAdmin(admin.ModelAdmin):
         TrainerWhoIWorkWithInline,
         TrainerAdditionalQualificationInline,
         TrainerSpecialismInline,
+        TrainerGymInline,
         TrainerPriceTierInline,
         TrainerGalleryPhotoInline,
     )

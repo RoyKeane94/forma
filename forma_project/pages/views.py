@@ -24,6 +24,7 @@ from .forms import (
     OnboardingStep2QuickForm,
     OnboardingStep4Form,
     OnboardingStep5MetaForm,
+    TrainerGymFormSet,
     OnboardingStep6InstagramForm,
     OnboardingStep7ReviewsForm,
     ProfileEnquiryForm,
@@ -41,7 +42,13 @@ from .forma_yaml_import import (
     parse_forma_profile_yaml,
     read_profile_example_template,
 )
-from .models import QUICK_QUALIFICATION_CHOICES, TrainerProfile, TrainerSpecialism, ensure_onboarding_children
+from .models import (
+    QUICK_QUALIFICATION_CHOICES,
+    TrainerGym,
+    TrainerProfile,
+    TrainerSpecialism,
+    ensure_onboarding_children,
+)
 from .stripe_keep_profile import (
     checkout_session_paid,
     create_subscription_checkout_session,
@@ -896,6 +903,7 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
         'price_tiers',
         'gallery_photos',
         'who_i_work_with_items',
+        'gyms',
     )
     if url_key is not None:
         profile = get_object_or_404(
@@ -943,11 +951,17 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
 
     price_tiers = visible_price_tiers(profile)
     pricing_has_featured_tier = any(getattr(t, 'is_most_popular', False) for t in price_tiers)
+    trainer_gyms = [
+        g
+        for g in profile.gyms.all()
+        if (g.name or '').strip() or (g.location or '').strip()
+    ]
 
     context = {
         'profile': profile,
         'quick_qual_items': quick_qualification_items(profile),
         'training_location_items': training_location_items(profile.training_locations),
+        'trainer_gyms': trainer_gyms,
         'featured_review': featured_review,
         'other_reviews': other_reviews,
         'review_carousel_pages': _review_carousel_pages(other_reviews),
@@ -1073,11 +1087,29 @@ def _process_step_post(
 
     if step_idx == 3:
         form = OnboardingStep4Form(request.POST, instance=profile)
-        if form.is_valid():
-            form.save()
+        ensure_onboarding_children(profile)
+        gym_formset = TrainerGymFormSet(
+            request.POST,
+            instance=profile,
+            prefix='gyms',
+        )
+        if not form.is_valid():
+            return False, {'form': form, 'gym_formset': gym_formset}
+        gym_locs = list(form.cleaned_data.get('training_locations') or [])
+        gym_in = 'gym' in gym_locs
+        if gym_in:
+            if not gym_formset.is_valid():
+                return False, {'form': form, 'gym_formset': gym_formset}
+            with transaction.atomic():
+                form.save()
+                gym_formset.save()
             _advance_if_needed()
             return True, {}
-        return False, {'form': form}
+        with transaction.atomic():
+            form.save()
+            TrainerGym.objects.filter(profile=profile).update(name='', location='')
+        _advance_if_needed()
+        return True, {}
 
     if step_idx == 4:
         pfs = TrainerPriceTierFormSet(request.POST, instance=profile)
@@ -1142,7 +1174,12 @@ def _load_step_get_forms(context: dict, profile: TrainerProfile, step_idx: int) 
     elif step_idx == 2:
         context['formset'] = TrainerSpecialismFormSet(instance=profile)
     elif step_idx == 3:
+        ensure_onboarding_children(profile)
         context['form'] = OnboardingStep4Form(instance=profile)
+        context['gym_formset'] = TrainerGymFormSet(
+            instance=profile,
+            prefix='gyms',
+        )
     elif step_idx == 4:
         fs = TrainerPriceTierFormSet(instance=profile)
         context['formset'] = fs

@@ -569,6 +569,37 @@ class TrainerSpecialism(models.Model):
         return (self.title or '').strip()
 
 
+class TrainerGym(models.Model):
+    """Gyms a PT works from — name and rough location, optional repeater in onboarding (logistics step)."""
+
+    profile = models.ForeignKey(
+        'TrainerProfile',
+        on_delete=models.CASCADE,
+        related_name='gyms',
+    )
+    order = models.PositiveSmallIntegerField()
+    name = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Venue or chain name, e.g. a specific gym’s name",
+    )
+    location = models.CharField(
+        max_length=300,
+        blank=True,
+        help_text='e.g. neighbourhood, area, or part of the city (not a full address required)',
+    )
+
+    class Meta:
+        db_table = 'pages_trainer_gym'
+        ordering = ['order']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['profile', 'order'],
+                name='pages_gym_unique_order',
+            ),
+        ]
+
+
 class TrainerPriceTier(models.Model):
     """Step 5 — up to ten pricing rows (orders 1–10)."""
 
@@ -787,3 +818,10 @@ def ensure_onboarding_children(profile: TrainerProfile) -> None:
             slot=slot,
             defaults={},
         )
+    for order in range(1, 6):
+        TrainerGym.objects.get_or_create(
+            profile=profile,
+            order=order,
+            defaults={'name': '', 'location': ''},
+        )
+    TrainerGym.objects.filter(profile=profile, order__gt=5).delete()
