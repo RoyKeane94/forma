@@ -278,6 +278,14 @@ class TrainerProfile(models.Model):
                 name='pages_trainer_forma_slug_key_uniq',
             ),
         ]
+        indexes = [
+            # Staff “Forma-made profiles I created” list: filter(created_by=me, forma_made=True).order_by('-id')
+            models.Index(
+                fields=['created_by', 'id'],
+                name='pages_trf_createdby_id_f',
+                condition=Q(forma_made=True) & Q(created_by__isnull=False),
+            ),
+        ]
 
     def __str__(self):
         return f'TrainerProfile({self.user_id})'
@@ -502,6 +510,13 @@ class SpecialismCatalog(models.Model):
     class Meta:
         db_table = 'pages_specialism_catalog'
         ordering = ['title']
+        indexes = [
+            # Onboarding & admin: filter(is_active=True).order_by('title')
+            models.Index(
+                fields=['is_active', 'title'],
+                name='pages_spec_cat_active_title',
+            ),
+        ]
 
     def __str__(self) -> str:
         return self.title
