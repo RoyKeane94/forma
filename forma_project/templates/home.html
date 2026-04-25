@@ -33,13 +33,24 @@
     .home-hero-h1 {
       padding-top: calc(var(--home-forma-fsp) + 0.5rem);
     }
+    @media (max-width: 1023px) {
+      .home-hero--atmospheric {
+        --home-forma-fsp: clamp(4.25rem, 34vw, 9rem);
+      }
+      .home-hero-grids {
+        --home-grid-cell: 4.5rem;
+      }
+      .home-hero--atmospheric .home-hero-h1 {
+        padding-top: calc(20dvh + var(--home-forma-fsp) + 0.75rem);
+      }
+    }
   </style>
 {% endblock %}
 
 {% block body %}
 <div class="flex w-full min-w-0 min-h-0 flex-1 flex-col">
   <main
-    class="home-hero--atmospheric relative flex min-h-[calc(100dvh-3.75rem)] w-full min-w-0 flex-1 flex-col items-center justify-start overflow-hidden border-b border-rule bg-paper px-4 pt-6 pb-10 sm:px-8 sm:pt-8 sm:pb-12"
+    class="home-hero--atmospheric relative flex min-h-[calc(100dvh-3.75rem)] w-full min-w-0 flex-1 flex-col items-stretch justify-start overflow-hidden border-b border-rule bg-paper px-4 pb-8 pt-3 sm:items-center sm:px-8 sm:pb-12 sm:pt-8"
     aria-label="Forma home"
   >
     <div
@@ -51,12 +62,12 @@
       aria-hidden="true"
     >
       <span
-        class="home-hero-forma absolute left-1/2 top-0 w-max max-w-full -translate-x-1/2 select-none whitespace-nowrap font-display font-normal tracking-[0.1em] text-blue [opacity:0.055]"
+        class="home-hero-forma absolute left-1/2 top-[20dvh] w-max max-w-full -translate-x-1/2 select-none whitespace-nowrap font-display font-normal tracking-[0.1em] text-blue [opacity:0.055] lg:top-0"
         >FORMA</span
       >
     </div>
     <div
-      class="relative z-[2] mx-auto flex w-full max-w-4xl flex-col items-center gap-3 text-center sm:gap-3.5"
+      class="relative z-[2] mx-auto flex w-full min-h-0 max-w-4xl flex-1 flex-col items-center justify-center gap-10 text-center sm:flex-none sm:gap-3.5"
     >
       <h1
         class="home-hero-h1 home-anim-1 w-full max-w-4xl font-display text-[clamp(2.5rem,4.2vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink"
