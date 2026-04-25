@@ -67,26 +67,24 @@
       >
     </div>
     <div
-      class="relative z-[2] mx-auto flex w-full min-h-0 max-w-4xl flex-1 flex-col items-center justify-center gap-10 text-center sm:flex-none sm:gap-3.5"
+      class="relative z-[2] mx-auto flex w-full min-h-0 max-w-4xl flex-1 flex-col items-center justify-center text-center sm:flex-none"
     >
       <h1
-        class="home-hero-h1 home-anim-1 w-full max-w-4xl font-display text-[clamp(2.5rem,4.2vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink"
+        class="home-hero-h1 home-anim-1 m-0 mb-3.5 w-full max-w-4xl font-display text-[clamp(2.5rem,4.2vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink"
       >
         Finally look as good as you are.
       </h1>
       <p
-        class="home-anim-2 max-w-md font-serif text-[1.1rem] font-light italic leading-body text-slate sm:max-w-xl sm:text-[1.12rem] sm:leading-[1.85] md:max-w-2xl"
+        class="home-anim-2 m-0 max-w-md font-serif text-[1.1rem] font-light italic leading-[1.55] text-slate sm:max-w-xl sm:text-[1.12rem] sm:leading-[1.6] md:max-w-2xl"
       >
         Your clients already recommend you. Now they can show you off.
       </p>
-      <div class="home-anim-3 mt-0">
-        <a
-          href="{% url 'pages:profile_enquiry' %}"
-          class="inline-flex items-center gap-2.5 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] text-white no-underline transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-mid"
-        >
-          Enquire about a profile →
-        </a>
-      </div>
+      <a
+        href="{% url 'pages:profile_enquiry' %}"
+        class="home-anim-3 mt-8 inline-flex items-center gap-2.5 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] text-white no-underline transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-mid sm:mt-10"
+      >
+        Enquire about a profile →
+      </a>
     </div>
   </main>
 
