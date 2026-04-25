@@ -5,111 +5,97 @@
 
 {% block extra_head %}
   <style>
-    /* Grid background only — line colour matches border-rule token */
-    .home-hero-grid {
+    /* Square graph paper: equal cell width and height (rule #dddbd4) */
+    .home-hero-grids {
+      z-index: 0;
+      background-color: transparent;
+      --home-grid-cell: 6rem;
+      --home-grid-line: rgba(221, 219, 204, 0.36);
       background-image:
-        linear-gradient(#dddbd4 1px, transparent 1px),
-        linear-gradient(90deg, #dddbd4 1px, transparent 1px);
-      background-size: 80px 80px;
+        linear-gradient(to right, var(--home-grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--home-grid-line) 1px, transparent 1px);
+      background-size: var(--home-grid-cell) var(--home-grid-cell);
     }
     @keyframes homeFadeUp {
       from { opacity: 0; transform: translateY(18px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .home-anim-1 { animation: homeFadeUp 0.6s ease both; animation-delay: 0.05s; }
-    .home-anim-2 { animation: homeFadeUp 0.55s ease both; animation-delay: 0.2s; }
-    .home-anim-3 { animation: homeFadeUp 0.55s ease both; animation-delay: 0.32s; }
+    .home-anim-1 { animation: homeFadeUp 0.75s ease both; animation-delay: 0.05s; }
+    .home-anim-2 { animation: homeFadeUp 0.75s ease both; animation-delay: 0.18s; }
+    .home-anim-3 { animation: homeFadeUp 0.75s ease both; animation-delay: 0.3s; }
+    .home-hero--atmospheric {
+      --home-forma-fsp: clamp(4.5rem, 28vw, 32rem);
+    }
+    .home-hero-forma {
+      font-size: var(--home-forma-fsp);
+      line-height: 1;
+    }
+    .home-hero-h1 {
+      padding-top: calc(var(--home-forma-fsp) + 0.5rem);
+    }
   </style>
 {% endblock %}
 
 {% block body %}
-<div class="flex min-h-0 w-full min-w-0 flex-1 flex-col">
-  <main class="flex min-h-0 w-full min-w-0 flex-1 flex-col">
-    <section
-      class="relative flex shrink-0 flex-col items-start overflow-hidden border-b border-rule bg-paper px-3 pb-10 pt-6 sm:px-page sm:pb-12 sm:pt-8"
-      aria-label="Forma"
-    >
-      <div
-        class="home-hero-grid pointer-events-none absolute inset-0 z-0 opacity-30"
-        aria-hidden="true"
-      ></div>
-      <div class="relative z-[1] w-full max-w-[62rem]">
-        <h1
-          class="home-anim-1 font-display text-[clamp(5.5rem,20vw,14rem)] leading-[0.86] tracking-[0.01em] text-blue"
-        >
-          Forma
-        </h1>
-        <p
-          class="home-anim-2 mt-5 max-w-[40ch] font-serif text-[clamp(1.05rem,2.2vw,1.35rem)] font-light italic leading-serif text-slate"
-        >
-          The only question is whether your profile does justice to what you actually do.
-        </p>
-        <div class="home-anim-3 mt-10">
-          <a
-            href="{% url 'pages:profile_enquiry' %}"
-            class="inline-flex items-center gap-2.5 bg-blue font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white transition-transform duration-200 hover:-translate-y-0.5 hover:bg-blue-mid px-8 py-[0.9rem] no-underline"
-          >
-            Enquire about a profile →
-          </a>
-        </div>
-      </div>
-    </section>
-
+<div class="flex w-full min-w-0 min-h-0 flex-1 flex-col">
+  <main
+    class="home-hero--atmospheric relative flex min-h-[calc(100dvh-3.75rem)] w-full min-w-0 flex-1 flex-col items-center justify-start overflow-hidden border-b border-rule bg-paper px-4 pt-6 pb-10 sm:px-8 sm:pt-8 sm:pb-12"
+    aria-label="Forma home"
+  >
     <div
-      class="min-h-[3rem] w-full flex-1 sm:min-h-[5rem]"
+      class="home-hero-grids pointer-events-none absolute inset-0 z-0 min-h-full"
       aria-hidden="true"
     ></div>
-
-    <div class="grid shrink-0 grid-cols-1 border-b border-t border-rule bg-surface sm:grid-cols-3">
-      <div
-        class="border-b border-rule px-4 py-8 text-center sm:border-b-0 sm:border-r sm:px-8 sm:py-10"
+    <div
+      class="pointer-events-none absolute inset-0 z-[1] overflow-hidden"
+      aria-hidden="true"
+    >
+      <span
+        class="home-hero-forma absolute left-1/2 top-0 w-max max-w-full -translate-x-1/2 select-none whitespace-nowrap font-display font-normal tracking-[0.1em] text-blue [opacity:0.055]"
+        >FORMA</span
       >
-        <div class="font-display text-[clamp(2.2rem,5vw,3.5rem)] leading-none tracking-[0.03em] text-blue">
-          £29
-        </div>
-        <div
-          class="mt-1.5 font-body text-[0.58rem] font-medium uppercase leading-none tracking-[0.18em] text-muted"
+    </div>
+    <div
+      class="relative z-[2] mx-auto flex w-full max-w-4xl flex-col items-center gap-3 text-center sm:gap-3.5"
+    >
+      <h1
+        class="home-hero-h1 home-anim-1 w-full max-w-4xl font-display text-[clamp(2.5rem,4.2vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink"
+      >
+        Finally look as good as you are.
+      </h1>
+      <p
+        class="home-anim-2 max-w-md font-serif text-[1.1rem] font-light italic leading-body text-slate sm:max-w-xl sm:text-[1.12rem] sm:leading-[1.85] md:max-w-2xl"
+      >
+        Your clients already recommend you. Now they can show you off.
+      </p>
+      <div class="home-anim-3 mt-0">
+        <a
+          href="{% url 'pages:profile_enquiry' %}"
+          class="inline-flex items-center gap-2.5 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] text-white no-underline transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-mid"
         >
-          Per month
-        </div>
-      </div>
-      <div class="border-b border-rule px-4 py-8 text-center sm:border-b-0 sm:border-r sm:px-8 sm:py-10">
-        <div
-          class="font-display text-[clamp(1.6rem,4.5vw,2.5rem)] leading-tight tracking-[0.02em] text-blue"
-        >
-          London
-        </div>
-        <div
-          class="mt-1.5 font-body text-[0.58rem] font-medium uppercase leading-none tracking-[0.18em] text-muted"
-        >
-          First
-        </div>
-      </div>
-      <div class="px-4 py-8 text-center sm:px-8 sm:py-10">
-        <div class="font-display text-[clamp(2.2rem,5vw,3.5rem)] leading-none tracking-[0.03em] text-blue">
-          0%
-        </div>
-        <div
-          class="mt-1.5 font-body text-[0.58rem] font-medium uppercase leading-none tracking-[0.18em] text-muted"
-        >
-          Commission taken
-        </div>
+          Enquire about a profile →
+        </a>
       </div>
     </div>
   </main>
 
   <footer
-    class="mt-auto flex flex-wrap items-center justify-between gap-4 border-t border-white/5 bg-ink px-3 py-6 sm:px-page"
+    class="mt-auto w-full self-stretch rounded-none border-t border-white/5 bg-ink"
   >
-    <a
-      href="{% url 'home' %}"
-      class="font-display text-[1.4rem] tracking-wide-4 text-paper no-underline"
-      >Forma</a
+    <div
+      class="flex w-full flex-col items-center justify-center gap-2 px-3 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-page"
     >
-    <span
-      class="font-body text-[0.6rem] font-medium uppercase leading-none tracking-[0.16em] text-white/30"
-      >Professional profiles for personal trainers</span
-    >
+      <a
+        href="{% url 'home' %}"
+        class="shrink-0 font-display text-[1.4rem] leading-none tracking-wide-4 text-paper no-underline"
+        >Forma</a
+      >
+      <span
+        class="max-w-md text-center font-body text-[0.68rem] font-light leading-relaxed tracking-wide-5 text-paper/50 sm:max-w-none sm:text-right"
+      >
+        Your clients already recommend you. Now they can show you off.
+      </span>
+    </div>
   </footer>
 </div>
 {% endblock %}
