@@ -77,8 +77,8 @@ STEP_COUNT = 7
 logger = logging.getLogger(__name__)
 
 
-def _review_carousel_pages(reviews: list, page_size: int = 1) -> list:
-    """Slice reviews into page-sized groups for the public profile carousel (one per slide by default)."""
+def _review_carousel_pages(reviews: list, page_size: int = 2) -> list:
+    """Slice reviews into page-sized groups for the public profile carousel (2 per slide by default; CSS stacks on small widths)."""
     if not reviews:
         return []
     return [reviews[i : i + page_size] for i in range(0, len(reviews), page_size)]

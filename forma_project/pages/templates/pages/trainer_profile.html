@@ -394,9 +394,9 @@
       <div class="min-w-0 w-full max-w-full overflow-hidden" data-carousel-viewport>
         <div class="flex w-full min-w-0 max-w-full transition-transform duration-300 ease-out will-change-transform" data-carousel-track>
           {% for page in review_carousel_pages %}
-          <div class="grid w-full min-w-full max-w-full shrink-0 grid-cols-1">
+          <div class="grid w-full min-w-full max-w-full shrink-0 grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 md:items-stretch md:gap-6">
             {% for rev in page %}
-            <blockquote class="w-full min-w-0 max-w-full border border-rule bg-surface p-2.5 text-left sm:p-5 md:p-6">
+            <blockquote class="w-full min-w-0 max-w-full border border-rule bg-surface p-2.5 text-left sm:p-5 md:p-6{% if page|length == 1 %} md:col-span-2 md:max-w-[40rem] md:justify-self-center{% endif %}">
               <div class="mb-2 flex gap-0.5 text-blue sm:mb-3" aria-label="{{ rev.rating }} out of 5 stars">
                 {% for _ in "12345" %}
                 <span class="font-body text-[0.95rem] leading-none {% if forloop.counter <= rev.rating %}text-blue{% else %}text-rule{% endif %}" aria-hidden="true">★</span>
