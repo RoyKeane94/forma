@@ -142,6 +142,7 @@ class OnboardingStep1Form(forms.ModelForm):
             'first_name',
             'last_name',
             'tagline',
+            'years_experience',
             'bio',
             'contact_email',
             'contact_phone',
@@ -149,6 +150,7 @@ class OnboardingStep1Form(forms.ModelForm):
             'portrait',
         )
         labels = {
+            'years_experience': 'Years of experience',
             'contact_email': 'Contact email',
             'contact_phone': 'Contact phone',
             'contact_phone_preference': 'Preferred contact method for this number',
@@ -161,6 +163,16 @@ class OnboardingStep1Form(forms.ModelForm):
                     {
                         'placeholder': 'Strength training for people who are done doing things half-heartedly',
                         'maxlength': '80',
+                    }
+                )
+            ),
+            'years_experience': forms.NumberInput(
+                attrs=_forma_attrs(
+                    {
+                        'placeholder': '7',
+                        'min': 0,
+                        'max': 60,
+                        'inputmode': 'numeric',
                     }
                 )
             ),
@@ -204,6 +216,12 @@ class OnboardingStep1Form(forms.ModelForm):
         if len(data) > 80:
             raise ValidationError('Tagline must be 80 characters or fewer.')
         return data
+
+    def clean_years_experience(self):
+        raw = self.cleaned_data.get('years_experience')
+        if raw in (None, ''):
+            return None
+        return int(raw)
 
     def clean_contact_phone(self):
         return (self.cleaned_data.get('contact_phone') or '').strip()

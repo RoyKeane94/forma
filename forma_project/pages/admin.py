@@ -132,6 +132,7 @@ class TrainerProfileAdmin(admin.ModelAdmin):
             {
                 'fields': (
                     'tagline',
+                    'years_experience',
                     'bio',
                     'portrait',
                     'quick_qualifications',

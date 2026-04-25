@@ -146,12 +146,12 @@
       <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">Reviews</div>
     </div>
     <div class="border-r border-rule py-5 text-center sm:border-r">
-      <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-ink">{% if areas_covered_count %}{{ areas_covered_count }}{% else %}—{% endif %}</div>
-      <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">Areas covered</div>
+      <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-ink">{% if profile.years_experience is not None %}{{ profile.years_experience }}{% else %}—{% endif %}</div>
+      <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">Years experience</div>
     </div>
     <div class="py-5 text-center">
-      <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-ink">{{ training_location_items|length }}</div>
-      <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">Ways to train</div>
+      <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-ink">{{ qualifications_held_count }}</div>
+      <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">{% if qualifications_held_count == 1 %}Qualification{% else %}Qualifications{% endif %}</div>
     </div>
   </div>
 </section>

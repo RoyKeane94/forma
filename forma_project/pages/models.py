@@ -152,6 +152,12 @@ class TrainerProfile(models.Model):
         max_length=80,
         help_text='One line — what you do and for whom.',
     )
+    years_experience = models.SmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(60)],
+        help_text='Years you have been training clients (optional; shown in the public profile stats).',
+    )
     bio = models.TextField(help_text='Longer profile copy.')
     portrait = models.ImageField(upload_to='trainer/portraits/', blank=True, null=True)
     contact_email = models.EmailField(

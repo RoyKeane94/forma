@@ -15,6 +15,8 @@ profile:
   first_name: Jane
   last_name: Smith
   tagline: One line — what you do and for whom (max 80 characters).
+  # Optional; shown in the public profile stats (0–60, or omit).
+  years_experience: 7
   bio: |
     First paragraph of bio.
 

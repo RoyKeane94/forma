@@ -97,6 +97,13 @@
           >0 / {{ form.tagline.field.max_length }}</p>
           {% if form.tagline.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in form.tagline.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
+        <div class="mb-10 max-w-md flex flex-col gap-2">
+          <label for="{{ form.years_experience.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+            {{ form.years_experience.label }} <span class="ml-2 font-body text-[0.68rem] font-normal normal-case tracking-normal text-muted">Optional — shown in your profile stats (0–60 years)</span>
+          </label>
+          {{ form.years_experience }}
+          {% if form.years_experience.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in form.years_experience.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
         <div class="mb-10 flex flex-col gap-2">
           <label for="{{ form.bio.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
             {{ form.bio.label }} <span class="ml-2 font-body text-[0.68rem] font-normal normal-case tracking-normal text-muted">2–3 paragraphs. Who you are and how you train.</span>

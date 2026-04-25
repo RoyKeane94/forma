@@ -87,6 +87,17 @@ def apply_forma_profile_yaml(profile: TrainerProfile, data: dict) -> None:
     profile.first_name = first[:150]
     profile.last_name = last[:150]
     profile.tagline = (prof_in.get('tagline') or '')[:80].strip()
+    ye = prof_in.get('years_experience', None)
+    if ye in (None, ''):
+        profile.years_experience = None
+    else:
+        try:
+            n = int(ye)
+        except (TypeError, ValueError) as e:
+            raise ValidationError('profile.years_experience must be an integer 0–60 or omitted.') from e
+        if n < 0 or n > 60:
+            raise ValidationError('profile.years_experience must be between 0 and 60.')
+        profile.years_experience = n
     profile.bio = (prof_in.get('bio') or '').strip() or ''
     profile.contact_email = (prof_in.get('contact_email') or '').strip()[:254]
     profile.contact_phone = (prof_in.get('contact_phone') or '').strip()[:32]
