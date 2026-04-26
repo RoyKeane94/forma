@@ -37,6 +37,21 @@ class RegisterForm(UserCreationForm):
         model = User
         fields = ('email', 'password1', 'password2')
 
+    accept_terms = forms.BooleanField(
+        required=True,
+        label='',
+        error_messages={
+            'required': _(
+                'You must accept the terms and conditions to create an account.'
+            ),
+        },
+        widget=forms.CheckboxInput(
+            attrs={
+                'class': 'h-4 w-4 shrink-0 border border-rule accent-blue',
+            },
+        ),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['email'] = forms.EmailField(

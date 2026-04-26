@@ -153,6 +153,26 @@ else:
         }
     }
 
+# Cache: in-memory in local dev. With PostgreSQL, use the DB cache so every Gunicorn
+# worker shares the same store — required for keep-profile checkout pending data
+# (see pages.stripe_keep_profile) to survive a redirect to another process.
+if _db_host:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'forma_cache',
+            'TIMEOUT': 60 * 60,
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'forma-local',
+            'TIMEOUT': 60 * 60,
+        }
+    }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

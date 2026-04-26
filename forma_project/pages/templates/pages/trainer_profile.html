@@ -13,7 +13,7 @@
 {% endblock %}
 {# Global auth nav also shows “Forma”; hide it here so only the profile bar appears. #}
 {% block site_nav %}{% endblock %}
-{% block content_shell_class %}min-h-screen{% endblock %}
+{% block content_shell_class %}min-h-screen flex flex-col{% endblock %}
 
 {% block body %}
 {# Fixed CTA must sit outside any overflow-x-* wrapper or it can be clipped / not paint above the page. #}
@@ -29,7 +29,7 @@
   </div>
   <div class="flex min-w-0 shrink-0 items-center gap-1.5 border-l border-rule px-2.5 sm:gap-3 sm:px-6 lg:px-8">
     {% if instagram_url %}
-    <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="hidden min-w-0 max-w-[8rem] items-center gap-1.5 text-muted transition-colors hover:text-ink sm:inline-flex">
+    <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="hidden min-w-0 max-w-[16rem] items-center gap-1.5 text-muted transition-colors hover:text-ink sm:inline-flex lg:max-w-[22rem]">
       <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>
       <span class="min-w-0 truncate font-body text-[0.65rem] tracking-wide-5 sm:text-[0.7rem]">@{{ profile.instagram_handle }}</span>
     </a>
@@ -627,12 +627,3 @@
 </div>
 {% endblock %}
 
-{% block site_footer %}
-<footer class="flex flex-col items-start justify-between gap-6 border-t border-rule bg-ink px-page py-8 sm:flex-row sm:items-center">
-  <div>
-    <a href="{% url 'home' %}" class="font-display text-[1.4rem] tracking-wide-4 text-paper no-underline">Forma</a>
-    <p class="mt-2 max-w-md font-body text-[0.72rem] font-light leading-relaxed text-paper/60">Forma - professional profiles for personal trainers</p>
-  </div>
-  <span class="font-body text-[0.65rem] uppercase tracking-wide-4 text-paper/30">Public profile</span>
-</footer>
-{% endblock %}

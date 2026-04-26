@@ -73,6 +73,23 @@
         {% endif %}
       </div>
 
+      <div class="mb-8">
+        <div class="flex items-start gap-2.5">
+          <span class="flex h-[1.32rem] shrink-0 items-center">{{ form.accept_terms }}</span>
+          <label for="{{ form.accept_terms.id_for_label }}" class="min-w-0 flex-1 cursor-pointer font-body text-[0.8rem] font-light leading-[1.65] text-slate">
+            I agree to the
+            <a href="{% url 'pages:terms' %}" class="text-blue no-underline border-b border-blue/30 pb-0.5 transition hover:border-blue" target="_blank" rel="noopener">Terms and conditions</a>
+            and confirm I have read the
+            <a href="{% url 'pages:privacy' %}" class="text-blue no-underline border-b border-blue/30 pb-0.5 transition hover:border-blue" target="_blank" rel="noopener">Privacy</a> policy.
+          </label>
+        </div>
+        {% if form.accept_terms.errors %}
+        <ul class="mt-2 list-none p-0 m-0 font-body text-[0.68rem] font-light text-muted">
+          {% for error in form.accept_terms.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
       <button type="submit" class="bg-blue hover:bg-blue-mid text-white font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] px-8 py-[0.9rem] border-0 cursor-pointer hover:-translate-y-0.5">
         Create account
       </button>

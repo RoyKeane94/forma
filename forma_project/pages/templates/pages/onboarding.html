@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Set up your profile — Forma{% endblock %}
 {% block site_nav %}{% endblock %}
-{% block content_shell_class %}min-h-screen{% endblock %}
+{% block content_shell_class %}min-h-screen flex flex-col{% endblock %}
 
 {% block body %}
 <nav class="sticky top-0 z-[100] flex h-[60px] items-stretch border-b border-rule bg-paper">
@@ -716,7 +716,9 @@
   </div>
 </div>
 
-<div class="sticky bottom-0 z-[90] flex items-center justify-between gap-4 border-t border-rule bg-paper px-page py-8">
+<div
+  class="sticky bottom-0 z-50 flex items-center justify-between gap-4 border-t border-rule bg-paper px-page py-8"
+>
   {% if prev_step %}
   <a href="{% if staff_forma and onboarding_edit %}{% url 'pages:staff_forma_onboarding_step_edit' profile_pk=staff_profile_pk step=prev_step %}{% elif staff_forma %}{% url 'pages:staff_forma_onboarding_step' profile_pk=staff_profile_pk step=prev_step %}{% elif onboarding_edit %}{% url 'pages:onboarding_step_edit' step=prev_step %}{% else %}{% url 'pages:onboarding_step' step=prev_step %}{% endif %}" class="inline-flex items-center gap-2 border-0 bg-transparent font-body text-[0.75rem] font-medium uppercase tracking-wide-3 text-muted no-underline transition-colors hover:text-ink">← Back</a>
   {% else %}

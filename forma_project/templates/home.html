@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block title %}Forma{% endblock %}
-{% block site_footer %}{% endblock %}
 {% block content_shell_class %}pt-[60px] min-h-screen flex flex-col{% endblock %}
 
 {% block extra_head %}
@@ -48,9 +47,9 @@
 {% endblock %}
 
 {% block body %}
-<div class="flex w-full min-w-0 min-h-0 flex-1 flex-col">
+<div class="flex min-h-0 w-full min-w-0 flex-1 flex-col">
   <main
-    class="home-hero--atmospheric relative flex min-h-[calc(100dvh-3.75rem)] w-full min-w-0 flex-1 flex-col items-stretch justify-start overflow-hidden border-b border-rule bg-paper px-4 pb-8 pt-3 sm:items-center sm:px-8 sm:pb-12 sm:pt-8"
+    class="home-hero--atmospheric relative flex min-h-0 w-full min-w-0 flex-1 flex-col items-stretch justify-start overflow-hidden border-b border-rule bg-paper px-4 pb-8 pt-3 sm:items-center sm:px-8 sm:pb-12 sm:pt-8"
     aria-label="Forma home"
   >
     <div
@@ -87,24 +86,5 @@
       </a>
     </div>
   </main>
-
-  <footer
-    class="mt-auto w-full self-stretch rounded-none border-t border-white/5 bg-ink"
-  >
-    <div
-      class="flex w-full flex-col items-center justify-center gap-2 px-3 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-page"
-    >
-      <a
-        href="{% url 'home' %}"
-        class="shrink-0 font-display text-[1.4rem] leading-none tracking-wide-4 text-paper no-underline"
-        >Forma</a
-      >
-      <span
-        class="max-w-md text-center font-body text-[0.68rem] font-light leading-relaxed tracking-wide-5 text-paper/50 sm:max-w-none sm:text-right"
-      >
-        Your clients already recommend you. Now they can show you off.
-      </span>
-    </div>
-  </footer>
 </div>
 {% endblock %}

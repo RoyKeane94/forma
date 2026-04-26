@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Privacy — Forma{% endblock %}
+{% block body %}
+<section class="min-h-[calc(100vh-60px)] border-t border-rule bg-surface px-page py-section">
+  <div class="mx-auto max-w-2xl">
+    <p class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+      Legal
+    </p>
+    <h1 class="mb-4 font-display text-[clamp(2.2rem,3.5vw,3rem)] leading-heading text-ink">Privacy</h1>
+    <div class="space-y-4 border-t border-rule pt-8 font-body text-[0.88rem] font-light leading-[1.75] text-slate">
+      <p>
+        Forma (<a href="https://thisisforma.co.uk" class="text-ink border-b border-blue/30 no-underline transition hover:border-blue" rel="noopener">thisisforma.co.uk</a>)
+        collects the information you provide when you register and build your profile — your name, email address, and
+        the text, images, and content you choose to add.
+      </p>
+      <p>
+        We use this to run the service, keep your account secure, and display your public profile to visitors. We do
+        not sell your data to anyone.
+      </p>
+      <p>
+        We set cookies only where they are strictly necessary for sign-in and security. These do not require your
+        consent and cannot be turned off while you use the account.
+      </p>
+      <p>
+        You can delete your account at any time in Settings. We will remove your data within 30 days, except where the
+        law requires us to keep certain records.
+      </p>
+      <p class="text-ink/80">Last updated April 2026.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}
