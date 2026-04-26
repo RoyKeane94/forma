@@ -131,6 +131,25 @@
     box-shadow: 0 0 0 3px rgba(26, 63, 204, 0.08);
   }
 
+  .forma-yes-no.forma-yes-no--compact > div {
+    @apply gap-2 p-0 sm:gap-2.5;
+  }
+  .forma-yes-no.forma-yes-no--compact > div > div {
+    @apply m-0 flex-1 p-0 sm:min-w-[5.5rem] sm:flex-none;
+  }
+  .forma-yes-no.forma-yes-no--compact > div > div > label {
+    @apply w-full min-h-[2.15rem] px-3 py-1.5 font-body text-[0.62rem] font-semibold uppercase leading-tight;
+  }
+  .forma-yes-no.forma-yes-no--compact > ul {
+    @apply gap-2 sm:gap-2.5;
+  }
+  .forma-yes-no.forma-yes-no--compact > ul > li {
+    @apply sm:min-w-[5.5rem];
+  }
+  .forma-yes-no.forma-yes-no--compact > ul > li > label {
+    @apply w-full min-h-[2.15rem] px-3 py-1.5 text-[0.62rem] leading-tight;
+  }
+
   /* Reviews step: pick which slot is the standout (three options) */
   .forma-review-slot-pick > ul {
     @apply m-0 flex list-none flex-col gap-3 p-0 sm:flex-row sm:flex-wrap sm:gap-3;
@@ -388,5 +407,12 @@
 
   .forma-review-star-radios label:has(input:checked) {
     @apply border-blue/25 bg-blue-light text-blue;
+  }
+
+  .forma-star-row__btn {
+    @apply m-0 min-h-0 min-w-0 border-0 bg-transparent p-0.5 font-body text-[1.4rem] leading-none text-amber-500/35 transition hover:text-amber-500/90;
+  }
+  .forma-star-row__btn[aria-pressed='true'] {
+    @apply text-amber-600;
   }
 }

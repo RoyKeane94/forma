@@ -290,8 +290,8 @@ def apply_forma_profile_yaml(profile: TrainerProfile, data: dict) -> None:
         reviews = []
     if not isinstance(reviews, list):
         raise ValidationError('client_reviews must be a list.')
-    if len(reviews) > 3:
-        raise ValidationError('client_reviews allows at most 3 rows.')
+    if len(reviews) > 200:
+        raise ValidationError('client_reviews allows at most 200 rows.')
     clean_reviews: list[dict] = []
     for i, row in enumerate(reviews):
         if not isinstance(row, dict):
@@ -329,7 +329,7 @@ def apply_forma_profile_yaml(profile: TrainerProfile, data: dict) -> None:
             si = int(slot)
         except (TypeError, ValueError):
             si = None
-        if si is not None and 0 <= si <= 2:
+        if si is not None and 0 <= si < len(clean_reviews):
             profile.featured_review_slot = si
         else:
             profile.featured_review_slot = None

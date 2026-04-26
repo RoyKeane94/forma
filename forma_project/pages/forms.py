@@ -9,7 +9,7 @@ View wiring (call `ensure_onboarding_children(profile)` before step 0 GET/POST s
   other_areas: catalogue names and/or {name, outward}; custom entries are copied into PrimaryArea on save)
   Step 5: OnboardingStep5MetaForm + TrainerPriceTierFormSet (up to 10 tiers + one blank row to add more)
   Step 6: OnboardingStep6InstagramForm (intro video, show toggle, Instagram) + TrainerGalleryPhotoFormSet
-  Step 7: OnboardingStep7ReviewsForm → TrainerProfile.client_reviews (max 3) + featured_review_slot
+  Step 7: OnboardingStep7ReviewsForm → TrainerProfile.client_reviews (JSON) + featured_review_slot
 
 Constants: QUICK_QUALIFICATION_CHOICES, TRAINING_LOCATION_CHOICES (from models).
 """
@@ -995,112 +995,52 @@ class OnboardingStep6InstagramForm(forms.ModelForm):
         return h
 
 
-MAX_ONBOARDING_REVIEWS = 3
+MAX_ONBOARDING_REVIEWS_IN_PAYLOAD = 200
 
-_REVIEW_RATING_CHOICES = [('', '—')] + [(str(n), '★' * n) for n in range(1, 6)]
+
+def _reviews_list_for_client_json_field(profile: TrainerProfile | None) -> list[dict]:
+    """Build list for onboarding hidden JSON (name, quote, rating, focus, confirmed)."""
+    out: list[dict] = []
+    rows = (profile.client_reviews or []) if profile is not None else []
+    for i, row in enumerate(rows):
+        if not isinstance(row, dict):
+            continue
+        r = row.get('rating')
+        if isinstance(r, (int, float)) and 1 <= int(r) <= 5:
+            r_int = int(r)
+        else:
+            r_int = None
+        item = {
+            'name': (row.get('name') or '')[:120],
+            'quote': (row.get('quote') or '')[:600],
+            'rating': r_int,
+            'focus': (row.get('focus') or '').strip(),
+            'confirmed': bool(row.get('confirmed')),
+        }
+        out.append(item)
+    return out
 
 
 def client_reviews_form_initial(profile: TrainerProfile) -> dict:
-    init = {}
-    rows = profile.client_reviews or []
-    for i in range(MAX_ONBOARDING_REVIEWS):
-        row = rows[i] if i < len(rows) else {}
-        if not isinstance(row, dict):
-            row = {}
-        init[f'review_{i}_name'] = row.get('name', '')
-        init[f'review_{i}_quote'] = row.get('quote', '')
-        r = row.get('rating')
-        if isinstance(r, (int, float)) and 1 <= int(r) <= 5:
-            init[f'review_{i}_rating'] = str(int(r))
-        else:
-            init[f'review_{i}_rating'] = ''
-        init[f'review_{i}_confirmed'] = bool(row.get('confirmed'))
-        init[f'review_{i}_focus'] = (row.get('focus') or '').strip()
+    init: dict = {}
+    init['client_reviews_json'] = json.dumps(_reviews_list_for_client_json_field(profile))
     fs = getattr(profile, 'featured_review_slot', None)
     init['show_featured_review'] = 'yes' if fs is not None else 'no'
-    init['featured_review_slot'] = str(fs) if fs is not None else ''
+    if fs is not None:
+        try:
+            init['featured_review_index'] = int(fs)
+        except (TypeError, ValueError):
+            pass
     return init
 
 
 class OnboardingStep7ReviewsForm(forms.Form):
-    """Up to three reviews (name, quote, 1–5 stars, confirmation, optional focus); persisted to TrainerProfile.client_reviews."""
+    """Testimonials (name, quote, 1–5 stars, confirmation, optional focus) as JSON; persisted to TrainerProfile.client_reviews."""
 
-    review_0_name = forms.CharField(
-        label='Reviewer name',
-        max_length=120,
+    client_reviews_json = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs=_forma_attrs({'placeholder': 'e.g. Jamie T.'})),
+        widget=forms.HiddenInput,
     )
-    review_0_quote = forms.CharField(
-        label='What they said',
-        max_length=600,
-        required=False,
-        widget=forms.Textarea(attrs=_forma_attrs({'rows': 3, 'placeholder': 'Short testimonial…'})),
-    )
-    review_0_rating = forms.ChoiceField(
-        label='Star rating',
-        choices=_REVIEW_RATING_CHOICES,
-        required=False,
-        widget=forms.RadioSelect(attrs={'class': 'forma-review-star-radios'}),
-    )
-    review_0_confirmed = forms.BooleanField(required=False)
-    review_0_focus = forms.ChoiceField(
-        label='Focus area',
-        choices=[('', '—')],
-        required=False,
-        widget=forms.Select(attrs=_forma_attrs()),
-    )
-    review_1_name = forms.CharField(
-        label='Reviewer name',
-        max_length=120,
-        required=False,
-        widget=forms.TextInput(attrs=_forma_attrs({'placeholder': 'e.g. Sam K.'})),
-    )
-    review_1_quote = forms.CharField(
-        label='What they said',
-        max_length=600,
-        required=False,
-        widget=forms.Textarea(attrs=_forma_attrs({'rows': 3, 'placeholder': 'Short testimonial…'})),
-    )
-    review_1_rating = forms.ChoiceField(
-        label='Star rating',
-        choices=_REVIEW_RATING_CHOICES,
-        required=False,
-        widget=forms.RadioSelect(attrs={'class': 'forma-review-star-radios'}),
-    )
-    review_1_confirmed = forms.BooleanField(required=False)
-    review_1_focus = forms.ChoiceField(
-        label='Focus area',
-        choices=[('', '—')],
-        required=False,
-        widget=forms.Select(attrs=_forma_attrs()),
-    )
-    review_2_name = forms.CharField(
-        label='Reviewer name',
-        max_length=120,
-        required=False,
-        widget=forms.TextInput(attrs=_forma_attrs({'placeholder': 'e.g. Priya N.'})),
-    )
-    review_2_quote = forms.CharField(
-        label='What they said',
-        max_length=600,
-        required=False,
-        widget=forms.Textarea(attrs=_forma_attrs({'rows': 3, 'placeholder': 'Short testimonial…'})),
-    )
-    review_2_rating = forms.ChoiceField(
-        label='Star rating',
-        choices=_REVIEW_RATING_CHOICES,
-        required=False,
-        widget=forms.RadioSelect(attrs={'class': 'forma-review-star-radios'}),
-    )
-    review_2_confirmed = forms.BooleanField(required=False)
-    review_2_focus = forms.ChoiceField(
-        label='Focus area',
-        choices=[('', '—')],
-        required=False,
-        widget=forms.Select(attrs=_forma_attrs()),
-    )
-
     show_featured_review = forms.TypedChoiceField(
         label='Show a large standout quote on your public profile?',
         choices=[('yes', 'Yes'), ('no', 'No')],
@@ -1108,136 +1048,124 @@ class OnboardingStep7ReviewsForm(forms.Form):
         widget=forms.RadioSelect,
         required=True,
     )
-    featured_review_slot = forms.ChoiceField(
-        label='Which review should be the standout?',
-        choices=[],
-        widget=TierCaptionRadioSelect,
+    featured_review_index = forms.IntegerField(
         required=False,
+        min_value=0,
+        widget=forms.HiddenInput,
     )
 
     def __init__(self, *args, profile=None, **kwargs):
         self._profile = profile
+        self.focus_choices: list[tuple[str, str]] = []
         super().__init__(*args, **kwargs)
-        base_titles = non_empty_specialisms(profile) if profile is not None else []
-        for i in range(MAX_ONBOARDING_REVIEWS):
-            slot_titles = list(dict.fromkeys(base_titles))
-            v = (self.initial.get(f'review_{i}_focus') or '').strip()
-            if v and v not in slot_titles:
-                slot_titles.append(v)
-            if slot_titles:
-                slot_titles.sort(key=str.casefold)
-                focus_choices = [('', 'Choose one of your specialisms')] + [(t, t) for t in slot_titles]
-            else:
-                focus_choices = [
-                    (
-                        '',
-                        'Add specialisms in step 3 to link a review to a focus area',
-                    )
-                ]
-            self.fields[f'review_{i}_focus'].choices = focus_choices
-
-        data = self.data if self.is_bound else None
-        slot_choices = []
-        for i in range(MAX_ONBOARDING_REVIEWS):
-            raw = ''
-            if data is not None:
-                raw = (data.get(f'review_{i}_name') or '').strip()
-            if not raw:
-                raw = (self.initial.get(f'review_{i}_name') or '').strip()
-            if not raw:
-                label = f'Review {i + 1}'
-            elif len(raw) > 48:
-                label = raw[:47] + '…'
-            else:
-                label = raw
-            slot_choices.append((str(i), label))
-        self.fields['featured_review_slot'].choices = slot_choices
+        slot_titles: list[str] = list(
+            dict.fromkeys(non_empty_specialisms(profile) if profile is not None else [])
+        )
+        for row in (profile.client_reviews or []) if profile is not None else []:
+            if isinstance(row, dict) and (row.get('focus') or '').strip():
+                t = (row.get('focus') or '').strip()
+                if t not in slot_titles:
+                    slot_titles.append(t)
+        if slot_titles:
+            slot_titles = sorted(slot_titles, key=str.casefold)
+            self.focus_choices = [('', 'Choose one of your specialisms')] + [(t, t) for t in slot_titles]
+        else:
+            self.focus_choices = [
+                (
+                    '',
+                    'Add specialisms in step 3 to link a review to a focus area',
+                )
+            ]
 
     def clean(self):
         data = super().clean()
-        out = []
+        out: list[dict] = []
         profile = getattr(self, '_profile', None)
         spec_titles = frozenset(non_empty_specialisms(profile)) if profile is not None else frozenset()
         prev_rows = (profile.client_reviews or []) if profile is not None else []
-        for i in range(MAX_ONBOARDING_REVIEWS):
-            n = (data.get(f'review_{i}_name') or '').strip()
-            q = (data.get(f'review_{i}_quote') or '').strip()
-            rat_raw = (data.get(f'review_{i}_rating') or '').strip()
-            confirmed = bool(data.get(f'review_{i}_confirmed'))
-            fo = (data.get(f'review_{i}_focus') or '').strip()
-            prev_f = ''
-            if i < len(prev_rows) and isinstance(prev_rows[i], dict):
-                prev_f = (prev_rows[i].get('focus') or '').strip()
-            allowed_focus = set(spec_titles)
-            if prev_f:
-                allowed_focus.add(prev_f)
-
-            if not n and not q and not rat_raw and not confirmed and not fo:
-                continue
-
-            if not n and not q:
-                if rat_raw or confirmed or fo:
+        raw = (self.cleaned_data.get('client_reviews_json') or '').strip()
+        if raw:
+            payload: list | None = None
+            try:
+                payload = json.loads(raw)
+            except (json.JSONDecodeError, TypeError, ValueError):
+                self.add_error('client_reviews_json', 'The reviews data is invalid. Refresh the page and try again.')
+            if payload is not None:
+                if not isinstance(payload, list):
+                    self.add_error('client_reviews_json', 'The reviews data is invalid.')
+                elif len(payload) > MAX_ONBOARDING_REVIEWS_IN_PAYLOAD:
                     self.add_error(
-                        f'review_{i}_name',
-                        'Add reviewer name and quote, or clear this slot.',
+                        'client_reviews_json',
+                        f'You can add at most {MAX_ONBOARDING_REVIEWS_IN_PAYLOAD} reviews.',
                     )
-                continue
-
-            if n and not q:
-                self.add_error(f'review_{i}_quote', 'Add a quote for this review or clear the name.')
-            elif q and not n:
-                self.add_error(f'review_{i}_name', 'Add a reviewer name or clear the quote.')
-            elif n and q:
-                rating_val = int(rat_raw) if rat_raw.isdigit() and 1 <= int(rat_raw) <= 5 else None
-                if rating_val is None:
-                    self.add_error(f'review_{i}_rating', 'Choose a star rating from 1 to 5.')
-                if not confirmed:
-                    self.add_error(
-                        f'review_{i}_confirmed',
-                        'Tick to confirm that this is a true review.',
-                    )
-                if spec_titles and fo not in allowed_focus:
-                    self.add_error(
-                        f'review_{i}_focus',
-                        'Choose which of your specialisms this review relates to.',
-                    )
-                if rating_val is not None and confirmed and (not spec_titles or fo in allowed_focus):
-                    row = {
-                        'name': n,
-                        'quote': q,
-                        'rating': rating_val,
-                        'confirmed': True,
-                        'slot': i,
-                    }
-                    if fo:
-                        row['focus'] = fo
-                    out.append(row)
+                else:
+                    for i, item in enumerate(payload):
+                        if not isinstance(item, dict):
+                            self.add_error('client_reviews_json', f'Review {i + 1} is invalid.')
+                            out = []
+                            break
+                        n = (item.get('name') or '').strip()[:120]
+                        q = (item.get('quote') or '').strip()[:600]
+                        fo = (item.get('focus') or '').strip()
+                        raw_rat = item.get('rating')
+                        if isinstance(raw_rat, (int, float)):
+                            rating_val = int(raw_rat) if 1 <= int(raw_rat) <= 5 else None
+                        elif isinstance(raw_rat, str) and raw_rat.isdigit() and 1 <= int(raw_rat) <= 5:
+                            rating_val = int(raw_rat)
+                        else:
+                            rating_val = None
+                        confirmed = bool(item.get('confirmed') or item.get('confirm'))
+                        if not n and not q and not raw_rat and not fo and not confirmed:
+                            continue
+                        if (not n or not q) and (n or q or raw_rat or fo or confirmed):
+                            self.add_error('client_reviews_json', f'Review {i + 1}: add both reviewer name and a quote, or clear the row fully.')
+                            continue
+                        if not n and not q:
+                            continue
+                        if rating_val is None:
+                            self.add_error('client_reviews_json', f'Review {i + 1}: choose a star rating from 1 to 5.')
+                        if not confirmed:
+                            self.add_error('client_reviews_json', f'Review {i + 1}: confirm that this is a true review.')
+                        prev_f = ''
+                        if i < len(prev_rows) and isinstance(prev_rows[i], dict):
+                            prev_f = (prev_rows[i].get('focus') or '').strip()
+                        allowed_focus = set(spec_titles)
+                        if prev_f:
+                            allowed_focus.add(prev_f)
+                        if spec_titles and fo not in allowed_focus:
+                            self.add_error('client_reviews_json', f'Review {i + 1}: pick which of your specialisms this review relates to.')
+                        if (
+                            rating_val is not None
+                            and confirmed
+                            and (not spec_titles or fo in allowed_focus)
+                            and n
+                            and q
+                        ):
+                            row = {
+                                'name': n,
+                                'quote': q,
+                                'rating': rating_val,
+                                'confirmed': True,
+                                'slot': len(out),
+                            }
+                            if fo:
+                                row['focus'] = fo
+                            out.append(row)
         self._reviews_json = out
 
         want = self.cleaned_data.get('show_featured_review')
-        choice_raw = (self.cleaned_data.get('featured_review_slot') or '').strip()
-        slots_saved = {r['slot'] for r in out}
+        idx = self.cleaned_data.get('featured_review_index')
+        n_out = len(getattr(self, '_reviews_json', []))
         self._featured_slot = None
-        if want:
-            if not out:
-                self.add_error(
-                    'show_featured_review',
-                    'Add at least one completed review first, or choose No.',
-                )
-            elif choice_raw not in ('0', '1', '2'):
-                self.add_error(
-                    'featured_review_slot',
-                    'Choose which review is the standout.',
-                )
-            else:
-                si = int(choice_raw)
-                if si not in slots_saved:
-                    self.add_error(
-                        'featured_review_slot',
-                        'Pick a review slot you have filled in and confirmed above.',
-                    )
-                else:
-                    self._featured_slot = si
+        if not want:
+            return data
+        if n_out < 1:
+            self.add_error('show_featured_review', 'Add at least one completed review first, or choose No.')
+            return data
+        if not isinstance(idx, int) or idx < 0 or idx >= n_out:
+            self.add_error('featured_review_index', 'Use Make standout on one of your reviews, or turn off the large quote.')
+        else:
+            self._featured_slot = idx
         return data
 
     def save_to_profile(self, profile: TrainerProfile) -> None:

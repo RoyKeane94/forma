@@ -226,13 +226,13 @@ class TrainerProfile(models.Model):
     client_reviews = models.JSONField(
         default=_empty_list,
         blank=True,
-        help_text='Up to three {name, quote, rating 1–5, confirmed, focus?, slot 0–2} objects from onboarding.',
+        help_text='List of {name, quote, rating 1–5, confirmed, focus?, slot} from onboarding; slot is a non-negative list index.',
     )
     featured_review_slot = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
-        validators=[MinValueValidator(0), MaxValueValidator(2)],
-        help_text='Which review slot (0–2) is shown as the large standout quote; null = none.',
+        validators=[MinValueValidator(0), MaxValueValidator(500)],
+        help_text='Index of the review in client_reviews to show as the large standout quote; null = none.',
     )
 
     onboarding_step = models.PositiveSmallIntegerField(default=0)

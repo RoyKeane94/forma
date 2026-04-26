@@ -563,147 +563,154 @@
         {% if reviews_form.non_field_errors %}
         <ul class="mb-6 list-none font-body text-[0.8rem] text-danger">{% for e in reviews_form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
         {% endif %}
-        <div class="mb-10 border-b border-rule pb-10">
-          <p class="mb-4 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-blue">Review 1</p>
-          <div class="mb-4 flex flex-col gap-2">
-            <label for="{{ reviews_form.review_0_name.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Reviewer name</label>
-            {{ reviews_form.review_0_name }}
-            {% if reviews_form.review_0_name.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_0_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="mb-4 flex flex-col gap-2">
-            <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Star rating</span>
-            {{ reviews_form.review_0_rating }}
-            {% if reviews_form.review_0_rating.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_0_rating.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="mb-4 flex flex-col gap-2">
-            <label for="{{ reviews_form.review_0_quote.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">What they said</label>
-            {{ reviews_form.review_0_quote }}
-            {% if reviews_form.review_0_quote.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_0_quote.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="mb-4 flex max-w-md flex-col gap-2">
-            <label for="{{ reviews_form.review_0_focus.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">{{ reviews_form.review_0_focus.label }}</label>
-            <p class="font-body text-[0.72rem] leading-relaxed text-muted">Same titles as your <span class="font-medium text-slate">Specialisms</span> step — tags this review on your public profile.</p>
-            <div
-              class="forma-combobox"
-              data-forma-combobox
-              {% for val, lbl in reviews_form.review_0_focus.field.choices %}{% if forloop.first %}data-combobox-placeholder="{{ lbl|escape }}"{% endif %}{% endfor %}
-            >{{ reviews_form.review_0_focus }}</div>
-            {% if reviews_form.review_0_focus.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_0_focus.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="forma-check-group forma-check-group--sentence mt-2">
-            <div>
-              <div>
-                <label>
-                  {{ reviews_form.review_0_confirmed }}
-                  <span>Tick this to confirm that this is a true review</span>
-                </label>
-              </div>
-            </div>
-          </div>
-          {% if reviews_form.review_0_confirmed.errors %}<ul class="mt-2 list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_0_confirmed.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        {% if reviews_form.client_reviews_json.errors or reviews_form.featured_review_index.errors %}
+        <div class="mb-6 space-y-1" role="alert" aria-label="Form errors">
+          {% for e in reviews_form.client_reviews_json.errors %}
+          <p class="font-body text-[0.72rem] text-danger">{{ e }}</p>
+          {% endfor %}
+          {% for e in reviews_form.featured_review_index.errors %}
+          <p class="font-body text-[0.72rem] text-danger">{{ e }}</p>
+          {% endfor %}
         </div>
-        <div class="mb-10 border-b border-rule pb-10">
-          <p class="mb-4 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-blue">Review 2</p>
-          <div class="mb-4 flex flex-col gap-2">
-            <label for="{{ reviews_form.review_1_name.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Reviewer name</label>
-            {{ reviews_form.review_1_name }}
-            {% if reviews_form.review_1_name.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_1_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="mb-4 flex flex-col gap-2">
-            <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Star rating</span>
-            {{ reviews_form.review_1_rating }}
-            {% if reviews_form.review_1_rating.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_1_rating.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="mb-4 flex flex-col gap-2">
-            <label for="{{ reviews_form.review_1_quote.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">What they said</label>
-            {{ reviews_form.review_1_quote }}
-            {% if reviews_form.review_1_quote.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_1_quote.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="mb-4 flex max-w-md flex-col gap-2">
-            <label for="{{ reviews_form.review_1_focus.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">{{ reviews_form.review_1_focus.label }}</label>
-            <p class="font-body text-[0.72rem] leading-relaxed text-muted">Same titles as your <span class="font-medium text-slate">Specialisms</span> step — tags this review on your public profile.</p>
-            <div
-              class="forma-combobox"
-              data-forma-combobox
-              {% for val, lbl in reviews_form.review_0_focus.field.choices %}{% if forloop.first %}data-combobox-placeholder="{{ lbl|escape }}"{% endif %}{% endfor %}
-            >{{ reviews_form.review_1_focus }}</div>
-            {% if reviews_form.review_1_focus.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_1_focus.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="forma-check-group forma-check-group--sentence mt-2">
-            <div>
-              <div>
-                <label>
-                  {{ reviews_form.review_1_confirmed }}
-                  <span>Tick this to confirm that this is a true review</span>
-                </label>
-              </div>
-            </div>
-          </div>
-          {% if reviews_form.review_1_confirmed.errors %}<ul class="mt-2 list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_1_confirmed.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-        </div>
-        <div class="mb-10">
-          <p class="mb-4 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-blue">Review 3</p>
-          <div class="mb-4 flex flex-col gap-2">
-            <label for="{{ reviews_form.review_2_name.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Reviewer name</label>
-            {{ reviews_form.review_2_name }}
-            {% if reviews_form.review_2_name.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_2_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="mb-4 flex flex-col gap-2">
-            <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Star rating</span>
-            {{ reviews_form.review_2_rating }}
-            {% if reviews_form.review_2_rating.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_2_rating.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="mb-4 flex flex-col gap-2">
-            <label for="{{ reviews_form.review_2_quote.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">What they said</label>
-            {{ reviews_form.review_2_quote }}
-            {% if reviews_form.review_2_quote.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_2_quote.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="mb-4 flex max-w-md flex-col gap-2">
-            <label for="{{ reviews_form.review_2_focus.id_for_label }}" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">{{ reviews_form.review_2_focus.label }}</label>
-            <p class="font-body text-[0.72rem] leading-relaxed text-muted">Same titles as your <span class="font-medium text-slate">Specialisms</span> step — tags this review on your public profile.</p>
-            <div
-              class="forma-combobox"
-              data-forma-combobox
-              {% for val, lbl in reviews_form.review_0_focus.field.choices %}{% if forloop.first %}data-combobox-placeholder="{{ lbl|escape }}"{% endif %}{% endfor %}
-            >{{ reviews_form.review_2_focus }}</div>
-            {% if reviews_form.review_2_focus.errors %}<ul class="list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_2_focus.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-          <div class="forma-check-group forma-check-group--sentence mt-2">
-            <div>
-              <div>
-                <label>
-                  {{ reviews_form.review_2_confirmed }}
-                  <span>Tick this to confirm that this is a true review</span>
-                </label>
-              </div>
-            </div>
-          </div>
-          {% if reviews_form.review_2_confirmed.errors %}<ul class="mt-2 list-none text-[0.65rem] text-danger">{% for e in reviews_form.review_2_confirmed.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-        </div>
-
-        <section class="mx-auto mt-12 max-w-4xl space-y-8 border-t border-rule pt-12" aria-labelledby="standout-heading">
-          <h2 id="standout-heading" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-blue">Standout testimonial</h2>
-          <p class="max-w-[68ch] font-body text-[0.8rem] font-light leading-relaxed text-muted">
-            Your public page can show one review as a large quote at the top of the reviews area. Turn this off if you would rather only show the smaller review cards.
+        {% endif %}
+        <section
+          class="mb-8 max-w-4xl space-y-4 border border-rule bg-surface/60 px-4 py-5 sm:px-6"
+          id="onboarding-standout-options"
+          aria-labelledby="onboarding-standout-lead"
+        >
+          <h2 id="onboarding-standout-lead" class="m-0 font-body text-[0.65rem] font-semibold uppercase tracking-wide-3 text-blue">Large quote (standout)</h2>
+          <p class="m-0 max-w-[68ch] font-body text-[0.78rem] font-light leading-relaxed text-muted">
+            Your public page can show one review as a large quote at the top of the reviews area. Turn this off if you would rather only show the smaller review cards. Use <span class="font-medium text-ink">Make standout</span> in the list below to choose which one.
           </p>
-          <fieldset class="m-0 space-y-4 border-0 p-0">
+          <fieldset class="m-0 space-y-2 border-0 p-0">
             <legend class="sr-only">{{ reviews_form.show_featured_review.label }}</legend>
-            <p class="max-w-[68ch] font-body text-[0.95rem] font-medium leading-snug text-ink" aria-hidden="true">{{ reviews_form.show_featured_review.label }}</p>
-            <div class="forma-yes-no">
+            <p class="m-0 max-w-[68ch] font-body text-[0.7rem] font-medium leading-snug text-ink">{{ reviews_form.show_featured_review.label }}</p>
+            <div class="forma-yes-no forma-yes-no--compact w-full max-w-md sm:max-w-none">
               {{ reviews_form.show_featured_review }}
             </div>
-            {% if reviews_form.show_featured_review.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in reviews_form.show_featured_review.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if reviews_form.show_featured_review.errors %}
+            <ul class="m-0 list-none font-body text-[0.65rem] text-danger">{% for e in reviews_form.show_featured_review.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
           </fieldset>
-          <div id="featured-review-slot-wrap" class="space-y-4 {% with v=reviews_form.show_featured_review.value %}{% if v != 'yes' and v != True %}hidden{% endif %}{% endwith %}" {% with v=reviews_form.show_featured_review.value %}{% if v != 'yes' and v != True %}aria-hidden="true"{% else %}aria-hidden="false"{% endif %}{% endwith %}>
-            <fieldset class="m-0 space-y-4 border-0 p-0">
-              <legend class="max-w-[68ch] font-body text-[0.95rem] font-medium leading-snug text-ink">{{ reviews_form.featured_review_slot.label }}</legend>
-              <div class="forma-review-slot-pick forma-review-slot-pick--review-names">
-                {{ reviews_form.featured_review_slot }}
+          {% if reviews_form.featured_review_index.errors %}
+          <ul class="m-0 list-none font-body text-[0.65rem] text-danger">{% for e in reviews_form.featured_review_index.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+          {% endif %}
+        </section>
+        <p class="mb-4 max-w-[68ch] font-body text-[0.78rem] font-light leading-relaxed text-muted">Add short testimonials. They appear on your public page when you continue from this step. Use the form below, then <span class="font-medium text-ink">Save to list</span> to add a review to the list or update one you are editing. The list updates here without leaving the page.</p>
+        <p class="mb-6 font-body text-[0.7rem] font-light text-muted" id="onboarding-reviews-count-hint" aria-live="polite">0 reviews on your profile (from this page).</p>
+        <ul id="onboarding-reviews-summary" class="mb-6 m-0 flex list-none flex-col gap-2 p-0" hidden aria-label="Added reviews">
+        </ul>
+        <p id="onboarding-reviews-empty" class="mb-6 max-w-[52ch] border border-dashed border-rule bg-surface/80 px-5 py-6 font-body text-[0.78rem] text-muted" role="status">No reviews in the list yet — use the form below, then press Save to list.</p>
+        <section
+          class="mb-8 border border-rule bg-surface/60 px-5 py-6 sm:px-7 sm:py-7"
+          id="onboarding-reviews-drafts-root"
+          aria-labelledby="onboarding-d-form-title"
+        >
+          <h2 class="m-0 mb-4 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-blue" id="onboarding-d-form-title">Add a review</h2>
+          <p id="onboarding-d-form-msg" class="mb-4 font-body text-[0.7rem] text-danger hidden" role="alert" hidden></p>
+          <div class="mb-4 flex flex-col gap-2">
+            <label for="onboarding_d_name" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Reviewer name</label>
+            <input type="text" class="forma-input" id="onboarding_d_name" maxlength="120" autocomplete="off" placeholder="e.g. Jamie T.">
+          </div>
+          <div class="mb-4 flex flex-col gap-2">
+            <span class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Star rating</span>
+            <div
+              class="flex flex-wrap items-center gap-1.5"
+              id="onboarding_d_starbar"
+              role="radiogroup"
+              aria-label="Star rating 1 to 5"
+              tabindex="0"
+            >
+              <button type="button" class="forma-star-row__btn" data-obr-star="1" aria-pressed="false" aria-label="1 out of 5" tabindex="-1">★</button>
+              <button type="button" class="forma-star-row__btn" data-obr-star="2" aria-pressed="false" aria-label="2 out of 5" tabindex="-1">★</button>
+              <button type="button" class="forma-star-row__btn" data-obr-star="3" aria-pressed="false" aria-label="3 out of 5" tabindex="-1">★</button>
+              <button type="button" class="forma-star-row__btn" data-obr-star="4" aria-pressed="false" aria-label="4 out of 5" tabindex="-1">★</button>
+              <button type="button" class="forma-star-row__btn" data-obr-star="5" aria-pressed="false" aria-label="5 out of 5" tabindex="-1">★</button>
+            </div>
+          </div>
+          <div class="mb-4 flex flex-col gap-2">
+            <label for="onboarding_d_quote" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">What they said</label>
+            <textarea class="forma-input" id="onboarding_d_quote" rows="3" maxlength="600" placeholder="Short testimonial…"></textarea>
+          </div>
+          <div class="mb-4 flex max-w-md flex-col gap-2">
+            <label for="onboarding_d_focus" class="font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">Focus area (specialism)</label>
+            <p class="font-body text-[0.72rem] leading-relaxed text-muted">Same titles as your <span class="font-medium text-slate">Specialisms</span> step — tags this review on your public profile.</p>
+            <div
+              class="forma-combobox"
+              data-forma-combobox
+              data-combobox-placeholder="{% for val, lbl in reviews_form.focus_choices %}{% if forloop.first %}{{ lbl|escape }}{% endif %}{% endfor %}"
+            >
+              <select class="forma-input" id="onboarding_d_focus">
+                {% for val, lbl in reviews_form.focus_choices %}
+                <option value="{{ val|escape }}">{{ lbl }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="forma-check-group forma-check-group--sentence mt-2">
+            <div>
+              <div>
+                <label for="onboarding_d_confirmed">
+                  <input type="checkbox" id="onboarding_d_confirmed" class="m-0">
+                  <span>Tick this to confirm that this is a true review</span>
+                </label>
               </div>
-              {% if reviews_form.featured_review_slot.errors %}<ul class="list-none font-body text-[0.65rem] text-danger">{% for e in reviews_form.featured_review_slot.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-            </fieldset>
+            </div>
+          </div>
+          <div class="mt-6 flex flex-wrap items-center gap-3">
+            <button type="button" id="onboarding-d-cancel" class="hidden min-h-[2.75rem] border border-rule bg-paper font-body text-[0.7rem] font-medium uppercase tracking-wide-3 text-ink transition-colors hover:border-ink sm:min-h-0 sm:px-4" hidden>Cancel edit</button>
+            <button type="button" class="min-h-[2.75rem] border border-ink bg-transparent font-body text-[0.7rem] font-medium uppercase tracking-wide-3 text-ink transition-all hover:bg-ink hover:text-paper sm:min-h-0 sm:min-w-[8.5rem] sm:px-4" id="onboarding-reviews-btn-save">Save to list</button>
           </div>
         </section>
+        <div id="onboarding-reviews-slots" class="hidden" aria-hidden="true">
+          {{ reviews_form.client_reviews_json }}
+          {{ reviews_form.featured_review_index }}
+        </div>
+        <div
+          id="onboarding-review-delete-backdrop"
+          class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4 sm:p-6"
+          role="presentation"
+        >
+          <div
+            class="absolute inset-0 bg-ink/40"
+            data-obr-delete-dismiss
+            aria-hidden="true"
+            tabindex="-1"
+          ></div>
+          <div
+            class="relative z-[1] w-full max-w-md border border-rule bg-paper p-6 sm:p-7"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="onboarding-review-delete-title"
+            data-obr-delete-panel
+            tabindex="-1"
+          >
+            <h2 id="onboarding-review-delete-title" class="m-0 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-ink">
+              Remove review
+            </h2>
+            <p class="m-0 mt-3 max-w-prose font-body text-[0.88rem] font-light leading-[1.65] text-slate">
+              Remove this review from the list? This step is not final until you press
+              <span class="text-ink">Continue</span> or
+              <span class="text-ink">Save changes</span> at the foot of the page.
+            </p>
+            <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
+              <button
+                type="button"
+                id="onboarding-review-delete-cancel"
+                class="min-h-[2.75rem] border border-ink bg-transparent font-body text-[0.7rem] font-medium uppercase tracking-wide-3 text-ink transition-all hover:bg-ink hover:text-paper sm:min-h-0 sm:px-5"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                id="onboarding-review-delete-confirm"
+                class="min-h-[2.75rem] border border-danger/50 bg-paper font-body text-[0.7rem] font-medium uppercase tracking-wide-3 text-danger transition-all hover:border-danger hover:bg-danger hover:text-paper sm:min-h-0 sm:px-5"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
       {% endif %}
     </form>
   </div>
@@ -1343,42 +1350,554 @@
 (function () {
   var form = document.getElementById('onboarding-step-form');
   if (!form) return;
-  var wrap = document.getElementById('featured-review-slot-wrap');
-  function syncStandoutPickers() {
-    if (!wrap) return;
-    var yes = form.querySelector('input[name="show_featured_review"][value="yes"]');
-    var on = yes && yes.checked;
-    wrap.classList.toggle('hidden', !on);
-    wrap.setAttribute('aria-hidden', on ? 'false' : 'true');
-  }
-  form.querySelectorAll('input[name="show_featured_review"]').forEach(function (el) {
-    el.addEventListener('change', syncStandoutPickers);
-  });
-  syncStandoutPickers();
+  var ul = document.getElementById('onboarding-reviews-summary');
+  var emptyEl = document.getElementById('onboarding-reviews-empty');
+  var countHint = document.getElementById('onboarding-reviews-count-hint');
+  var draftTitle = document.getElementById('onboarding-d-form-title');
+  var dMsg = document.getElementById('onboarding-d-form-msg');
+  var dName = document.getElementById('onboarding_d_name');
+  var dQuote = document.getElementById('onboarding_d_quote');
+  var dConf = document.getElementById('onboarding_d_confirmed');
+  var dCancel = document.getElementById('onboarding-d-cancel');
+  var dSave = document.getElementById('onboarding-reviews-btn-save');
+  var dRoot = document.getElementById('onboarding-reviews-drafts-root');
+  var jsonInp = form.querySelector('[name="client_reviews_json"]');
+  var featInp = form.querySelector('[name="featured_review_index"]');
+  var starbar = document.getElementById('onboarding_d_starbar');
+  var deleteBackdrop = document.getElementById('onboarding-review-delete-backdrop');
+  var deleteCancelBtn = document.getElementById('onboarding-review-delete-cancel');
+  var deleteConfirmBtn = document.getElementById('onboarding-review-delete-confirm');
+  if (!ul) return;
+  if (!emptyEl) return;
+  if (!jsonInp) return;
 
-  function featuredSlotCaption(i) {
-    var inp = form.querySelector('input[name="review_' + i + '_name"]');
-    var t = (inp && inp.value && inp.value.trim()) || '';
-    if (!t) t = 'Review ' + String(i + 1);
-    if (t.length > 48) t = t.slice(0, 47) + '\u2026';
-    return t;
+  var draftStar = null;
+  var editingIndex = null;
+  var pendingDeleteIndex = null;
+  var focusBeforeDeleteDialog = null;
+
+  function getReviews() {
+    try {
+      var t = (jsonInp.value || '').trim();
+      if (!t) return [];
+      var a = JSON.parse(t);
+      return Array.isArray(a) ? a : [];
+    } catch (e) {
+      return [];
+    }
   }
-  function syncFeaturedSlotCaptions() {
-    form.querySelectorAll('input[name="featured_review_slot"]').forEach(function (radio) {
-      var i = parseInt(radio.value, 10);
-      if (isNaN(i)) return;
-      var span = radio.parentNode && radio.parentNode.querySelector('.js-tier-radio-caption');
-      if (span) span.textContent = featuredSlotCaption(i);
+  function setReviews(arr) {
+    jsonInp.value = JSON.stringify(arr);
+  }
+  function paintDraftStars(n) {
+    if (!starbar) return;
+    [1, 2, 3, 4, 5].forEach(function (k) {
+      var b = starbar.querySelector('[data-obr-star="' + k + '"]');
+      if (!b) return;
+      var on = n !== null && n >= 1 && n <= 5 && k <= n;
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
   }
-  [0, 1, 2].forEach(function (i) {
-    var el = form.querySelector('input[name="review_' + i + '_name"]');
-    if (!el) return;
-    ['input', 'change', 'keyup', 'paste', 'cut'].forEach(function (ev) {
-      el.addEventListener(ev, syncFeaturedSlotCaptions);
+  if (starbar) {
+    starbar.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || t.getAttribute('data-obr-star') == null) return;
+      e.preventDefault();
+      var v = parseInt(t.getAttribute('data-obr-star'), 10);
+      if (!(v >= 1 && v <= 5)) return;
+      draftStar = v;
+      paintDraftStars(v);
+    });
+  }
+  if (starbar) {
+    starbar.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      if (e.key === 'ArrowLeft') {
+        if (draftStar === null) draftStar = 1;
+        else draftStar = Math.max(1, draftStar - 1);
+      } else {
+        if (draftStar === null) draftStar = 1;
+        else draftStar = Math.min(5, draftStar + 1);
+      }
+      paintDraftStars(draftStar);
+    });
+  }
+  function getDraftSelect() {
+    return document.getElementById('onboarding_d_focus_native') || document.getElementById('onboarding_d_focus');
+  }
+  function getFocusTextForValue(val) {
+    if (!val) return '—';
+    var s = getDraftSelect();
+    if (s && s.options) {
+      for (var oi = 0; oi < s.options.length; oi += 1) {
+        if (s.options[oi].value === val) {
+          var tx = (s.options[oi].textContent || '').trim();
+          return tx || val;
+        }
+      }
+    }
+    return val;
+  }
+  function setDraftMsg(t) {
+    if (!dMsg) return;
+    if (!t) {
+      dMsg.setAttribute('hidden', '');
+      dMsg.classList.add('hidden');
+      dMsg.textContent = '';
+    } else {
+      dMsg.removeAttribute('hidden');
+      dMsg.classList.remove('hidden');
+      dMsg.textContent = t;
+    }
+  }
+  function focusOptionsNeedSelection() {
+    var sel = getDraftSelect();
+    if (!sel) return false;
+    var c = 0;
+    var o;
+    for (o = 0; o < sel.options.length; o += 1) {
+      if (sel.options[o].value) {
+        c += 1;
+      }
+    }
+    return c > 0;
+  }
+  function clearDraft() {
+    editingIndex = null;
+    if (dName) dName.value = '';
+    if (dQuote) dQuote.value = '';
+    if (dConf) dConf.checked = false;
+    draftStar = null;
+    paintDraftStars(null);
+    var ds = getDraftSelect();
+    if (ds) {
+      ds.value = '';
+      ds.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (dCancel) {
+      dCancel.setAttribute('hidden', '');
+      dCancel.classList.add('hidden');
+    }
+    if (draftTitle) draftTitle.textContent = 'Add a review';
+    if (dSave) dSave.textContent = 'Save to list';
+    setDraftMsg('');
+  }
+  function loadFromIndex(i) {
+    var r = getReviews()[i];
+    if (!r) return;
+    if (dName) dName.value = (r.name || '') + '';
+    if (dQuote) dQuote.value = (r.quote || '') + '';
+    if (dConf) dConf.checked = !!r.confirmed;
+    var ra = r.rating;
+    if (ra !== null && ra !== undefined) {
+      var n = parseInt(ra, 10);
+      draftStar = n >= 1 && n <= 5 ? n : null;
+    } else {
+      draftStar = null;
+    }
+    paintDraftStars(draftStar);
+    var ds = getDraftSelect();
+    if (ds) {
+      ds.value = (r.focus || '') + '';
+      ds.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (dCancel) {
+      dCancel.removeAttribute('hidden');
+      dCancel.classList.remove('hidden');
+    }
+    if (draftTitle) draftTitle.textContent = 'Edit review';
+    if (dSave) dSave.textContent = 'Update in list';
+    setDraftMsg('');
+  }
+  function readDraftAndValidate() {
+    var n = dName && (dName.value || '').trim();
+    var q = dQuote && (dQuote.value || '').trim();
+    var fSel = getDraftSelect();
+    var f = fSel && (fSel.value || '').trim();
+    var con = dConf && dConf.checked;
+    if (!n && !q) {
+      setDraftMsg('Add a reviewer name and a quote, or use Cancel edit.');
+      return { ok: false, data: null };
+    }
+    if (!n || !q) {
+      setDraftMsg('Add both reviewer name and a quote, or clear both to start over.');
+      return { ok: false, data: null };
+    }
+    if (!(draftStar >= 1 && draftStar <= 5)) {
+      setDraftMsg('Click the stars to choose a rating from 1 to 5.');
+      return { ok: false, data: null };
+    }
+    if (!con) {
+      setDraftMsg('Tick the box to confirm that this is a true review.');
+      return { ok: false, data: null };
+    }
+    if (focusOptionsNeedSelection() && !f) {
+      setDraftMsg('Choose which of your specialisms this review relates to (focus area).');
+      return { ok: false, data: null };
+    }
+    return {
+      ok: true,
+      data: {
+        name: n,
+        quote: q,
+        rating: draftStar,
+        focus: f,
+        confirmed: true,
+        confirm: true,
+      },
+    };
+  }
+  function makeStarsDisplay(n) {
+    if (!(n >= 1 && n <= 5)) return '—';
+    return '\u2605'.repeat(n) + '\u2606'.repeat(5 - n);
+  }
+  function hasAnyDraft() {
+    if (dName && (dName.value || '').trim()) return true;
+    if (dQuote && (dQuote.value || '').trim()) return true;
+    if (dConf && dConf.checked) return true;
+    if (draftStar !== null) return true;
+    var f = getDraftSelect();
+    if (f && f.value) return true;
+    return false;
+  }
+  function hasMeaningfulDraft() {
+    return hasAnyDraft() || editingIndex !== null;
+  }
+  function isStandoutEnabled() {
+    var y = form.querySelector('input[name="show_featured_review"][value="yes"]');
+    return !!(y && y.checked);
+  }
+  function isRowStandout(i) {
+    if (!isStandoutEnabled() || !featInp) return false;
+    var s = (featInp.value || '').trim();
+    if (s === '' || s === 'null') return false;
+    return String(parseInt(s, 10)) === String(i);
+  }
+  function ensureFeaturedInRange() {
+    if (!featInp) return;
+    var a = getReviews();
+    if (!a.length) {
+      featInp.value = '';
+      return;
+    }
+    var s = (featInp.value || '').trim();
+    if (s === '' || s === 'null' || isNaN(parseInt(s, 10))) {
+      if (isStandoutEnabled()) featInp.value = '0';
+      return;
+    }
+    var f = parseInt(s, 10);
+    if (f < 0) featInp.value = '0';
+    else if (f >= a.length) featInp.value = String(a.length - 1);
+  }
+  function rowButtons(slot) {
+    var w = document.createElement('div');
+    w.className = 'ml-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2';
+    var ed = document.createElement('button');
+    ed.type = 'button';
+    ed.className = 'shrink-0 border border-ink bg-transparent px-2.5 py-1.5 font-body text-[0.6rem] font-medium uppercase tracking-wide-3 text-ink transition hover:bg-ink hover:text-paper sm:px-3';
+    ed.setAttribute('data-obr-edit', String(slot));
+    ed.textContent = 'Edit';
+    var del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'shrink-0 border border-rule bg-paper px-2.5 py-1.5 font-body text-[0.6rem] font-medium uppercase tracking-wide-3 text-muted transition hover:border-danger hover:text-danger sm:px-3';
+    del.setAttribute('data-obr-del', String(slot));
+    del.textContent = 'Delete';
+    var st = document.createElement('button');
+    st.type = 'button';
+    st.setAttribute('data-obr-standout', String(slot));
+    var isSt = isRowStandout(slot);
+    st.setAttribute('aria-pressed', isSt ? 'true' : 'false');
+    var stBase =
+      'inline-flex h-[2.25rem] w-[11.25rem] min-w-[11.25rem] max-w-[11.25rem] flex-none items-center justify-center self-center text-center text-[0.6rem] leading-tight sm:w-[11.25rem]';
+    if (isSt) {
+      st.setAttribute('aria-label', 'This is your standout (large) quote. Choose another in the list to change it.');
+      st.className =
+        'shrink-0 border border-blue/50 bg-blue-light font-medium uppercase tracking-wide-3 text-blue transition ' + stBase;
+      st.textContent = 'standout';
+    } else {
+      st.className = 'shrink-0 border-0 bg-blue/90 font-medium uppercase tracking-wide-3 text-white transition hover:bg-blue ' + stBase;
+      st.textContent = 'Make standout';
+    }
+    w.appendChild(ed);
+    w.appendChild(del);
+    w.appendChild(st);
+    return w;
+  }
+  function buildList() {
+    var reviews = getReviews();
+    ensureFeaturedInRange();
+    ul.innerHTML = '';
+    var c = 0;
+    for (var i = 0; i < reviews.length; i += 1) {
+      var row = reviews[i] || {};
+      if (!(row.name || '').trim() && !(row.quote || '').trim()) {
+        continue;
+      }
+      c += 1;
+      var li = document.createElement('li');
+      li.className = 'border border-rule bg-surface/90 p-3 sm:px-4 sm:py-3';
+      if (isRowStandout(i)) {
+        li.className += ' ring-1 ring-blue/30 bg-blue-light/25';
+        li.setAttribute('data-obr-standout-row', '1');
+      }
+      li.setAttribute('data-obr-row', String(i));
+      li.style.display = 'flex';
+      li.style.flexWrap = 'wrap';
+      li.style.alignItems = 'flex-start';
+      li.style.gap = '0.75rem';
+      var col = document.createElement('div');
+      col.className = 'min-w-0 flex-1 space-y-1.5 sm:pr-2';
+      var t = document.createElement('p');
+      t.className = 'm-0 font-body text-[0.8rem] font-medium text-ink break-words';
+      t.textContent = (row.name || '—') + '';
+      var nRat = row.rating !== undefined && row.rating !== null ? parseInt(row.rating, 10) : 0;
+      if (isNaN(nRat)) nRat = 0;
+      var srow = document.createElement('p');
+      srow.className = 'm-0 font-body text-[0.7rem] text-ink/90';
+      srow.setAttribute('aria-label', 'Star rating');
+      srow.textContent = 'Stars: ' + makeStarsDisplay(nRat);
+      var frow = document.createElement('p');
+      frow.className = 'm-0 font-body text-[0.68rem] text-muted';
+      frow.textContent = 'Specialism: ' + getFocusTextForValue((row.focus || '') + '');
+      col.appendChild(t);
+      col.appendChild(srow);
+      col.appendChild(frow);
+      li.appendChild(col);
+      li.appendChild(rowButtons(i));
+      ul.appendChild(li);
+    }
+    if (c === 0) {
+      ul.setAttribute('hidden', '');
+    } else {
+      ul.removeAttribute('hidden');
+    }
+    if (countHint) {
+      countHint.textContent = c + (c === 1 ? ' review' : ' reviews') + ' on your profile (from this page).';
+    }
+    emptyEl.classList.toggle('hidden', c > 0);
+  }
+  function updateFormUi() {
+    if (dSave) {
+      dSave.removeAttribute('disabled');
+      dSave.removeAttribute('aria-disabled');
+    }
+  }
+  function openDeleteModal(i) {
+    if (!deleteBackdrop || !deleteConfirmBtn) {
+      if (!window.confirm('Remove this review from the list?')) {
+        return;
+      }
+      performDelete(i);
+      return;
+    }
+    pendingDeleteIndex = i;
+    focusBeforeDeleteDialog = document.activeElement;
+    deleteBackdrop.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+    if (deleteConfirmBtn) {
+      window.setTimeout(function () {
+        deleteConfirmBtn.focus();
+      }, 0);
+    }
+  }
+  function closeDeleteModal() {
+    if (!deleteBackdrop) return;
+    deleteBackdrop.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+    pendingDeleteIndex = null;
+    if (focusBeforeDeleteDialog && typeof focusBeforeDeleteDialog.focus === 'function') {
+      try {
+        focusBeforeDeleteDialog.focus();
+      } catch (e2) {}
+    }
+    focusBeforeDeleteDialog = null;
+  }
+  function trySaveToList() {
+    setDraftMsg('');
+    var reviews = getReviews();
+    if (editingIndex !== null) {
+      var vr = readDraftAndValidate();
+      if (!vr.ok || !vr.data) {
+        return false;
+      }
+      var copyEdit = reviews.slice();
+      copyEdit[editingIndex] = vr.data;
+      setReviews(copyEdit);
+      clearDraft();
+      buildList();
+      updateFormUi();
+      return true;
+    }
+    var vr2 = readDraftAndValidate();
+    if (!vr2.ok || !vr2.data) {
+      return false;
+    }
+    var copy2 = reviews.slice();
+    copy2.push(vr2.data);
+    setReviews(copy2);
+    if (isStandoutEnabled() && copy2.length > 0 && (!featInp || !(featInp.value + '').trim())) {
+      if (featInp) featInp.value = '0';
+    }
+    clearDraft();
+    buildList();
+    updateFormUi();
+    return true;
+  }
+  function performDelete(i) {
+    var a = getReviews();
+    if (i < 0 || i >= a.length) {
+      return;
+    }
+    var pfi = featInp && featInp.value != null ? parseInt(featInp.value, 10) : -1;
+    a.splice(i, 1);
+    setReviews(a);
+    if (featInp) {
+      if (a.length === 0) {
+        featInp.value = '';
+        var fno = form.querySelector('input[name="show_featured_review"][value="no"]');
+        if (fno) fno.checked = true;
+        if (fno) fno.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        if (!isNaN(pfi) && pfi >= 0) {
+          if (i < pfi) {
+            featInp.value = String(pfi - 1);
+          } else if (i > pfi) {
+            /* keep */
+          } else {
+            featInp.value = '0';
+          }
+        }
+        ensureFeaturedInRange();
+      }
+    }
+    if (editingIndex === i) {
+      clearDraft();
+    } else if (editingIndex !== null) {
+      if (editingIndex > i) editingIndex -= 1;
+    }
+    buildList();
+    updateFormUi();
+  }
+  if (deleteCancelBtn) {
+    deleteCancelBtn.addEventListener('click', function () {
+      closeDeleteModal();
+    });
+  }
+  if (deleteConfirmBtn) {
+    deleteConfirmBtn.addEventListener('click', function () {
+      if (pendingDeleteIndex === null) return;
+      var idx = pendingDeleteIndex;
+      closeDeleteModal();
+      performDelete(idx);
+    });
+  }
+  if (deleteBackdrop) {
+    deleteBackdrop.addEventListener('click', function (e) {
+      if (e.target.getAttribute('data-obr-delete-dismiss') != null) {
+        closeDeleteModal();
+      }
+    });
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || !deleteBackdrop || deleteBackdrop.classList.contains('hidden')) {
+      return;
+    }
+    e.preventDefault();
+    closeDeleteModal();
+  });
+  function onStandout(i) {
+    var fyes = form.querySelector('input[name="show_featured_review"][value="yes"]');
+    if (fyes) fyes.checked = true;
+    if (fyes) fyes.dispatchEvent(new Event('change', { bubbles: true }));
+    if (featInp) featInp.value = String(i);
+    buildList();
+    updateFormUi();
+  }
+  ul.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.getAttribute('data-obr-edit') !== null) {
+      e.preventDefault();
+      var ei = parseInt(t.getAttribute('data-obr-edit'), 10);
+      if (isNaN(ei)) return;
+      editingIndex = ei;
+      loadFromIndex(editingIndex);
+      updateFormUi();
+    } else if (t.getAttribute('data-obr-del') !== null) {
+      e.preventDefault();
+      var di = parseInt(t.getAttribute('data-obr-del'), 10);
+      if (isNaN(di)) return;
+      openDeleteModal(di);
+    } else if (t.getAttribute('data-obr-standout') !== null) {
+      e.preventDefault();
+      onStandout(parseInt(t.getAttribute('data-obr-standout'), 10));
+    }
+  });
+  if (dSave) {
+    dSave.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dSave.removeAttribute('disabled');
+      dSave.removeAttribute('aria-disabled');
+      if (!trySaveToList()) {
+        return;
+      }
+    });
+  }
+  if (dCancel) {
+    dCancel.addEventListener('click', function () {
+      clearDraft();
+      updateFormUi();
+    });
+  }
+  var isProgrammaticFormSubmit = false;
+  form.addEventListener('submit', function (e) {
+    if (isProgrammaticFormSubmit) {
+      isProgrammaticFormSubmit = false;
+      return;
+    }
+    if (!hasMeaningfulDraft()) {
+      return;
+    }
+    e.preventDefault();
+    if (dRoot) {
+      dRoot.querySelectorAll('input, textarea, select').forEach(function (el) {
+        el.removeAttribute('disabled');
+      });
+    }
+    if (dSave) dSave.removeAttribute('disabled');
+    if (!trySaveToList()) {
+      updateFormUi();
+      if (dRoot) dRoot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+    if (dRoot) {
+      dRoot.querySelectorAll('input, textarea, select').forEach(function (el) {
+        if (dCancel && el === dCancel) return;
+        el.setAttribute('disabled', 'disabled');
+      });
+    }
+    if (dSave) dSave.setAttribute('disabled', 'disabled');
+    isProgrammaticFormSubmit = true;
+    form.submit();
+  });
+  form.querySelectorAll('input[name="show_featured_review"]').forEach(function (el) {
+    el.addEventListener('change', function () {
+      if (isStandoutEnabled() && getReviews().length) {
+        ensureFeaturedInRange();
+        if (featInp && !(featInp.value + '').trim()) {
+          featInp.value = '0';
+        }
+      }
+      if (!isStandoutEnabled() && featInp) {
+        featInp.value = '';
+      }
+      buildList();
     });
   });
-  syncFeaturedSlotCaptions();
+  buildList();
+  updateFormUi();
 })();
 </script>
 {% endif %}

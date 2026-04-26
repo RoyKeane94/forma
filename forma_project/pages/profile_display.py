@@ -104,7 +104,7 @@ def visible_price_tiers(profile):
 
 
 def non_empty_client_reviews(profile):
-    """Structured reviews from onboarding (max three); requires rating + confirmation. Each row has slot 0–2."""
+    """Structured reviews from onboarding; requires rating + confirmation. Each row has a non-negative slot index."""
     out = []
     legacy_pos = 0
     for item in profile.client_reviews or []:
@@ -119,7 +119,7 @@ def non_empty_client_reviews(profile):
         if name and quote and rating is not None and confirmed:
             focus = (item.get('focus') or '').strip()
             raw_slot = item.get('slot')
-            if isinstance(raw_slot, int) and 0 <= raw_slot <= 2:
+            if isinstance(raw_slot, int) and raw_slot >= 0:
                 slot = raw_slot
             else:
                 slot = legacy_pos
@@ -133,9 +133,10 @@ def non_empty_client_reviews(profile):
 
 def split_featured_client_reviews(profile, review_rows):
     """
-    Pick the standout review from profile.featured_review_slot (0–2), or no standout if null.
-    Returns (featured_dict | None, list of rows for the “What clients say” grid). The featured
-    review is still included in that list so it appears both in the hero block and below.
+    Pick the standout review from profile.featured_review_slot (index into the saved list), or
+    no standout if null. Returns (featured_dict | None, list of rows for the “What clients say”
+    grid). The featured review is still included in that list so it appears both in the hero
+    block and below.
     """
     if not review_rows:
         return None, []

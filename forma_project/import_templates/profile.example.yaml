@@ -90,7 +90,7 @@ price_tiers:
     price: 580
     is_most_popular: true
 
-# Up to three reviews. rating 1–5; confirmed must be true to show publicly.
+# Multiple reviews (import allows up to 200). rating 1–5; confirmed must be true to show publicly.
 # focus optional — should match one of this PT’s specialism titles if set.
 client_reviews:
   - name: Alex M.
@@ -105,5 +105,5 @@ client_reviews:
     confirmed: true
     slot: 1
 
-# 0, 1, or 2 — which client_reviews entry is the large hero quote; omit or null for none.
+# Index into the client_reviews list for the large hero quote; omit or null for none.
 featured_review_slot: 0
