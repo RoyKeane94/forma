@@ -154,37 +154,6 @@
   </div>
 </section>
 
-{% if profile.show_intro_video %}
-<section class="grid border-t border-rule lg:grid-cols-[1fr_340px]" id="intro">
-  <div class="relative flex aspect-video items-center justify-center overflow-hidden bg-ink">
-    <div class="pointer-events-none absolute inset-0 z-[1] opacity-[0.35]" style="background:repeating-linear-gradient(0deg,rgba(255,255,255,0.02) 0 1px,transparent 1px 4px)" aria-hidden="true"></div>
-    <div class="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_center,rgba(26,63,204,0.12),rgba(0,0,0,0.55))]" aria-hidden="true"></div>
-    {% if profile.intro_video %}
-    <video class="relative z-[2] h-full w-full object-contain" controls playsinline preload="metadata" src="{{ profile.intro_video.url }}"></video>
-    {% else %}
-    <div class="relative z-[2] max-w-[16rem] px-6 text-center">
-      {% include "pages/includes/trainer_media_placeholder.html" with caption="Intro video" %}
-    </div>
-    <div class="pointer-events-none absolute bottom-5 left-6 z-[3] max-w-[min(90%,20rem)]">
-      <p class="font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-white/50">Intro video</p>
-      <p class="font-serif text-[1.05rem] font-light italic text-white/85">{{ profile.first_name }} {{ profile.last_name }} — in their own words</p>
-    </div>
-    {% endif %}
-  </div>
-  <aside class="flex flex-col justify-between border-t border-rule bg-surface p-8 lg:border-l lg:border-t-0 lg:p-12">
-    <div>
-      <p class="mb-3 font-body text-label text-blue">Watch first</p>
-      <h2 class="mb-4 font-display text-[2.2rem] leading-none tracking-[0.02em] text-ink">Before you read anything else.</h2>
-      {% if profile.intro_video %}
-      <p class="font-serif text-[0.95rem] font-light italic leading-[1.7] text-slate">A quick sense of how they coach — then scroll for the detail.</p>
-      {% else %}
-      <p class="font-serif text-[0.95rem] font-light italic leading-[1.7] text-slate">They’ve left this block visible; a clip or a fuller placeholder will appear here when it’s ready.</p>
-      {% endif %}
-    </div>
-  </aside>
-</section>
-{% endif %}
-
 <section class="border-t border-rule bg-paper py-section" id="about">
   <div class="w-full px-page">
     <p class="mb-4 flex w-full items-center gap-3 font-body text-label text-blue after:block after:h-px after:min-w-[3rem] after:flex-1 after:bg-rule">About</p>
@@ -244,6 +213,72 @@
   </blockquote>
 </section>
 {% endif %}
+
+{% if profile.show_intro_video %}
+<section class="grid border-t border-rule lg:grid-cols-[1fr_340px]" id="intro">
+  <div class="relative flex aspect-video items-center justify-center overflow-hidden bg-ink">
+    <div class="pointer-events-none absolute inset-0 z-[1] opacity-[0.35]" style="background:repeating-linear-gradient(0deg,rgba(255,255,255,0.02) 0 1px,transparent 1px 4px)" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_center,rgba(26,63,204,0.12),rgba(0,0,0,0.55))]" aria-hidden="true"></div>
+    {% if profile.intro_video %}
+    <video class="relative z-[2] h-full w-full object-contain" controls playsinline preload="metadata" src="{{ profile.intro_video.url }}"></video>
+    {% else %}
+    <div class="relative z-[2] max-w-[16rem] px-6 text-center">
+      {% include "pages/includes/trainer_media_placeholder.html" with caption="Intro video" %}
+    </div>
+    <div class="pointer-events-none absolute bottom-5 left-6 z-[3] max-w-[min(90%,20rem)]">
+      <p class="font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-white/50">Intro video</p>
+      <p class="font-serif text-[1.05rem] font-light italic text-white/85">{{ profile.first_name }} {{ profile.last_name }} — in their own words</p>
+    </div>
+    {% endif %}
+  </div>
+  <aside class="flex flex-col justify-between border-t border-rule bg-surface p-8 lg:border-l lg:border-t-0 lg:p-12">
+    <div>
+      <p class="mb-3 font-body text-label text-blue">Video</p>
+      <h2 class="mb-4 font-display text-[2.2rem] leading-none tracking-[0.02em] text-ink">In their own words</h2>
+      {% if profile.intro_video %}
+      <p class="font-serif text-[0.95rem] font-light italic leading-[1.7] text-slate">A quick sense of how they coach in practice — then the gallery below.</p>
+      {% else %}
+      <p class="font-serif text-[0.95rem] font-light italic leading-[1.7] text-slate">They’ve left this block visible; a clip or a fuller placeholder will appear here when it’s ready.</p>
+      {% endif %}
+    </div>
+  </aside>
+</section>
+{% endif %}
+
+<section class="w-full min-w-0 max-w-full border-t border-rule bg-paper px-3 py-10 sm:px-6 md:px-page md:py-section" id="instagram">
+  <div class="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+    <div class="flex min-w-0 items-center gap-2.5 sm:gap-4">
+      <svg class="h-5 w-5 shrink-0 text-ink sm:h-9 sm:w-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>
+      <div class="min-w-0">
+        {% if instagram_url %}
+        <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="block min-w-0 font-display text-[0.9rem] leading-[1.35] tracking-wide-4 text-ink no-underline transition-colors hover:text-blue sm:text-[1.2rem] md:text-[1.5rem] lg:text-[2.1rem] [overflow-wrap:anywhere]">@{{ profile.instagram_handle }}</a>
+        {% else %}
+        <span class="font-display text-[1.4rem] leading-none tracking-[0.03em] text-very-muted sm:text-[2.2rem]">Instagram</span>
+        {% endif %}
+      </div>
+    </div>
+    {% if instagram_url %}
+    <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit min-w-0 items-center self-start border border-ink px-4 py-2 font-body text-[0.65rem] font-medium uppercase tracking-wide-3 text-ink no-underline transition-colors hover:bg-ink hover:text-paper sm:px-5 sm:py-2.5 sm:text-[0.72rem]">Follow on Instagram</a>
+    {% endif %}
+  </div>
+  <div class="grid grid-cols-2 gap-[3px] sm:grid-cols-3 lg:grid-cols-6">
+    {% for ph in profile.gallery_photos.all %}
+    <div class="group relative aspect-square overflow-hidden bg-surface">
+      {% if ph.image %}
+        {% if instagram_url %}
+        <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="block h-full w-full">
+          <img src="{{ ph.image.url }}" alt="" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]" loading="lazy" decoding="async" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw">
+        </a>
+        {% else %}
+        <img src="{{ ph.image.url }}" alt="" class="h-full w-full object-cover" loading="lazy" decoding="async" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw">
+        {% endif %}
+      {% else %}
+      <div class="h-full w-full">{% include "pages/includes/trainer_media_placeholder.html" %}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
 
 {% if specialism_items %}
 <section class="border-t border-rule bg-white px-page py-section">
@@ -428,41 +463,6 @@
   </div>
 </section>
 {% endif %}
-
-<section class="w-full min-w-0 max-w-full border-t border-rule bg-paper px-3 py-10 sm:px-6 md:px-page md:py-section" id="instagram">
-  <div class="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-    <div class="flex min-w-0 items-center gap-2.5 sm:gap-4">
-      <svg class="h-5 w-5 shrink-0 text-ink sm:h-9 sm:w-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>
-      <div class="min-w-0">
-        {% if instagram_url %}
-        <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="block min-w-0 font-display text-[0.9rem] leading-[1.35] tracking-wide-4 text-ink no-underline transition-colors hover:text-blue sm:text-[1.2rem] md:text-[1.5rem] lg:text-[2.1rem] [overflow-wrap:anywhere]">@{{ profile.instagram_handle }}</a>
-        {% else %}
-        <span class="font-display text-[1.4rem] leading-none tracking-[0.03em] text-very-muted sm:text-[2.2rem]">Instagram</span>
-        {% endif %}
-      </div>
-    </div>
-    {% if instagram_url %}
-    <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit min-w-0 items-center self-start border border-ink px-4 py-2 font-body text-[0.65rem] font-medium uppercase tracking-wide-3 text-ink no-underline transition-colors hover:bg-ink hover:text-paper sm:px-5 sm:py-2.5 sm:text-[0.72rem]">Follow on Instagram</a>
-    {% endif %}
-  </div>
-  <div class="grid grid-cols-2 gap-[3px] sm:grid-cols-3 lg:grid-cols-6">
-    {% for ph in profile.gallery_photos.all %}
-    <div class="group relative aspect-square overflow-hidden bg-surface">
-      {% if ph.image %}
-        {% if instagram_url %}
-        <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="block h-full w-full">
-          <img src="{{ ph.image.url }}" alt="" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]" loading="lazy" decoding="async" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw">
-        </a>
-        {% else %}
-        <img src="{{ ph.image.url }}" alt="" class="h-full w-full object-cover" loading="lazy" decoding="async" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw">
-        {% endif %}
-      {% else %}
-      <div class="h-full w-full">{% include "pages/includes/trainer_media_placeholder.html" %}</div>
-      {% endif %}
-    </div>
-    {% endfor %}
-  </div>
-</section>
 
 <section class="grid min-h-[420px] border-t border-rule lg:grid-cols-2" id="enquire">
   <div class="relative flex flex-col justify-start border-rule bg-surface px-page py-section lg:border-r lg:px-16">
