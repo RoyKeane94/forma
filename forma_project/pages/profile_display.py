@@ -66,13 +66,6 @@ def visible_who_i_work_with_items(profile) -> list[dict]:
     return out
 
 
-def qualifications_held_count(profile) -> int:
-    """Quick presets (valid keys) plus non-empty additional qualification rows."""
-    n = len(quick_qualification_items(profile))
-    n += len(non_empty_additional_qualifications(profile))
-    return n
-
-
 def areas_covered_count(profile) -> int:
     """Primary + other service areas for the proof strip."""
     n = 1 if profile.primary_area_id else 0

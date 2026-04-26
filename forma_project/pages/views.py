@@ -61,7 +61,6 @@ from .stripe_keep_profile import (
 )
 from .onboarding_meta import ONBOARDING_STEPS, TAB_LABELS
 from .profile_display import (
-    qualifications_held_count,
     media_storage_preconnect_origin,
     non_empty_client_reviews,
     split_featured_client_reviews,
@@ -971,7 +970,6 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
         'review_stats': review_stats,
         'instagram_url': instagram_url,
         'who_i_work_with_items': visible_who_i_work_with_items(profile),
-        'qualifications_held_count': qualifications_held_count(profile),
         'media_preconnect_origin': media_storage_preconnect_origin(),
     }
     return render(request, 'pages/trainer_profile.html', context)

@@ -52,17 +52,19 @@
       <h1 class="font-display text-[clamp(2.75rem,9vw,10rem)] sm:text-[clamp(3.5rem,11vw,10rem)] leading-[0.88] tracking-[0.01em] text-ink">
         {{ profile.first_name }}<br>{{ profile.last_name }}
       </h1>
-      {% if review_stats %}
       <p class="flex flex-wrap items-center gap-x-3 gap-y-1 font-body text-[clamp(0.95rem,2.2vw,1.15rem)] tracking-wide-5 text-muted">
-        <span class="inline-flex items-center gap-1 text-blue" aria-label="{{ review_stats.average }} out of 5 average">
+        <span class="inline-flex items-center gap-1 text-blue"{% if review_stats %} aria-label="{{ review_stats.average }} out of 5 average"{% else %} aria-label="No average rating yet"{% endif %}>
           <span class="text-[1.15em] leading-none" aria-hidden="true">★</span>
-          <span class="font-semibold text-ink">{{ review_stats.average }}</span>
+          <span class="font-semibold text-ink">{% if review_stats %}{{ review_stats.average }}{% else %}—{% endif %}</span>
           <span class="sr-only">out of 5</span>
         </span>
         <span class="text-rule" aria-hidden="true">·</span>
-        <span>{{ review_stats.count }} review{{ review_stats.count|pluralize }}</span>
+        <span>{% if review_stats %}{{ review_stats.count }} review{{ review_stats.count|pluralize }}{% else %}0 reviews{% endif %}</span>
+        <span class="text-rule" aria-hidden="true">·</span>
+        <span>
+          {% if profile.years_experience is not None %}{{ profile.years_experience }}&nbsp;year{{ profile.years_experience|pluralize }} experience{% else %}—{% endif %}
+        </span>
       </p>
-      {% endif %}
       <div class="h-0.5 w-12 bg-blue"></div>
       <p class="max-w-[46ch] font-serif text-[clamp(1.05rem,1.8vw,1.3rem)] font-light leading-serif text-slate">{{ profile.tagline }}</p>
       <div class="flex flex-wrap items-center gap-4">
@@ -134,24 +136,20 @@
   </div>
 </section>
 
-{# Social proof strip — four quick numbers before scroll depth #}
+{# Social proof strip — same three numbers as the hero, larger before scroll depth #}
 <section class="border-t border-rule bg-surface" aria-label="At a glance">
-  <div class="grid grid-cols-2 border-b border-rule sm:grid-cols-4">
+  <div class="grid grid-cols-1 border-b border-rule sm:grid-cols-3">
     <div class="border-b border-rule py-5 text-center sm:border-b-0 sm:border-r sm:last:border-r-0">
       <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-blue">{% if review_stats %}{{ review_stats.average }}{% else %}—{% endif %}</div>
       <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">Avg. rating</div>
     </div>
-    <div class="border-b border-r-0 border-rule py-5 text-center sm:border-b-0 sm:border-r sm:last:border-r-0">
+    <div class="border-b border-rule py-5 text-center sm:border-b-0 sm:border-r sm:last:border-r-0">
       <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-ink">{% if review_stats %}{{ review_stats.count }}{% else %}0{% endif %}</div>
       <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">Reviews</div>
     </div>
-    <div class="border-r border-rule py-5 text-center sm:border-r">
+    <div class="py-5 text-center sm:border-b-0">
       <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-ink">{% if profile.years_experience is not None %}{{ profile.years_experience }}{% else %}—{% endif %}</div>
       <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">Years experience</div>
-    </div>
-    <div class="py-5 text-center">
-      <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-ink">{{ qualifications_held_count }}</div>
-      <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">{% if qualifications_held_count == 1 %}Qualification{% else %}Qualifications{% endif %}</div>
     </div>
   </div>
 </section>
