@@ -59,7 +59,7 @@
           <span class="sr-only">out of 5</span>
         </span>
         <span class="text-rule" aria-hidden="true">·</span>
-        <span>{% if review_stats %}{{ review_stats.count }} review{{ review_stats.count|pluralize }}{% else %}0 reviews{% endif %}</span>
+        <span>{% if review_stats %}{% if review_stats.count == 1 %}1 review{% else %}{{ review_stats.count }} reviews{% endif %}{% else %}0 reviews{% endif %}</span>
         <span class="text-rule" aria-hidden="true">·</span>
         <span>
           {% if profile.years_experience is not None %}{{ profile.years_experience }}&nbsp;year{{ profile.years_experience|pluralize }} experience{% else %}—{% endif %}
@@ -145,7 +145,9 @@
     </div>
     <div class="border-b border-rule py-5 text-center sm:border-b-0 sm:border-r sm:last:border-r-0">
       <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-ink">{% if review_stats %}{{ review_stats.count }}{% else %}0{% endif %}</div>
-      <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">Reviews</div>
+      <div class="mt-1 font-body text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted">
+        {% if review_stats and review_stats.count == 1 %}Review{% else %}Reviews{% endif %}
+      </div>
     </div>
     <div class="py-5 text-center sm:border-b-0">
       <div class="font-display text-[2rem] leading-none tracking-[0.03em] text-ink">{% if profile.years_experience is not None %}{{ profile.years_experience }}{% else %}—{% endif %}</div>
@@ -395,7 +397,7 @@
 {% if other_reviews %}
 <section class="w-full min-w-0 max-w-full border-t border-rule bg-white py-6 sm:py-10 md:py-section" id="reviews">
   <div class="w-full min-w-0 max-w-full px-3 sm:px-6 md:px-page">
-    <p class="mb-2 sm:mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">Reviews</p>
+    <p class="mb-2 sm:mb-4 flex items-center gap-3 font-body text-label text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">{% if review_stats and review_stats.count == 1 %}Review{% else %}Reviews{% endif %}</p>
     <h2 class="mb-3 sm:mb-4 font-display text-[clamp(2.5rem,4vw,4rem)] leading-[0.92] tracking-[0.02em] text-ink">What clients say</h2>
     {% if review_stats %}
     <p class="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 font-body text-[0.95rem] tracking-wide-5 text-muted sm:mb-10">
@@ -405,7 +407,7 @@
         <span class="sr-only">out of 5</span>
       </span>
       <span class="text-rule" aria-hidden="true">·</span>
-      <span class="text-slate">{{ review_stats.count }} review{{ review_stats.count|pluralize }}</span>
+      <span class="text-slate">{% if review_stats.count == 1 %}1 review{% else %}{{ review_stats.count }} reviews{% endif %}</span>
     </p>
     {% endif %}
   </div>
