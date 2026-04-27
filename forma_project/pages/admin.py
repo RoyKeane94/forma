@@ -1,10 +1,25 @@
 from django.contrib import admin
+from django.db.models import (
+    Avg,
+    Case,
+    CharField,
+    Count,
+    FloatField,
+    IntegerField,
+    OuterRef,
+    Subquery,
+    Value,
+    When,
+)
+from django.db.models.functions import Coalesce, Concat, Lower
 
 from .models import (
     HttpErrorLog,
     PostcodeDistrict,
     PrimaryArea,
     ProfileEnquiry,
+    ProfilePageView,
+    ProfileScrollEvent,
     SpecialismCatalog,
     TrainerAdditionalQualification,
     TrainerGalleryPhoto,
@@ -90,6 +105,8 @@ class TrainerProfileAdmin(admin.ModelAdmin):
         'onboarding_step',
         'completed_at',
         'is_published',
+        'admin_analytics_views',
+        'admin_analytics_avg_scroll',
     )
     search_fields = (
         'first_name',
@@ -187,6 +204,57 @@ class TrainerProfileAdmin(admin.ModelAdmin):
         TrainerPriceTierInline,
         TrainerGalleryPhotoInline,
     )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        path_expr = Case(
+            When(
+                forma_made=True,
+                then=Concat(
+                    Value('/'),
+                    Lower('slug'),
+                    Value('/'),
+                    Coalesce(Lower('public_url_key'), Value('')),
+                    Value('/'),
+                ),
+            ),
+            default=Concat(Value('/'), Lower('slug'), Value('/')),
+            output_field=CharField(max_length=512),
+        )
+        qs = qs.annotate(_trainer_analytics_path=path_expr)
+        pv_sq = (
+            ProfilePageView.objects.filter(page=OuterRef('_trainer_analytics_path'))
+            .order_by()
+            .values('page')
+            .annotate(c=Count('pk'))
+            .values('c')[:1]
+        )
+        sc_sq = (
+            ProfileScrollEvent.objects.filter(page=OuterRef('_trainer_analytics_path'))
+            .order_by()
+            .values('page')
+            .annotate(a=Avg('depth'))
+            .values('a')[:1]
+        )
+        return qs.annotate(
+            admin_analytics_views_count=Coalesce(
+                Subquery(pv_sq, output_field=IntegerField()),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            admin_analytics_avg_scroll=Subquery(sc_sq, output_field=FloatField()),
+        )
+
+    @admin.display(description='Views', ordering='admin_analytics_views_count')
+    def admin_analytics_views(self, obj):
+        return getattr(obj, 'admin_analytics_views_count', 0)
+
+    @admin.display(description='Avg scroll %', ordering='admin_analytics_avg_scroll')
+    def admin_analytics_avg_scroll(self, obj):
+        v = getattr(obj, 'admin_analytics_avg_scroll', None)
+        if v is None:
+            return '—'
+        return f'{float(v):.0f}%'
 
 
 @admin.register(ProfileEnquiry)

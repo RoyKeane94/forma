@@ -626,6 +626,47 @@
 })();
 </script>
 
+<script>
+{# One scroll row per visit on tab hide: deepest milestone (0=no 25% band yet, then 25/50/75/100). #}
+(function () {
+  var pageViewUrl = '{% url "pages:track_profile_pageview" %}';
+  var scrollUrl = '{% url "pages:track_profile_scroll" %}';
+  var page = window.location.pathname;
+  function send(url, data) {
+    try {
+      if (navigator.sendBeacon) {
+        return navigator.sendBeacon(url, new URLSearchParams(data));
+      }
+    } catch (e) {}
+    return false;
+  }
+  send(pageViewUrl, { page: page });
+  var maxMilestone = 0;
+  var scrollSent = false;
+  function updateMaxMilestone() {
+    var sh = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
+    if (sh <= 0) return;
+    var pct = Math.round(((window.scrollY + window.innerHeight) / sh) * 100);
+    var m = 0;
+    [25, 50, 75, 100].forEach(function (d) {
+      if (pct >= d) m = d;
+    });
+    if (m > maxMilestone) maxMilestone = m;
+  }
+  function sendMaxScrollOnce() {
+    if (scrollSent) return;
+    scrollSent = true;
+    send(scrollUrl, { page: page, depth: String(maxMilestone) });
+  }
+  window.addEventListener('scroll', updateMaxMilestone, { passive: true });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') sendMaxScrollOnce();
+  });
+  window.addEventListener('pagehide', sendMaxScrollOnce);
+  updateMaxMilestone();
+})();
+</script>
+
 </div>
 {% endblock %}
 

@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import transaction
-from django.db.models import Prefetch
+from django.db.models import Avg, Count, Prefetch
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
@@ -44,10 +44,17 @@ from .forma_yaml_import import (
 )
 from .models import (
     QUICK_QUALIFICATION_CHOICES,
+    ProfilePageView,
+    ProfileScrollEvent,
     TrainerGym,
     TrainerProfile,
     TrainerSpecialism,
     ensure_onboarding_children,
+)
+from .profile_analytics import (
+    is_trackable_public_profile_path,
+    normalize_profile_path,
+    profile_path_for_object,
 )
 from .stripe_keep_profile import (
     checkout_session_paid,
@@ -410,16 +417,37 @@ def staff_forma_profile_list(request):
         .select_related('user')
         .order_by('-pk')
     )
+    paths = []
     rows = []
     for p in profiles:
         url = request.build_absolute_uri(p.get_absolute_url()) if p.public_url_key else ''
+        track_path = profile_path_for_object(p)
+        paths.append(track_path)
         rows.append(
             {
                 'profile': p,
                 'label': f'{p.first_name} {p.last_name}'.strip(),
                 'url': url,
+                'track_path': track_path,
             }
         )
+    view_counts = dict(
+        ProfilePageView.objects.filter(page__in=paths)
+        .values('page')
+        .annotate(c=Count('pk'))
+        .values_list('page', 'c')
+    )
+    scroll_avgs = dict(
+        ProfileScrollEvent.objects.filter(page__in=paths)
+        .values('page')
+        .annotate(a=Avg('depth'))
+        .values_list('page', 'a')
+    )
+    for row in rows:
+        tp = row['track_path']
+        row['page_views'] = view_counts.get(tp, 0)
+        avg = scroll_avgs.get(tp)
+        row['avg_scroll_pct'] = None if avg is None else round(float(avg), 1)
     return render(
         request,
         'pages/staff_forma_profile_list.html',
@@ -1257,6 +1285,39 @@ def profile_enquiry(request):
         'pages/profile_enquiry.html',
         {'form': form},
     )
+
+
+# ── Public profile analytics (sendBeacon; CSRF-exempt POST) ───────────────────
+
+# 0 = left without reaching the 25% milestone (still counts toward average scroll vs pageviews).
+_SCROLL_DEPTH_ALLOWED = frozenset({0, 25, 50, 75, 100})
+
+
+@csrf_exempt
+@require_POST
+def track_profile_pageview(request):
+    page = (request.POST.get('page') or '').strip()
+    if not page or not is_trackable_public_profile_path(page):
+        return HttpResponse(status=204)
+    ProfilePageView.objects.create(page=normalize_profile_path(page))
+    return HttpResponse(status=204)
+
+
+@csrf_exempt
+@require_POST
+def track_profile_scroll(request):
+    page = (request.POST.get('page') or '').strip()
+    raw_depth = (request.POST.get('depth') or '').strip()
+    if not page or not is_trackable_public_profile_path(page):
+        return HttpResponse(status=204)
+    try:
+        depth = int(raw_depth)
+    except (TypeError, ValueError):
+        return HttpResponse(status=204)
+    if depth not in _SCROLL_DEPTH_ALLOWED:
+        return HttpResponse(status=204)
+    ProfileScrollEvent.objects.create(page=normalize_profile_path(page), depth=depth)
+    return HttpResponse(status=204)
 
 
 # ── HTTP error handlers (ROOT_URLCONF handler400 / 403 / 404 / 500) ─────────

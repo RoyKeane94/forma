@@ -59,6 +59,7 @@ def _reserved_public_profile_slugs() -> frozenset[str]:
         'media',
         'stripe',
         'api',
+        'track',
     }
     if admin_seg:
         out.add(admin_seg)
@@ -849,3 +850,36 @@ def ensure_onboarding_children(profile: TrainerProfile) -> None:
             defaults={'name': ''},
         )
     TrainerGym.objects.filter(profile=profile, order__gt=5).delete()
+
+
+class ProfilePageView(models.Model):
+    """Anonymous page-view beacon for public trainer profile URLs (pathname only)."""
+
+    page = models.CharField(max_length=512, db_index=True)
+    ts = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'pages_profile_pageview'
+        indexes = [
+            models.Index(fields=['page', 'ts']),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.page} @ {self.ts}'
+
+
+class ProfileScrollEvent(models.Model):
+    """Scroll-depth milestone (25 / 50 / 75 / 100) per profile path."""
+
+    page = models.CharField(max_length=512, db_index=True)
+    depth = models.PositiveSmallIntegerField()
+    ts = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'pages_profile_scroll_event'
+        indexes = [
+            models.Index(fields=['page', 'ts']),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.page} {self.depth}% @ {self.ts}'

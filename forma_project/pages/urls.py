@@ -24,6 +24,8 @@ urlpatterns = [
         name='keep_forma_profile_success',
     ),
     path('stripe/webhook/', views.stripe_webhook, name='stripe_webhook'),
+    path('track/pageview/', views.track_profile_pageview, name='track_profile_pageview'),
+    path('track/scroll/', views.track_profile_scroll, name='track_profile_scroll'),
     path('staff/forma-profiles/', views.staff_forma_profile_list, name='staff_forma_profiles'),
     path(
         'staff/forma-profiles/new/yaml/',
