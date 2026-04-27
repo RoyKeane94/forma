@@ -12,12 +12,28 @@
     </p>
 
     <p class="mb-6 flex flex-wrap items-center gap-3">
-      <a href="{% url 'pages:staff_forma_profile_new' %}" class="inline-flex items-center justify-center bg-blue px-6 py-3 font-body text-[0.75rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-colors hover:bg-blue-mid">
+      <a href="{% url 'pages:staff_forma_profile_new' %}" class="inline-flex shrink-0 items-center justify-center bg-blue px-6 py-3 font-body text-[0.75rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-colors hover:bg-blue-mid">
         Create profile
       </a>
-      <a href="{% url 'pages:staff_forma_profile_new_yaml' %}" class="inline-flex items-center justify-center border border-blue bg-transparent px-6 py-3 font-body text-[0.75rem] font-medium uppercase tracking-wide-2 text-blue no-underline transition-colors hover:bg-blue-light">
-        Create profile with YAML
-      </a>
+      <span class="inline-flex min-w-0 shrink-0 flex-nowrap items-center gap-3">
+        <a href="{% url 'pages:staff_forma_profile_new_yaml' %}" class="inline-flex items-center justify-center border border-blue bg-transparent px-6 py-3 font-body text-[0.75rem] font-medium uppercase tracking-wide-2 text-blue no-underline transition-colors hover:bg-blue-light">
+          Create profile with YAML
+        </a>
+        <form
+          method="post"
+          action="{% url 'pages:staff_forma_profile_reset_analytics' %}"
+          class="inline-flex shrink-0"
+          onsubmit="return confirm('Clear all page views and scroll stats for your Forma-made profiles on this list? This cannot be undone.');"
+        >
+          {% csrf_token %}
+          <button
+            type="submit"
+            class="inline-flex cursor-pointer items-center justify-center border border-rule bg-transparent px-6 py-3 font-body text-[0.75rem] font-medium uppercase tracking-wide-2 text-muted no-underline transition-colors hover:border-ink hover:text-ink"
+          >
+            Reset stats
+          </button>
+        </form>
+      </span>
     </p>
 
     {% if rows %}

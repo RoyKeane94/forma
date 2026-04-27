@@ -13,6 +13,8 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce, Concat, Lower
 
+from .profile_analytics import profile_path_for_object
+
 from .models import (
     HttpErrorLog,
     PostcodeDistrict,
@@ -195,6 +197,17 @@ class TrainerProfileAdmin(admin.ModelAdmin):
                 ),
             },
         ),
+        (
+            'Public page analytics',
+            {
+                'description': 'Anonymous tracking on this profile’s public URL (pathname only).',
+                'fields': ('readonly_public_page_views', 'readonly_public_avg_scroll_pct'),
+            },
+        ),
+    )
+    readonly_fields = (
+        'readonly_public_page_views',
+        'readonly_public_avg_scroll_pct',
     )
     inlines = (
         TrainerWhoIWorkWithInline,
@@ -245,7 +258,7 @@ class TrainerProfileAdmin(admin.ModelAdmin):
             admin_analytics_avg_scroll=Subquery(sc_sq, output_field=FloatField()),
         )
 
-    @admin.display(description='Views', ordering='admin_analytics_views_count')
+    @admin.display(description='Page views', ordering='admin_analytics_views_count')
     def admin_analytics_views(self, obj):
         return getattr(obj, 'admin_analytics_views_count', 0)
 
@@ -254,7 +267,30 @@ class TrainerProfileAdmin(admin.ModelAdmin):
         v = getattr(obj, 'admin_analytics_avg_scroll', None)
         if v is None:
             return '—'
-        return f'{float(v):.0f}%'
+        return f'{float(v):.1f}%'
+
+    @admin.display(description='Page views')
+    def readonly_public_page_views(self, obj):
+        if obj is None or obj.pk is None:
+            return '—'
+        n = getattr(obj, 'admin_analytics_views_count', None)
+        if n is not None:
+            return n
+        path = profile_path_for_object(obj)
+        return ProfilePageView.objects.filter(page=path).count()
+
+    @admin.display(description='Avg scroll %')
+    def readonly_public_avg_scroll_pct(self, obj):
+        if obj is None or obj.pk is None:
+            return '—'
+        v = getattr(obj, 'admin_analytics_avg_scroll', None)
+        if v is None:
+            path = profile_path_for_object(obj)
+            row = ProfileScrollEvent.objects.filter(page=path).aggregate(a=Avg('depth'))
+            v = row.get('a')
+        if v is None:
+            return '—'
+        return f'{float(v):.1f}%'
 
 
 @admin.register(ProfileEnquiry)

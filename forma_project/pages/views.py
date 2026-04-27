@@ -457,6 +457,25 @@ def staff_forma_profile_list(request):
 
 @user_passes_test(lambda u: u.is_superuser)
 @require_POST
+def staff_forma_profile_reset_analytics(request):
+    """Clear ProfilePageView / ProfileScrollEvent rows for this staff user’s Forma-made URLs only."""
+    profiles = TrainerProfile.objects.filter(forma_made=True, created_by=request.user)
+    paths = [profile_path_for_object(p) for p in profiles]
+    if paths:
+        pv_n = ProfilePageView.objects.filter(page__in=paths).delete()[0]
+        sc_n = ProfileScrollEvent.objects.filter(page__in=paths).delete()[0]
+        messages.success(
+            request,
+            f'Cleared public page stats for your Forma-made profiles '
+            f'({pv_n} page views removed, {sc_n} scroll events removed).',
+        )
+    else:
+        messages.info(request, 'No Forma-made profiles to reset.')
+    return redirect('pages:staff_forma_profiles')
+
+
+@user_passes_test(lambda u: u.is_superuser)
+@require_POST
 def staff_forma_outreach_toggle(request, profile_pk: int):
     profile = get_object_or_404(
         TrainerProfile.objects.filter(forma_made=True, created_by=request.user),
