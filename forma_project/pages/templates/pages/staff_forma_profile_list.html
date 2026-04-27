@@ -4,7 +4,7 @@
 
 {% block body %}
 <div class="px-page py-section">
-  <div class="mx-auto max-w-3xl">
+  <div class="mx-auto max-w-6xl">
     <p class="mb-3 font-body text-[0.7rem] font-medium uppercase tracking-wide-3 text-blue">Staff</p>
     <h1 class="mb-2 font-display text-[clamp(2rem,5vw,2.75rem)] leading-none tracking-[0.02em] text-ink">Forma-made profiles</h1>
     <p class="mb-8 max-w-[48ch] font-serif text-[1rem] font-light italic leading-[1.65] text-slate">
@@ -29,6 +29,9 @@
             <th class="px-4 py-3 font-semibold uppercase tracking-wide-3 text-muted">Public URL</th>
             <th class="px-4 py-3 text-right font-semibold uppercase tracking-wide-3 text-muted">Views</th>
             <th class="px-4 py-3 text-right font-semibold uppercase tracking-wide-3 text-muted">Avg scroll</th>
+            <th class="px-2 py-3 text-center font-semibold uppercase tracking-wide-3 text-muted">Email 1</th>
+            <th class="px-2 py-3 text-center font-semibold uppercase tracking-wide-3 text-muted">Call 1</th>
+            <th class="px-2 py-3 text-center font-semibold uppercase tracking-wide-3 text-muted">Email 2</th>
             <th class="px-4 py-3 font-semibold uppercase tracking-wide-3 text-muted">Actions</th>
             <th class="px-4 py-3 font-semibold uppercase tracking-wide-3 text-muted">Status</th>
           </tr>
@@ -47,6 +50,39 @@
             <td class="px-4 py-3 text-right tabular-nums text-ink">{{ row.page_views }}</td>
             <td class="px-4 py-3 text-right tabular-nums text-muted">
               {% if row.avg_scroll_pct is not None %}{{ row.avg_scroll_pct }}%{% else %}—{% endif %}
+            </td>
+            <td class="px-2 py-3 text-center align-middle">
+              <input
+                type="checkbox"
+                class="h-4 w-4 cursor-pointer border border-rule accent-blue"
+                data-forma-outreach
+                data-forma-field="email_1"
+                data-forma-action="{% url 'pages:staff_forma_outreach_toggle' profile_pk=row.profile.pk %}"
+                {% if row.profile.forma_outreach_email_1 %}checked{% endif %}
+                aria-label="Email 1 for {{ row.label }}"
+              />
+            </td>
+            <td class="px-2 py-3 text-center align-middle">
+              <input
+                type="checkbox"
+                class="h-4 w-4 cursor-pointer border border-rule accent-blue"
+                data-forma-outreach
+                data-forma-field="call_1"
+                data-forma-action="{% url 'pages:staff_forma_outreach_toggle' profile_pk=row.profile.pk %}"
+                {% if row.profile.forma_outreach_call_1 %}checked{% endif %}
+                aria-label="Call 1 for {{ row.label }}"
+              />
+            </td>
+            <td class="px-2 py-3 text-center align-middle">
+              <input
+                type="checkbox"
+                class="h-4 w-4 cursor-pointer border border-rule accent-blue"
+                data-forma-outreach
+                data-forma-field="email_2"
+                data-forma-action="{% url 'pages:staff_forma_outreach_toggle' profile_pk=row.profile.pk %}"
+                {% if row.profile.forma_outreach_email_2 %}checked{% endif %}
+                aria-label="Email 2 for {{ row.label }}"
+              />
             </td>
             <td class="px-4 py-3">
               <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -78,4 +114,33 @@
     {% endif %}
   </div>
 </div>
+
+<script>
+(function () {
+  function cookieVal(name) {
+    var m = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return m ? decodeURIComponent(m[2]) : '';
+  }
+  document.querySelectorAll('[data-forma-outreach]').forEach(function (el) {
+    el.addEventListener('change', function () {
+      var prev = !el.checked;
+      var fd = new FormData();
+      fd.append('csrfmiddlewaretoken', cookieVal('csrftoken'));
+      fd.append('field', el.getAttribute('data-forma-field'));
+      fd.append('checked', el.checked ? '1' : '0');
+      fetch(el.getAttribute('data-forma-action'), {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          if (!r.ok) el.checked = prev;
+        })
+        .catch(function () {
+          el.checked = prev;
+        });
+    });
+  });
+})();
+</script>
 {% endblock %}

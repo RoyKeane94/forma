@@ -28,6 +28,11 @@ urlpatterns = [
     path('track/scroll/', views.track_profile_scroll, name='track_profile_scroll'),
     path('staff/forma-profiles/', views.staff_forma_profile_list, name='staff_forma_profiles'),
     path(
+        'staff/forma-profiles/<int:profile_pk>/outreach/',
+        views.staff_forma_outreach_toggle,
+        name='staff_forma_outreach_toggle',
+    ),
+    path(
         'staff/forma-profiles/new/yaml/',
         views.staff_forma_profile_create_yaml,
         name='staff_forma_profile_new_yaml',

@@ -264,6 +264,18 @@ class TrainerProfile(models.Model):
         on_delete=models.SET_NULL,
         related_name='trainer_profiles_created',
     )
+    forma_outreach_email_1 = models.BooleanField(
+        default=False,
+        help_text='Staff checklist on Forma-made list: first email touchpoint done.',
+    )
+    forma_outreach_call_1 = models.BooleanField(
+        default=False,
+        help_text='Staff checklist on Forma-made list: first call touchpoint done.',
+    )
+    forma_outreach_email_2 = models.BooleanField(
+        default=False,
+        help_text='Staff checklist on Forma-made list: second email touchpoint done.',
+    )
 
     class Meta:
         db_table = 'pages_trainer_profile'

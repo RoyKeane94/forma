@@ -456,6 +456,28 @@ def staff_forma_profile_list(request):
 
 
 @user_passes_test(lambda u: u.is_superuser)
+@require_POST
+def staff_forma_outreach_toggle(request, profile_pk: int):
+    profile = get_object_or_404(
+        TrainerProfile.objects.filter(forma_made=True, created_by=request.user),
+        pk=profile_pk,
+    )
+    raw_field = (request.POST.get('field') or '').strip()
+    checked = request.POST.get('checked') == '1'
+    field_map = {
+        'email_1': 'forma_outreach_email_1',
+        'call_1': 'forma_outreach_call_1',
+        'email_2': 'forma_outreach_email_2',
+    }
+    attr = field_map.get(raw_field)
+    if not attr:
+        return HttpResponseBadRequest('invalid field')
+    setattr(profile, attr, checked)
+    profile.save(update_fields=[attr])
+    return HttpResponse(status=204)
+
+
+@user_passes_test(lambda u: u.is_superuser)
 def staff_forma_profile_create(request):
     if request.method == 'POST':
         form = StaffTrainerCreateForm(request.POST)
