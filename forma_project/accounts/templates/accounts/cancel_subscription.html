@@ -28,10 +28,12 @@
       {% endif %}
 
       <div class="mb-8">
-        <label class="flex cursor-pointer items-start gap-3 font-body text-[0.8rem] font-light leading-snug text-ink">
-          {{ form.acknowledge }}
-          <span>{{ form.acknowledge.label }}</span>
-        </label>
+        <div class="flex items-start gap-2.5">
+          <span class="flex h-[1.32rem] shrink-0 items-center">{{ form.acknowledge }}</span>
+          <label for="{{ form.acknowledge.id_for_label }}" class="min-w-0 flex-1 cursor-pointer font-body text-[0.8rem] font-light leading-[1.65] text-slate">
+            {{ form.acknowledge.label }}
+          </label>
+        </div>
         {% if form.acknowledge.errors %}
         <ul class="mt-2 m-0 list-none p-0 font-body text-[0.68rem] font-light normal-case tracking-normal text-muted">
           {% for error in form.acknowledge.errors %}<li>{{ error }}</li>{% endfor %}

@@ -150,6 +150,11 @@ class CancelSubscriptionDeleteAccountForm(forms.Form):
             'I understand that cancelling ends my Forma subscription, permanently deletes '
             'my account and my trainer page, and I would need to start again if I wanted to rejoin.'
         ),
+        widget=forms.CheckboxInput(
+            attrs={
+                'class': 'h-4 w-4 shrink-0 border border-rule accent-blue',
+            },
+        ),
     )
     password = forms.CharField(
         label=_('Current password'),
