@@ -122,6 +122,8 @@ def _finalize_keep_forma_profile(*, profile_id: int, email: str, password: str):
         profile.user = new_user
         profile.forma_made = False
         profile.public_url_key = None
+        # Claimed profiles should always be live on their new owner URL.
+        profile.is_published = True
         profile.save()
         if old_user.pk != new_user.pk:
             old_user.delete()
@@ -994,11 +996,10 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
         and profile.created_by_id == request.user.pk
     )
     # Owner or creating superuser: may preview drafts (unpublished or onboarding incomplete).
-    # Everyone else: self-serve profiles need completed onboarding + published; Forma-made
-    # only needs published (completed_at is still unset until step 7 — staff would otherwise
-    # see a live URL that 404s for clients).
+    # Everyone else: self-serve profiles need completed onboarding + published.
+    # Forma-made keyed URLs are intentionally publicly viewable even when unpublished.
     if not is_owner and not is_forma_creator:
-        if not profile.is_published:
+        if not profile.forma_made and not profile.is_published:
             raise Http404
         if not profile.forma_made and not profile.completed_at:
             raise Http404
