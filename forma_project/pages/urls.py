@@ -18,6 +18,9 @@ urlpatterns = [
     ),
     path('enquire/', views.profile_enquiry, name='profile_enquiry'),
     path('account/', views.my_account, name='my_account'),
+    path('account/notifications/', views.proof_notifications, name='proof_notifications'),
+    path('account/proof/', views.proof_testimonials_page, name='proof_testimonials_page'),
+    path('account/testimonials/', views.proof_testimonials_page),
     path(
         'keep-profile-return/',
         views.keep_forma_profile_checkout_success,
@@ -79,6 +82,8 @@ urlpatterns = [
     path('onboarding/complete/', views.onboarding_complete, name='onboarding_complete'),
     path('onboarding/<int:step>/', views.onboarding_step, name='onboarding_step'),
     path('trainer/<int:profile_id>/', views.trainer_profile_id_redirect, name='trainer_profile_legacy'),
+    path('<slug:profile_slug>/proof/success/', views.trainer_proof_submit_success, name='trainer_proof_submit_success'),
+    path('<slug:profile_slug>/proof/', views.trainer_proof_submit, name='trainer_proof_submit'),
     path(
         '<slug:profile_slug>/<slug:url_key>/keep-profile/',
         views.keep_forma_profile_register,

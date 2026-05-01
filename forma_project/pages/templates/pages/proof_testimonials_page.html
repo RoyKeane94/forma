@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}The Proof · Forma{% endblock %}
+{% block extra_head %}
+  <style>
+    .proof-page-grid {
+      z-index: 0;
+      background-color: transparent;
+      --proof-grid-cell: 6rem;
+      --proof-grid-line: rgba(221, 219, 204, 0.36);
+      background-image:
+        linear-gradient(to right, var(--proof-grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--proof-grid-line) 1px, transparent 1px);
+      background-size: var(--proof-grid-cell) var(--proof-grid-cell);
+    }
+    @media (max-width: 1023px) {
+      .proof-page-grid {
+        --proof-grid-cell: 4.5rem;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block body %}
+<section class="relative overflow-hidden bg-paper py-10 sm:py-14">
+  <div class="proof-page-grid pointer-events-none absolute inset-0" aria-hidden="true"></div>
+  <div class="relative z-[2] mx-auto w-full max-w-[100rem] px-page">
+  <header class="mb-10 flex flex-col items-center gap-2 text-center sm:mb-12">
+    <h1 class="m-0 font-display text-[clamp(2.6rem,10vw,5rem)] font-normal leading-[0.95] tracking-[0.06em] text-blue">The Proof</h1>
+    <p class="m-0 font-body text-[0.88rem] font-medium uppercase tracking-wide-4 text-ink">{{ profile.first_name }} {{ profile.last_name }}</p>
+    <div class="mt-2" aria-label="{{ approved_count }} testimonials">
+      <span class="font-body text-[0.72rem] font-semibold uppercase tracking-wide-3 text-ink">
+        {{ approved_count }} testimonial{% if approved_count != 1 %}s{% endif %}
+      </span>
+    </div>
+  </header>
+
+  {% if approved_testimonials %}
+  <div class="grid gap-7 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+    {% for submission in approved_testimonials %}
+    <article class="w-full">
+      <div class="proof-approved-card group relative overflow-hidden rounded-2xl bg-ink" data-approved-card>
+        <div class="relative">
+          <video
+            class="proof-approved-video aspect-[16/10] w-full object-cover sm:aspect-[4/3]"
+            src="{{ submission.video.url }}"
+            preload="metadata"
+            playsinline
+            data-approved-video
+          ></video>
+          <div class="pointer-events-none absolute bottom-2 left-2 z-10 rounded-lg border border-rule bg-[#F6F5F1]/95 px-2.5 py-1.5 transition-opacity duration-200" data-approved-meta>
+            <p class="m-0 font-body text-[0.72rem] font-semibold leading-none text-ink sm:text-[1rem]">{{ submission.client_first_name }} {{ submission.client_last_initial }}.</p>
+            {% if submission.client_job_title %}
+            <p class="mt-0.5 m-0 font-body text-[0.52rem] font-light uppercase tracking-wide-3 text-muted sm:text-[0.68rem]">{{ submission.client_job_title }}</p>
+            {% endif %}
+            <div class="mt-1 flex items-center gap-0.5">
+              {% for _ in "12345" %}
+              <span class="text-[0.7rem] leading-none sm:text-[1.05rem] {% if forloop.counter <= submission.star_rating %}text-[#F3B71B]{% else %}text-rule{% endif %}">★</span>
+              {% endfor %}
+            </div>
+          </div>
+          <button
+            type="button"
+            class="proof-approved-play absolute left-1/2 top-1/2 z-20 flex h-[4.8rem] w-[4.8rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-blue/70 text-white transition-transform duration-200 hover:scale-[1.06] hover:bg-blue-mid"
+            aria-label="Play video"
+            data-approved-play
+          >
+            <svg class="proof-approved-icon-play ml-1 h-10 w-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="6,3 20,12 6,21"></polygon>
+            </svg>
+            <svg class="proof-approved-icon-pause hidden h-10 w-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <rect x="6" y="4" width="4.5" height="16"></rect>
+              <rect x="13.5" y="4" width="4.5" height="16"></rect>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="mt-2 px-1">
+        <p class="m-0 truncate font-serif text-[0.98rem] font-light italic leading-tight text-ink sm:text-[1.06rem]">
+          {% if submission.pull_quote %}
+            {{ submission.pull_quote }}
+          {% elif submission.suggested_quotes %}
+            {{ submission.suggested_quotes.0 }}
+          {% else %}
+            Verified client testimonial
+          {% endif %}
+        </p>
+      </div>
+      <div class="mt-1.5 px-1">
+        <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+        {% if submission.outcome_labels %}
+        {% for label in submission.outcome_labels %}
+        <span class="inline-block border border-blue/20 bg-blue-light px-[0.66rem] py-[0.26rem] font-body text-[0.62rem] font-semibold uppercase tracking-[0.13em] text-blue">{{ label }}</span>
+        {% endfor %}
+        {% endif %}
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="rounded-card border border-rule bg-paper p-6 sm:p-7">
+    <p class="m-0 font-body text-[0.82rem] leading-relaxed text-slate">No approved testimonials yet. Once you approve client submissions, they appear here.</p>
+  </div>
+  {% endif %}
+
+  <div class="mt-12 border-t border-rule pt-8 text-center">
+    <p class="m-0 font-body text-[1rem] font-medium leading-relaxed text-ink">
+      Work with {{ profile.first_name }}?
+      <a href="{% url 'pages:trainer_proof_submit' profile_slug=profile.slug %}" class="font-body text-[1rem] font-medium text-blue no-underline border-b border-blue/40 pb-0.5 hover:border-blue">
+        Add your voice.
+      </a>
+    </p>
+  </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  var cards = document.querySelectorAll('[data-approved-card]');
+  cards.forEach(function (card) {
+    var video = card.querySelector('[data-approved-video]');
+    var button = card.querySelector('[data-approved-play]');
+    var playIcon = card.querySelector('.proof-approved-icon-play');
+    var pauseIcon = card.querySelector('.proof-approved-icon-pause');
+    var meta = card.querySelector('[data-approved-meta]');
+    if (!video || !button || !playIcon || !pauseIcon) return;
+
+    var isTouchUi =
+      window.matchMedia('(max-width: 768px)').matches ||
+      window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    var isPlaying = !video.paused && !video.ended;
+    var isHovering = false;
+
+    function render() {
+      if (meta) {
+        var hideMeta = isPlaying || (!isTouchUi && isHovering);
+        meta.classList.toggle('opacity-0', hideMeta);
+      }
+      var showButton = isTouchUi ? !isPlaying : (!isPlaying || isHovering);
+      var showPause = !isTouchUi && isPlaying && isHovering;
+      button.classList.toggle('hidden', !showButton);
+      playIcon.classList.toggle('hidden', showPause);
+      pauseIcon.classList.toggle('hidden', !showPause);
+      button.setAttribute('aria-label', showPause ? 'Pause video' : 'Play video');
+    }
+
+    function setHoverState(hovering) {
+      if (isTouchUi) return;
+      isHovering = hovering;
+      render();
+    }
+
+    button.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!video.paused) {
+        video.pause();
+        return;
+      }
+      var playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(function () {
+          isPlaying = false;
+          render();
+        });
+      }
+    });
+    card.addEventListener('mouseenter', function () {
+      setHoverState(true);
+    });
+    card.addEventListener('mouseleave', function () {
+      setHoverState(false);
+    });
+    card.addEventListener('pointerenter', function () {
+      setHoverState(true);
+    });
+    card.addEventListener('pointerleave', function () {
+      setHoverState(false);
+    });
+    card.addEventListener('mouseover', function () {
+      setHoverState(true);
+    });
+    card.addEventListener('mouseout', function () {
+      setHoverState(false);
+    });
+    video.addEventListener('click', function () {
+      if (!video.paused) {
+        video.pause();
+      }
+    });
+    video.addEventListener('play', function () {
+      isPlaying = true;
+      render();
+    });
+    video.addEventListener('pause', function () {
+      isPlaying = false;
+      render();
+    });
+    video.addEventListener('ended', function () {
+      isPlaying = false;
+      render();
+    });
+    render();
+  });
+})();
+</script>
+{% endblock %}

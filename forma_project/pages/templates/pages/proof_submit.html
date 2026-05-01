@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+{% block title %}Share your story — Forma{% endblock %}
+{% block content_shell_class %}pt-[60px] min-h-screen flex flex-col{% endblock %}
+{% block body %}
+<section class="border-t border-rule bg-paper px-4 py-8 sm:px-[4rem] sm:py-[5rem]">
+  <div class="mx-auto w-full max-w-6xl">
+    <p class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+      The Proof
+    </p>
+    <h1 class="mb-4 font-display text-[clamp(2.2rem,10vw,4.5rem)] leading-heading tracking-[0.02em] text-ink sm:mb-5">
+      Share your experience with {{ profile.first_name }} {{ profile.last_name }}
+    </h1>
+  </div>
+</section>
+
+<section class="border-t border-rule bg-white px-4 py-5 sm:px-[4rem] sm:py-10">
+  <div class="mx-auto w-full max-w-6xl">
+    <div class="mb-3 sm:mb-5">
+      <ol class="grid grid-cols-3 gap-2 sm:gap-3">
+        <li class="px-3 py-1 text-center font-body text-[1rem] leading-none tracking-[0.12em] {% if step == 'upload' %}font-semibold text-blue{% else %}font-semibold text-muted/70{% endif %}">
+          1
+        </li>
+        <li class="px-3 py-1 text-center font-body text-[1rem] leading-none tracking-[0.12em] {% if step == 'details' %}font-semibold text-blue{% else %}font-semibold text-muted/70{% endif %}">
+          2
+        </li>
+        <li class="px-3 py-1 text-center font-body text-[1rem] leading-none tracking-[0.12em] {% if step == 'preview' %}font-semibold text-blue{% else %}font-semibold text-muted/70{% endif %}">
+          3
+        </li>
+      </ol>
+    </div>
+
+    {% if step == 'upload' %}
+    <form method="post" enctype="multipart/form-data" novalidate class="max-w-xl border border-rule bg-paper p-5 sm:max-w-2xl sm:p-7">
+      {% csrf_token %}
+      <input type="hidden" name="proof_action" value="upload_video">
+      <p class="mb-3 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+        Step 1 · Video
+      </p>
+
+      {% if upload_form.errors %}
+      <div role="alert" class="mb-8 border border-rule bg-blue-light px-4 py-4">
+        <p class="mb-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">Please check the form</p>
+        <ul class="m-0 list-none space-y-2 p-0 font-body text-[0.8rem] font-light leading-[1.7] text-slate">
+          {% for field in upload_form %}
+            {% for error in field.errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="mb-4 flex flex-wrap gap-2">
+        <button type="button" id="proof-record-btn" class="proof-mode-btn border border-rule bg-paper px-3 py-2 font-body text-[0.68rem] font-medium uppercase tracking-wide-3 text-slate hover:border-blue/30 hover:bg-blue-light hover:text-blue sm:px-4 sm:text-[0.72rem]">Record</button>
+        <button type="button" id="proof-upload-btn" class="proof-mode-btn border border-rule bg-paper px-3 py-2 font-body text-[0.68rem] font-medium uppercase tracking-wide-3 text-slate hover:border-blue/30 hover:bg-blue-light hover:text-blue sm:px-4 sm:text-[0.72rem]">Upload</button>
+      </div>
+
+      <div class="hidden">
+        <input id="proof-video-record-input" type="file" name="video" accept="video/*" capture="user">
+        <input id="proof-video-upload-input" type="file" name="video" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v">
+      </div>
+      <p class="mt-3 font-body text-[0.72rem] font-light text-muted" id="video-help-copy">Choose Record or Upload to continue.</p>
+      <p class="mt-2 hidden font-body text-[0.72rem] font-medium text-ink" id="video-file-name"></p>
+
+      <div class="mt-5 sm:mt-6">
+        <button id="video-continue-btn" type="submit" disabled class="inline-flex border-0 bg-blue px-6 py-[0.8rem] font-body text-[0.72rem] font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-blue-mid disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-[0.9rem] sm:text-[0.78rem]">
+          Continue
+        </button>
+      </div>
+
+      <hr class="my-6 border-t border-rule sm:my-8">
+      <h3 class="mb-3 font-body text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-ink">What makes a great testimonial?</h3>
+      <p class="font-serif text-[1rem] font-light italic leading-[1.8] text-slate">Speak to the person who hasn&apos;t decided yet.</p>
+      <p class="mt-2 font-serif text-[1rem] font-light italic leading-[1.8] text-slate">Tell them where you started and what changed.</p>
+      <p class="mt-2 font-serif text-[1rem] font-light italic leading-[1.8] text-slate">Specific beats long every time.</p>
+    </form>
+
+    {% elif step == 'details' %}
+    <form method="post" novalidate class="max-w-xl border border-rule bg-paper p-5 sm:max-w-3xl sm:p-7">
+      {% csrf_token %}
+      <input type="hidden" name="proof_action" value="save_details">
+      <p class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+        Step 2 · Details
+      </p>
+      <h2 class="mb-4 font-display text-[clamp(2rem,3.8vw,3rem)] leading-heading tracking-[0.02em] text-ink">Tell us about this testimonial</h2>
+
+      {% if details_form.errors %}
+      <div role="alert" class="mb-8 border border-rule bg-blue-light px-4 py-4">
+        <p class="mb-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">Please check the form</p>
+        <ul class="m-0 list-none space-y-2 p-0 font-body text-[0.8rem] font-light leading-[1.7] text-slate">
+          {% for field in details_form %}
+            {% for error in field.errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
+        <div>
+          <label for="{{ details_form.client_first_name.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">{{ details_form.client_first_name.label }}</label>
+          {{ details_form.client_first_name }}
+        </div>
+        <div>
+          <label for="{{ details_form.client_last_initial.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">{{ details_form.client_last_initial.label }}</label>
+          {{ details_form.client_last_initial }}
+        </div>
+        <div>
+          <label for="{{ details_form.client_job_title.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">{{ details_form.client_job_title.label }}</label>
+          {{ details_form.client_job_title }}
+        </div>
+      </div>
+
+      <hr class="my-6 border-t border-rule sm:my-10">
+
+      {{ details_form.star_rating }}
+      <div class="mb-6 sm:mb-8">
+        <p class="mb-3 font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">Star rating</p>
+        <div class="flex items-center gap-2" id="star-picker">
+          {% for i in "12345" %}
+          <button type="button" class="star-btn h-11 w-11 border border-rule bg-paper text-[1.5rem] leading-none text-[#C7B98D] transition-colors hover:text-[#F3B71B]" data-star-value="{{ forloop.counter }}">★</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <p class="mb-3 font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">Outcome tags <span class="ml-2 font-normal normal-case tracking-normal text-muted">(choose one or two)</span></p>
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {% for checkbox in details_form.outcome_tags %}
+          <label class="flex items-center gap-2 border border-rule bg-paper px-[0.9rem] py-[0.45rem] font-body text-[0.75rem] font-medium uppercase tracking-[0.08em] text-slate">
+            {{ checkbox.tag }}
+            <span>{{ checkbox.choice_label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="mt-7 flex items-center gap-4 sm:mt-10">
+        <button type="submit" class="inline-flex border-0 bg-blue px-6 py-[0.8rem] font-body text-[0.72rem] font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-blue-mid sm:px-8 sm:py-[0.9rem] sm:text-[0.78rem]">
+          Continue to preview
+        </button>
+        <a href="?step=upload" class="font-body text-[0.72rem] uppercase tracking-wide-3 text-muted no-underline border-b border-rule pb-0.5 hover:text-ink hover:border-ink">Back to video</a>
+      </div>
+    </form>
+
+    {% elif step == 'preview' %}
+    <div class="max-w-lg sm:max-w-3xl">
+      <p class="mb-3 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+        Preview
+      </p>
+      <h2 class="mb-4 font-display text-[clamp(2rem,3.8vw,3rem)] leading-heading tracking-[0.02em] text-ink">Preview your testimonial card</h2>
+
+      <div id="proof-preview-card" class="group relative max-w-full overflow-hidden rounded-2xl border border-rule bg-ink sm:max-w-[32rem]">
+        {% if video_url %}
+        <video id="proof-preview-video" playsinline class="aspect-[4/3] w-full object-cover" src="{{ video_url }}"></video>
+        <button
+          type="button"
+          id="proof-preview-play"
+          class="absolute left-1/2 top-1/2 z-20 flex h-[5.2rem] w-[5.2rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-blue/70 text-white transition-transform duration-200 hover:scale-[1.06] hover:bg-blue-mid"
+          aria-label="Play video"
+        >
+          <svg id="proof-preview-icon-play" class="ml-1 h-10 w-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <polygon points="6,3 20,12 6,21"></polygon>
+          </svg>
+          <svg id="proof-preview-icon-pause" class="hidden h-10 w-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <rect x="6" y="4" width="4.5" height="16"></rect>
+            <rect x="13.5" y="4" width="4.5" height="16"></rect>
+          </svg>
+        </button>
+        {% else %}
+        <div class="aspect-[4/3] w-full bg-surface"></div>
+        {% endif %}
+        <div id="proof-preview-meta" class="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 via-black/35 to-transparent p-6 transition-opacity duration-200 group-hover:opacity-0">
+          <p class="font-body text-[2.1rem] font-semibold leading-[1] text-white">{{ preview.client_first_name }} {{ preview.client_last_initial }}.</p>
+          {% if preview.client_job_title %}<p class="mt-1 font-body text-[0.9rem] font-light text-white/90">{{ preview.client_job_title }}</p>{% endif %}
+          <div class="mt-3 flex items-center gap-1.5">
+            {% for _ in preview_stars %}
+            <span class="text-[2rem] leading-none text-[#F3B71B]">★</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {% if preview_outcomes %}
+      <div class="mt-3 flex flex-wrap gap-2">
+        {% for label in preview_outcomes %}
+        <span class="inline-block border border-blue/20 bg-blue-light px-[0.6rem] py-[0.2rem] font-body text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-blue">{{ label }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <form method="post" class="mt-5 flex items-center gap-4">
+        {% csrf_token %}
+        <input type="hidden" name="proof_action" value="submit_testimonial">
+        <button type="submit" class="inline-flex border-0 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-blue-mid">
+          Submit for approval
+        </button>
+        <a href="?step=details" class="font-body text-[0.72rem] uppercase tracking-wide-3 text-muted no-underline border-b border-rule pb-0.5 hover:text-ink hover:border-ink">Edit details</a>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<script>
+(function () {
+  var step = '{{ step }}';
+  if (step === 'upload') {
+    var recordInput = document.getElementById('proof-video-record-input');
+    var uploadInput = document.getElementById('proof-video-upload-input');
+    var recordBtn = document.getElementById('proof-record-btn');
+    var uploadBtn = document.getElementById('proof-upload-btn');
+    var help = document.getElementById('video-help-copy');
+    var fileName = document.getElementById('video-file-name');
+    var cta = document.getElementById('video-continue-btn');
+    if (!recordInput || !uploadInput) return;
+
+    function markSelected(file) {
+      if (file) {
+        if (cta) cta.disabled = false;
+        if (help) help.textContent = 'Video selected.';
+        if (fileName) {
+          fileName.classList.remove('hidden');
+          fileName.textContent = file.name;
+        }
+      } else {
+        if (cta) cta.disabled = true;
+        if (help) help.textContent = 'Choose Record or Upload to continue.';
+        if (fileName) {
+          fileName.classList.add('hidden');
+          fileName.textContent = '';
+        }
+      }
+    }
+
+    if (recordBtn) {
+      recordBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        recordInput.click();
+      });
+    }
+    if (uploadBtn) {
+      uploadBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        uploadInput.click();
+      });
+    }
+    recordInput.addEventListener('change', function () {
+      var file = recordInput.files && recordInput.files.length ? recordInput.files[0] : null;
+      if (file) uploadInput.value = '';
+      markSelected(file);
+    });
+    uploadInput.addEventListener('change', function () {
+      var file = uploadInput.files && uploadInput.files.length ? uploadInput.files[0] : null;
+      if (file) recordInput.value = '';
+      markSelected(file);
+    });
+  }
+
+  if (step === 'details') {
+    var hidden = document.getElementById('{{ details_form.star_rating.id_for_label|default:"id_star_rating" }}');
+    var stars = document.querySelectorAll('.star-btn[data-star-value]');
+    if (!hidden || !stars.length) return;
+
+    function paint(val) {
+      var n = parseInt(val || '0', 10);
+      stars.forEach(function (s) {
+        var on = parseInt(s.getAttribute('data-star-value'), 10) <= n;
+        s.classList.toggle('text-[#F3B71B]', on);
+        s.classList.toggle('border-blue/30', on);
+        s.classList.toggle('bg-blue-light', on);
+      });
+    }
+
+    stars.forEach(function (s) {
+      s.addEventListener('click', function () {
+        hidden.value = s.getAttribute('data-star-value');
+        paint(hidden.value);
+      });
+    });
+    paint(hidden.value);
+  }
+
+  if (step === 'preview') {
+    var previewCard = document.getElementById('proof-preview-card');
+    var previewVideo = document.getElementById('proof-preview-video');
+    var previewButton = document.getElementById('proof-preview-play');
+    var previewMeta = document.getElementById('proof-preview-meta');
+    var playIcon = document.getElementById('proof-preview-icon-play');
+    var pauseIcon = document.getElementById('proof-preview-icon-pause');
+    if (!previewCard || !previewVideo || !previewButton || !playIcon || !pauseIcon) return;
+
+    var isTouchUi =
+      window.matchMedia('(max-width: 768px)').matches ||
+      window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    var isPlaying = !previewVideo.paused && !previewVideo.ended;
+    var isHovering = false;
+
+    function renderPreviewState() {
+      if (isTouchUi && !isPlaying) {
+        isHovering = false;
+      }
+      if (previewMeta) {
+        var hideMeta = isPlaying || (!isTouchUi && isHovering);
+        previewMeta.classList.toggle('opacity-0', hideMeta);
+      }
+      var showButton = isTouchUi ? !isPlaying : (!isPlaying || isHovering);
+      previewButton.classList.toggle('hidden', !showButton);
+      var showPause = !isTouchUi && isPlaying && isHovering;
+      playIcon.classList.toggle('hidden', showPause);
+      pauseIcon.classList.toggle('hidden', !showPause);
+      previewButton.setAttribute('aria-label', showPause ? 'Pause video' : 'Play video');
+    }
+
+    function setHoverState(hovering) {
+      if (isTouchUi) return;
+      isHovering = hovering;
+      renderPreviewState();
+    }
+
+    previewButton.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!previewVideo.paused) {
+        previewVideo.pause();
+        return;
+      }
+      var playPromise = previewVideo.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(function () {
+          isPlaying = false;
+          renderPreviewState();
+        });
+      }
+    });
+    previewCard.addEventListener('mouseenter', function () {
+      setHoverState(true);
+    });
+    previewCard.addEventListener('mouseleave', function () {
+      setHoverState(false);
+    });
+    previewCard.addEventListener('pointerenter', function () {
+      setHoverState(true);
+    });
+    previewCard.addEventListener('pointerleave', function () {
+      setHoverState(false);
+    });
+    previewCard.addEventListener('mouseover', function () {
+      setHoverState(true);
+    });
+    previewCard.addEventListener('mouseout', function () {
+      setHoverState(false);
+    });
+    previewVideo.addEventListener('click', function () {
+      // Mobile behavior: tap the video to pause and restore overlay.
+      if (!previewVideo.paused) {
+        previewVideo.pause();
+        isPlaying = false;
+        renderPreviewState();
+      }
+    });
+    previewVideo.addEventListener('play', function () {
+      isPlaying = true;
+      renderPreviewState();
+    });
+    previewVideo.addEventListener('pause', function () {
+      isPlaying = false;
+      renderPreviewState();
+    });
+    previewVideo.addEventListener('ended', function () {
+      isPlaying = false;
+      renderPreviewState();
+    });
+    renderPreviewState();
+  }
+})();
+</script>
+{% endblock %}

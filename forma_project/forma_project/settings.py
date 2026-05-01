@@ -119,6 +119,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'pages.context_processors.proof_notifications',
             ],
         },
     },
@@ -263,6 +264,7 @@ STRIPE_PRODUCT_ID = os.getenv('STRIPE_PRODUCT_ID', '').strip()
 STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID', '').strip()
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '').strip()
 STRIPE_TRIAL_DAYS = int(os.getenv('STRIPE_TRIAL_DAYS', '30') or 30)
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '').strip()
 
 # Railway / Heroku / other HTTPS reverse proxies: set DJANGO_SECURE_PROXY_SSL=1
 if os.getenv('DJANGO_SECURE_PROXY_SSL', '').lower() in ('1', 'true', 'yes'):

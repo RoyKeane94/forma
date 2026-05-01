@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}Set your name — Forma{% endblock %}
+{% block body %}
+<section class="border-t border-rule bg-surface min-h-[calc(100vh-60px)] px-page py-section">
+  <div class="mx-auto w-full max-w-3xl">
+    <p class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+      Account setup
+    </p>
+    <h1 class="mb-4 font-display text-[clamp(2.8rem,4.5vw,4.5rem)] leading-heading tracking-[0.02em] text-ink">
+      Add your name
+    </h1>
+    <p class="mb-10 max-w-2xl font-serif text-[1.05rem] font-light italic leading-serif text-slate">
+      This is the name shown on your public Proof page.
+    </p>
+
+    <form method="post" class="border-t border-rule pt-10" novalidate>
+      {% csrf_token %}
+      {% if form.errors %}
+      <div role="alert" class="mb-8 border border-rule bg-blue-light px-4 py-4">
+        <p class="mb-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">
+          Please check the form
+        </p>
+        <ul class="m-0 list-none space-y-2 p-0 font-body text-[0.8rem] font-light leading-[1.7] text-slate">
+          {% for field in form %}
+            {% for error in field.errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+          {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div>
+          <label for="{{ form.first_name.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">
+            {{ form.first_name.label }}
+          </label>
+          {{ form.first_name }}
+        </div>
+        <div>
+          <label for="{{ form.last_name.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">
+            {{ form.last_name.label }}
+          </label>
+          {{ form.last_name }}
+        </div>
+      </div>
+
+      <hr class="my-10 border-t border-rule">
+
+      <div
+        class="forma-combobox forma-combobox--sentence max-w-[26rem]"
+        data-forma-combobox
+        data-combobox-placeholder="{{ form.primary_area.field.empty_label|default:'Select your primary area'|escape }}"
+      >
+        <label for="{{ form.primary_area.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">
+          {{ form.primary_area.label }}
+        </label>
+        {{ form.primary_area }}
+      </div>
+
+      <div class="mt-4">
+        <button
+          type="button"
+          id="toggle-new-area"
+          class="cursor-pointer border-0 bg-transparent pb-0.5 font-body text-[0.75rem] font-normal uppercase tracking-[0.1em] text-muted border-b border-rule hover:text-ink hover:border-ink"
+        >
+          Add new area
+        </button>
+      </div>
+
+      <div
+        id="new-area-fields"
+        class="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2{% if not form.location_add_name.value and not form.location_add_outward.value and not form.location_add_name.errors and not form.location_add_outward.errors %} hidden{% endif %}"
+      >
+        <div>
+          <label for="{{ form.location_add_name.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">
+            {{ form.location_add_name.label }}
+          </label>
+          {{ form.location_add_name }}
+        </div>
+        <div>
+          <label for="{{ form.location_add_outward.id_for_label }}" class="mb-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">
+            {{ form.location_add_outward.label }}
+          </label>
+          {{ form.location_add_outward }}
+        </div>
+      </div>
+
+      <div class="mt-8">
+        <button type="submit" class="cursor-pointer border-0 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-blue-mid">
+          Save and continue
+        </button>
+      </div>
+    </form>
+
+    {% if names_ready %}
+    <section class="mt-12 border-t border-rule bg-paper px-6 py-8">
+      <p class="mb-4 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">
+        Next step
+      </p>
+      <h2 class="mb-4 font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-heading tracking-[0.02em] text-ink">
+        Get your first testimonial
+      </h2>
+      <p class="mb-5 font-body text-[0.9rem] font-light leading-[1.7] text-slate">
+        Share this link with a client and they can upload their first 15 second testimonial.
+      </p>
+      <p class="mb-3 font-body text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-muted">Your testimonial link</p>
+      <a href="{{ proof_url }}" class="inline-block break-all border border-rule bg-white px-4 py-3 font-body text-[0.84rem] font-light text-blue no-underline hover:bg-blue-light">
+        {{ proof_url }}
+      </a>
+      <p class="mt-4 font-serif text-[0.95rem] font-light italic leading-[1.7] text-slate">
+        Don’t worry, you get to approve it before it goes live.
+      </p>
+    </section>
+    {% endif %}
+  </div>
+</section>
+<script>
+(function () {
+  function optionLabel(opt) {
+    if (!opt) return '';
+    return (opt.textContent || opt.innerText || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function enhanceCombobox(wrap) {
+    if (!wrap || wrap.classList.contains('forma-combobox--enhanced')) return;
+    var sel = wrap.querySelector('select');
+    if (!sel || wrap.querySelector('[data-combobox-trigger]')) return;
+
+    var origId = sel.id || 'register_primary_area';
+    var listId = origId + '_listbox';
+    var placeholder = wrap.getAttribute('data-combobox-placeholder') || 'Select your primary area';
+    var labelEl = wrap.querySelector('label[for="' + origId + '"]');
+    if (labelEl && !labelEl.id) labelEl.id = origId + '_label';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = origId;
+    sel.id = origId + '_native';
+    btn.setAttribute('data-combobox-trigger', '');
+    btn.setAttribute('aria-haspopup', 'listbox');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', listId);
+    if (labelEl && labelEl.id) btn.setAttribute('aria-labelledby', labelEl.id);
+
+    var labelSpan = document.createElement('span');
+    labelSpan.className = 'forma-combobox__label forma-combobox__label--placeholder';
+    var chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    chevron.setAttribute('data-combobox-chevron', '');
+    chevron.setAttribute('viewBox', '0 0 24 24');
+    chevron.setAttribute('fill', 'none');
+    chevron.setAttribute('stroke', 'currentColor');
+    chevron.setAttribute('stroke-width', '2');
+    chevron.setAttribute('aria-hidden', 'true');
+    var poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    poly.setAttribute('points', '6 9 12 15 18 9');
+    chevron.appendChild(poly);
+    btn.appendChild(labelSpan);
+    btn.appendChild(chevron);
+
+    var panel = document.createElement('div');
+    panel.id = listId;
+    panel.hidden = true;
+    panel.setAttribute('data-combobox-panel', '');
+    panel.setAttribute('role', 'listbox');
+
+    var isOpen = false;
+
+    function syncTrigger() {
+      var opt = sel.options[sel.selectedIndex];
+      var empty = !sel.value;
+      labelSpan.textContent = empty ? placeholder : optionLabel(opt);
+      labelSpan.classList.toggle('forma-combobox__label--placeholder', empty);
+      Array.prototype.forEach.call(panel.children, function (row) {
+        row.setAttribute('aria-selected', row.getAttribute('data-value') === sel.value ? 'true' : 'false');
+      });
+    }
+
+    function setOpen(open) {
+      isOpen = open;
+      btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      panel.hidden = !isOpen;
+      if (!isOpen) {
+        Array.prototype.forEach.call(panel.children, function (row) {
+          row.removeAttribute('data-active');
+        });
+      }
+    }
+
+    Array.prototype.forEach.call(sel.options, function (opt) {
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.setAttribute('role', 'option');
+      row.setAttribute('data-value', opt.value);
+      row.textContent = optionLabel(opt) || placeholder;
+      row.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        sel.value = row.getAttribute('data-value');
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+        setOpen(false);
+        syncTrigger();
+        btn.focus();
+      });
+      panel.appendChild(row);
+    });
+
+    wrap.insertBefore(btn, sel);
+    wrap.appendChild(panel);
+    wrap.classList.add('forma-combobox--enhanced');
+    syncTrigger();
+
+    sel.addEventListener('change', syncTrigger);
+    btn.addEventListener('click', function () {
+      setOpen(!isOpen);
+    });
+    document.addEventListener('click', function (ev) {
+      if (!isOpen) return;
+      if (!wrap.contains(ev.target)) setOpen(false);
+    });
+  }
+
+  document.querySelectorAll('[data-forma-combobox]').forEach(enhanceCombobox);
+
+  var toggleBtn = document.getElementById('toggle-new-area');
+  var newAreaWrap = document.getElementById('new-area-fields');
+  if (!toggleBtn || !newAreaWrap) return;
+
+  function syncLabel() {
+    var isHidden = newAreaWrap.classList.contains('hidden');
+    toggleBtn.textContent = isHidden ? 'Add new area' : 'Use area list only';
+  }
+
+  toggleBtn.addEventListener('click', function () {
+    newAreaWrap.classList.toggle('hidden');
+    syncLabel();
+  });
+
+  syncLabel();
+})();
+</script>
+{% endblock %}

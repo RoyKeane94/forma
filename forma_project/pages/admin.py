@@ -19,6 +19,8 @@ from .models import (
     HttpErrorLog,
     PostcodeDistrict,
     PrimaryArea,
+    ProofOutcomeTag,
+    ProofTestimonial,
     ProfileEnquiry,
     ProfilePageView,
     ProfileScrollEvent,
@@ -58,6 +60,14 @@ class SpecialismCatalogAdmin(admin.ModelAdmin):
     list_editable = ('sort_order', 'is_active')
     search_fields = ('title', 'slug')
     ordering = ('title',)
+
+
+@admin.register(ProofOutcomeTag)
+class ProofOutcomeTagAdmin(admin.ModelAdmin):
+    list_display = ('label', 'key', 'sort_order', 'is_active')
+    list_editable = ('sort_order', 'is_active')
+    search_fields = ('label', 'key')
+    ordering = ('sort_order', 'label')
 
 
 class TrainerSpecialismInline(admin.TabularInline):
@@ -306,6 +316,32 @@ class ProfileEnquiryAdmin(admin.ModelAdmin):
     def message_preview(self, obj):
         text = (obj.message or '').replace('\n', ' ')
         return (text[:100] + '…') if len(text) > 100 else (text or '—')
+
+
+@admin.register(ProofTestimonial)
+class ProofTestimonialAdmin(admin.ModelAdmin):
+    list_display = (
+        'submitted_at',
+        'profile',
+        'client_first_name',
+        'client_last_initial',
+        'star_rating',
+        'pull_quote',
+        'status',
+        'share_to_instagram',
+    )
+    list_filter = ('status', 'star_rating', 'share_to_instagram', 'submitted_at')
+    search_fields = (
+        'profile__first_name',
+        'profile__last_name',
+        'client_first_name',
+        'client_job_title',
+        'client_location',
+        'client_specialism',
+    )
+    readonly_fields = ('submitted_at',)
+    autocomplete_fields = ('profile', 'reviewed_by')
+    ordering = ('-submitted_at',)
 
 
 @admin.register(HttpErrorLog)

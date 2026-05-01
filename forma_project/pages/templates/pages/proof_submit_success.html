@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Thanks — Forma{% endblock %}
+{% block body %}
+<section class="border-t border-rule bg-paper px-4 py-10 sm:px-[4rem] sm:py-[5rem]">
+  <div class="mx-auto w-full max-w-5xl text-center">
+    <p class="mb-5 inline-flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+      The Proof
+    </p>
+    <h1 class="m-0 font-display text-[clamp(2.2rem,8vw,4rem)] leading-[0.95] tracking-[0.02em] text-ink">
+      Thanks. Your testimonial is submitted.
+    </h1>
+    <p class="mx-auto mt-5 mb-0 max-w-2xl font-body text-[0.95rem] font-light leading-relaxed text-slate">
+      It is now with {{ profile.first_name }} {{ profile.last_name }} for review.
+      We are generating suggested pull quotes in the background.
+    </p>
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <a href="{{ proof_submit_url }}" class="inline-flex h-10 items-center rounded-full border border-blue/30 bg-blue-light px-5 font-body text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-blue no-underline hover:border-blue/50">
+        Submit another testimonial
+      </a>
+      <a href="{% url 'home' %}" class="inline-flex h-10 items-center rounded-full border border-rule bg-paper px-5 font-body text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-muted no-underline hover:border-ink hover:text-ink">
+        Back to Forma
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

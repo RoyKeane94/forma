@@ -8,8 +8,50 @@
     <div class="flex min-w-0 max-w-xl flex-col items-start text-left">
       <p class="mb-3 font-body text-[0.7rem] font-medium uppercase tracking-wide-3 text-blue">Account</p>
       <h1 class="mb-4 font-display text-[clamp(2.25rem,6vw,3rem)] leading-none tracking-[0.02em] text-ink">My account</h1>
+      <section class="mb-8 w-full max-w-xl border border-rule bg-paper px-5 py-5 sm:px-6 sm:py-6">
+        <p class="mb-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">Next step</p>
+        <h2 class="mb-3 font-display text-[clamp(1.8rem,3vw,2.3rem)] leading-heading tracking-[0.02em] text-ink">Your next client is one link away</h2>
+        {% if testimonial_to_review_count > 0 %}
+        <p class="mb-4">
+          <a href="{% url 'pages:proof_notifications' %}" class="font-body text-[0.66rem] font-semibold uppercase tracking-wide-3 text-blue no-underline border-b border-blue/40 pb-0.5 hover:border-blue">
+            Review testimonials ({{ testimonial_to_review_count }})
+          </a>
+        </p>
+        {% endif %}
+        <div class="mb-3 grid grid-cols-2 gap-2.5 rounded-card border border-rule bg-surface px-3 py-3">
+          <div>
+            <p class="m-0 font-display text-[1.8rem] leading-none tracking-[0.04em] text-ink">{{ testimonial_total_count }}</p>
+            <p class="mt-1 m-0 font-body text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-muted">Total</p>
+          </div>
+          <div>
+            <p class="m-0 font-display text-[1.8rem] leading-none tracking-[0.04em] text-ink">{{ testimonial_to_review_count }}</p>
+            <p class="mt-1 m-0 font-body text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-muted">To review</p>
+          </div>
+        </div>
+        <p class="mb-4">
+          <a href="{% url 'pages:proof_testimonials_page' %}" class="font-body text-[0.64rem] font-semibold uppercase tracking-wide-3 text-blue no-underline border-b border-blue/40 pb-0.5 hover:border-blue">See my Testimonials</a>
+        </p>
+        <p class="mb-2 font-body text-[0.64rem] font-semibold uppercase tracking-wide-3 text-muted">Share with your clients to get a testimonial</p>
+        <div class="mb-3 flex items-stretch gap-2">
+          <a href="{{ proof_testimonial_url }}" class="min-w-0 flex-1 break-all border border-rule bg-white px-4 py-3 font-body text-[0.8rem] font-light text-blue no-underline transition-colors hover:bg-blue-light">
+            {{ proof_testimonial_url }}
+          </a>
+          <button
+            id="proof-link-copy-btn"
+            type="button"
+            class="inline-flex h-auto shrink-0 items-center justify-center border border-rule bg-paper px-4 font-body text-[0.64rem] font-semibold uppercase tracking-wide-3 text-ink transition-colors hover:border-ink hover:bg-surface"
+            data-copy-value="{{ proof_testimonial_url|escape }}"
+            aria-label="Copy testimonial link"
+          >
+            Copy link
+          </button>
+        </div>
+        <p class="mb-5 font-body text-[0.8rem] font-medium leading-[1.55] text-ink">
+          You approve every testimonial before it goes live.
+        </p>
+      </section>
 
-      {% if profile.completed_at %}
+      {% if show_legacy_profile_admin and profile.completed_at %}
       {% if profile.is_published %}
       <p class="mb-6 max-w-[42ch] font-serif text-[1.05rem] font-light italic leading-[1.7] text-slate">
         Your trainer page is published — anyone with your link can view it.
@@ -62,7 +104,7 @@
       </p>
       {% endif %}
 
-      {% else %}
+      {% elif show_legacy_profile_admin %}
       {% if profile.onboarding_step > 0 %}
       <p class="mb-6 max-w-[42ch] font-serif text-[1.05rem] font-light italic leading-[1.7] text-slate">
         Pick up where you left off. Sections you have finished are marked below.
@@ -101,9 +143,6 @@
       </a>
       {% endif %}
 
-      <p class="mt-2 font-body text-[0.72rem] text-muted">
-        <a href="{% url 'home' %}" class="border-b border-rule pb-0.5 text-slate no-underline transition-colors hover:border-ink hover:text-ink">Back to home</a>
-      </p>
     </div>
 
     <aside class="border-t border-rule pt-8 lg:border-t-0 lg:border-l lg:border-rule lg:pl-10 lg:pt-0" aria-label="Account settings">
@@ -127,4 +166,31 @@
     </aside>
   </div>
 </div>
+<script>
+(function () {
+  var btn = document.getElementById('proof-link-copy-btn');
+  if (!btn) return;
+  function setCopiedState(ok) {
+    var original = btn.getAttribute('data-original-label') || btn.textContent;
+    btn.textContent = ok ? 'Copied' : 'Failed';
+    setTimeout(function () {
+      btn.textContent = original;
+    }, ok ? 1600 : 2200);
+  }
+  btn.setAttribute('data-original-label', btn.textContent);
+  btn.addEventListener('click', function () {
+    var value = btn.getAttribute('data-copy-value') || '';
+    if (!value) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(value).then(function () {
+        setCopiedState(true);
+      }).catch(function () {
+        setCopiedState(false);
+      });
+      return;
+    }
+    setCopiedState(false);
+  });
+})();
+</script>
 {% endblock %}

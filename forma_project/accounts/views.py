@@ -4,9 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.generic import TemplateView
 
+from pages.models import TrainerProfile, ensure_onboarding_children
 from pages.stripe_keep_profile import cancel_stripe_subscription_immediately
 
 from .forms import (
@@ -15,6 +16,7 @@ from .forms import (
     FormaPasswordChangeForm,
     LoginForm,
     RegisterForm,
+    RegisterNameForm,
 )
 from .models import Profile
 
@@ -104,7 +106,78 @@ def register(request):
             Profile.objects.get_or_create(user=user)
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, 'Welcome to Forma.')
-            return redirect('home')
+            return redirect('pages:my_account')
     else:
         form = RegisterForm()
     return render(request, 'accounts/register.html', {'form': form})
+
+
+def _ensure_trainer_profile_for_user(user):
+    profile, _ = TrainerProfile.objects.get_or_create(
+        user=user,
+        defaults={
+            'first_name': (user.first_name or '').strip(),
+            'last_name': (user.last_name or '').strip(),
+            'tagline': '',
+            'bio': '',
+        },
+    )
+    ensure_onboarding_children(profile)
+    user_first = (user.first_name or '').strip()
+    user_last = (user.last_name or '').strip()
+    profile_first = (profile.first_name or '').strip()
+    profile_last = (profile.last_name or '').strip()
+    legacy_pairs = {
+        ('Trainer', 'Profile'),
+        ('Mark', 'Jobs'),
+    }
+    if not user_first and not user_last and (profile_first, profile_last) in legacy_pairs:
+        profile.first_name = ''
+        profile.last_name = ''
+        profile.save(update_fields=['first_name', 'last_name'])
+    return profile
+
+
+@login_required
+def register_name(request):
+    user = request.user
+    profile = _ensure_trainer_profile_for_user(user)
+
+    if request.method == 'POST':
+        form = RegisterNameForm(request.POST)
+        if form.is_valid():
+            first = form.cleaned_data['first_name']
+            last = form.cleaned_data['last_name']
+            primary_area = form.cleaned_data['resolved_primary_area']
+            user.first_name = first
+            user.last_name = last
+            user.save(update_fields=['first_name', 'last_name'])
+            profile.first_name = first
+            profile.last_name = last
+            profile.primary_area = primary_area
+            profile.save(update_fields=['first_name', 'last_name', 'primary_area'])
+            messages.success(request, 'Name saved.')
+            return redirect('accounts:register_name')
+    else:
+        form = RegisterNameForm(
+            initial={
+                'first_name': (user.first_name or profile.first_name or '').strip(),
+                'last_name': (user.last_name or profile.last_name or '').strip(),
+                'primary_area': profile.primary_area_id,
+            }
+        )
+
+    proof_url = request.build_absolute_uri(
+        reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})
+    )
+    names_ready = bool((user.first_name or '').strip() and (user.last_name or '').strip())
+    return render(
+        request,
+        'accounts/register_name.html',
+        {
+            'form': form,
+            'profile': profile,
+            'proof_url': proof_url,
+            'names_ready': names_ready,
+        },
+    )

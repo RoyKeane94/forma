@@ -1,17 +1,23 @@
 <nav class="fixed top-0 inset-x-0 z-[200] h-[60px] flex items-stretch bg-paper border-b border-rule" aria-label="Main">
-  <div class="flex items-center px-8 border-r border-rule shrink-0">
+  <div class="flex items-center px-4 sm:px-8 border-r border-rule shrink-0">
     <a href="{% url 'home' %}" class="font-display text-[1.55rem] tracking-[0.1em] text-blue no-underline leading-none">Forma</a>
   </div>
-  <div class="flex-1 flex items-center justify-end flex-wrap gap-x-6 gap-y-1 px-6 sm:px-8 min-w-0 sm:gap-x-8 sm:gap-y-0">
+  <div class="flex-1 flex items-center justify-end gap-2 px-3 sm:px-8 min-w-0 sm:gap-3">
     {% if user.is_authenticated %}
-    <span class="font-body text-[0.8rem] font-medium tracking-wide-5 text-muted hidden sm:inline">{{ user.get_username }}</span>
+    <span class="font-body text-[0.75rem] font-medium tracking-wide-4 text-muted hidden lg:inline">{{ user.get_username }}</span>
     {% if user.is_superuser %}
-    <a href="{% url 'pages:staff_forma_profiles' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-blue border-b border-blue/30 pb-0.5 no-underline hover:text-ink hover:border-ink shrink-0">Forma profiles</a>
+    <a href="{% url 'pages:staff_forma_profiles' %}" class="hidden lg:inline-flex h-8 items-center rounded-full border border-blue/30 bg-blue-light px-3 font-body text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-blue no-underline hover:border-blue/50">Forma profiles</a>
     {% endif %}
-    <a href="{% url 'pages:my_account' %}" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 no-underline hover:text-ink hover:border-ink shrink-0">My Account</a>
+    <a href="{% url 'pages:proof_notifications' %}" class="inline-flex h-8 items-center gap-1.5 rounded-full border border-rule bg-paper px-2.5 sm:px-3 font-body text-[0.62rem] sm:text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted no-underline hover:border-ink hover:text-ink shrink-0">
+      Notifications
+      {% if proof_pending_approvals_count > 0 %}
+      <span class="inline-flex min-w-5 items-center justify-center rounded-full bg-blue px-1.5 py-0.5 text-[0.62rem] leading-none tracking-normal text-paper">{{ proof_pending_approvals_count }}</span>
+      {% endif %}
+    </a>
+    <a href="{% url 'pages:my_account' %}" class="inline-flex h-8 items-center rounded-full border border-rule bg-paper px-2.5 sm:px-3 font-body text-[0.62rem] sm:text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted no-underline hover:border-ink hover:text-ink shrink-0">My Account</a>
     <form method="post" action="{% url 'accounts:logout' %}" class="inline m-0">
       {% csrf_token %}
-      <button type="submit" class="font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 bg-transparent cursor-pointer hover:text-ink hover:border-ink">Log out</button>
+      <button type="submit" class="inline-flex h-8 items-center rounded-full border border-rule bg-paper px-2.5 sm:px-3 font-body text-[0.62rem] sm:text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted cursor-pointer hover:border-ink hover:text-ink">Log out</button>
     </form>
     {% else %}
     <a href="{% url 'pages:profile_enquiry' %}" class="font-body text-[0.75rem] sm:text-[0.78rem] font-medium uppercase tracking-wide-2 text-blue border-b border-blue/30 pb-0.5 no-underline hover:border-blue shrink-0">Enquire about a profile</a>

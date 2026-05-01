@@ -5,7 +5,11 @@ from django.contrib.auth.forms import (
     PasswordChangeForm,
     UserCreationForm,
 )
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+
+from pages.forms import validate_uk_postcode_outward
+from pages.models import PrimaryArea
 
 User = get_user_model()
 
@@ -87,6 +91,88 @@ class RegisterForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class RegisterNameForm(forms.Form):
+    first_name = forms.CharField(
+        max_length=150,
+        label='First name',
+        widget=forms.TextInput(attrs={'autocomplete': 'given-name'}),
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        label='Last name',
+        widget=forms.TextInput(attrs={'autocomplete': 'family-name'}),
+    )
+    primary_area = forms.ModelChoiceField(
+        label='Primary area',
+        required=False,
+        queryset=PrimaryArea.objects.none(),
+        widget=forms.Select(attrs={'class': INPUT_WIDGET_CLASS}),
+    )
+    location_add_name = forms.CharField(
+        required=False,
+        label='Add new area name',
+        max_length=128,
+        widget=forms.TextInput(attrs={'autocomplete': 'off'}),
+    )
+    location_add_outward = forms.CharField(
+        required=False,
+        label='Postcode district',
+        max_length=16,
+        widget=forms.TextInput(attrs={'autocomplete': 'off'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _apply_input_classes(self)
+        self.fields['primary_area'].queryset = PrimaryArea.objects.select_related('district').order_by('name')
+        self.fields['primary_area'].empty_label = 'Select your primary area'
+
+    def clean_first_name(self):
+        return (self.cleaned_data.get('first_name') or '').strip()
+
+    def clean_last_name(self):
+        return (self.cleaned_data.get('last_name') or '').strip()
+
+    def clean(self):
+        data = super().clean()
+        selected_area = data.get('primary_area')
+        add_name = (data.get('location_add_name') or '').strip()
+        add_outward = (data.get('location_add_outward') or '').strip()
+
+        if selected_area and add_name:
+            self.add_error(
+                None,
+                'Choose an area from the list or add a new one, not both.',
+            )
+            return data
+
+        if add_outward and not add_name:
+            self.add_error('location_add_name', 'Add an area name for this postcode district.')
+            return data
+
+        resolved_area = selected_area
+        if add_name:
+            if not add_outward:
+                self.add_error('location_add_outward', 'Enter the postcode district for your new area.')
+                return data
+            try:
+                outward = validate_uk_postcode_outward(add_outward)
+            except ValidationError as exc:
+                self.add_error('location_add_outward', exc)
+                return data
+            resolved_area = PrimaryArea.ensure_for_custom_entry(add_name, outward)
+            if resolved_area is None:
+                self.add_error('location_add_name', 'Could not add that area. Check the name and postcode district.')
+                return data
+
+        if resolved_area is None:
+            self.add_error('primary_area', 'Choose an area from the list or add a new one.')
+            return data
+
+        data['resolved_primary_area'] = resolved_area
+        return data
 
 
 class LoginForm(AuthenticationForm):

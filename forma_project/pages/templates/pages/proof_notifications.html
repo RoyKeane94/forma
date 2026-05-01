@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications · Forma{% endblock %}
+
+{% block body %}
+<section class="mx-auto w-full max-w-6xl px-page py-10 sm:py-14">
+  <header class="mb-8 flex flex-col gap-2 sm:mb-10">
+    <p class="m-0 font-body text-[0.68rem] uppercase tracking-wide-4 text-muted">Proof</p>
+    <h1 class="m-0 font-display text-[1.8rem] font-normal tracking-[0.06em] text-ink sm:text-[2.1rem]">Notifications</h1>
+    <p class="m-0 max-w-2xl font-body text-[0.9rem] font-light leading-relaxed text-slate">Review client submissions for {{ profile.first_name }} {{ profile.last_name }}. Approve to publish on your Proof wall, or reject to keep it private.</p>
+    <div class="pt-2">
+      <a href="{% url 'pages:proof_testimonials_page' %}" class="inline-flex h-9 items-center rounded-full border border-blue/30 bg-blue-light px-4 font-body text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-blue no-underline hover:border-blue/50">View my testimonials page</a>
+    </div>
+  </header>
+
+  <div class="mb-8 rounded-card border border-rule bg-surface p-4 sm:p-5">
+    <p class="m-0 font-body text-[0.78rem] uppercase tracking-wide-4 text-muted">Pending approvals</p>
+    <p class="mt-2 mb-0 font-display text-[1.9rem] leading-none text-ink">{{ pending_submissions|length }}</p>
+  </div>
+
+  <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <section class="space-y-4">
+      {% if pending_submissions %}
+      {% for submission in pending_submissions %}
+      <article class="rounded-card border border-rule bg-paper p-4 sm:p-5">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <p class="m-0 font-body text-[0.72rem] uppercase tracking-wide-4 text-muted">Submitted {{ submission.submitted_at|date:"j M Y" }}</p>
+        </div>
+        <div class="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_260px]">
+          <div
+            class="proof-review-card group relative max-w-full overflow-hidden rounded-2xl border border-rule bg-paper"
+            data-review-card
+          >
+            <video
+              class="proof-review-video block aspect-square w-full object-cover bg-ink"
+              src="{{ submission.video.url }}"
+              preload="metadata"
+              playsinline
+              data-review-video
+            ></video>
+            <div class="pointer-events-none absolute bottom-14 left-3 z-10 rounded-lg bg-black/75 px-2.5 py-2 transition-opacity duration-200" data-review-meta>
+              <p class="m-0 font-body text-[1.15rem] font-semibold leading-none text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.45)]">
+                {{ submission.client_first_name }} {{ submission.client_last_initial }}.
+              </p>
+              {% if submission.client_job_title %}
+              <p class="mt-1 m-0 font-body text-[0.74rem] font-light uppercase tracking-wide-3 text-white/90 [text-shadow:0_1px_4px_rgba(0,0,0,0.35)]">{{ submission.client_job_title }}</p>
+              {% endif %}
+              <div class="mt-1.5 flex items-center gap-0.5">
+                {% for _ in "12345" %}
+                <span class="text-[1.2rem] leading-none {% if forloop.counter <= submission.star_rating %}text-[#F3B71B]{% else %}text-white/45{% endif %} [text-shadow:0_1px_4px_rgba(0,0,0,0.35)]">★</span>
+                {% endfor %}
+              </div>
+            </div>
+            <button
+              type="button"
+              class="proof-review-play absolute left-1/2 top-1/2 z-20 flex h-[5.2rem] w-[5.2rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-blue/70 text-white transition-transform duration-200 hover:scale-[1.06] hover:bg-blue-mid"
+              aria-label="Play video"
+              data-review-play
+            >
+              <svg class="proof-review-icon-play ml-1 h-10 w-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <polygon points="6,3 20,12 6,21"></polygon>
+              </svg>
+              <svg class="proof-review-icon-pause hidden h-10 w-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <rect x="6" y="4" width="4.5" height="16"></rect>
+                <rect x="13.5" y="4" width="4.5" height="16"></rect>
+              </svg>
+            </button>
+            <div class="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-blue px-3 py-3.5" data-review-quote-bar>
+              <p class="m-0 truncate font-body text-[0.84rem] font-semibold leading-tight text-white" data-review-quote-text>
+                {% if submission.pull_quote %}
+                  {{ submission.pull_quote }}
+                {% elif submission.suggested_quotes %}
+                  {{ submission.suggested_quotes.0 }}
+                {% else %}
+                  Pull quote appears here
+                {% endif %}
+              </p>
+            </div>
+          </div>
+          <div>
+            <h2 class="m-0 font-body text-[1rem] font-medium tracking-wide-2 text-ink">{{ submission.client_first_name }} {{ submission.client_last_initial }}.</h2>
+            {% if submission.client_job_title %}
+            <p class="mt-1 mb-0 font-body text-[0.78rem] uppercase tracking-wide-3 text-muted">{{ submission.client_job_title }}</p>
+            {% endif %}
+            <div class="mt-3 flex items-center gap-1.5" aria-label="Star rating: {{ submission.star_rating }} out of 5">
+              {% for _ in "12345" %}
+              <span class="text-[1.2rem] leading-none {% if forloop.counter <= submission.star_rating %}text-[#F3B71B]{% else %}text-rule{% endif %}">★</span>
+              {% endfor %}
+            </div>
+            {% if submission.outcome_labels %}
+            <div class="mt-3 flex flex-wrap gap-2">
+              {% for label in submission.outcome_labels %}
+              <span class="inline-block border border-blue/20 bg-blue-light px-[0.6rem] py-[0.2rem] font-body text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-blue">{{ label }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% if submission.suggested_quotes %}
+            <div class="mt-4">
+              <p class="m-0 font-body text-[0.62rem] font-bold uppercase tracking-wide-4 text-blue">Pick a pull quote before approving</p>
+              <p class="mt-1 mb-0 font-body text-[0.72rem] font-light text-slate">Choose one of these AI suggestions to highlight this testimonial.</p>
+              <div class="mt-2 flex flex-wrap gap-2" data-quote-picker>
+                {% for quote in submission.suggested_quotes %}
+                <button
+                  type="button"
+                  class="quote-option rounded-full border border-rule bg-paper px-3 py-1.5 font-body text-[0.68rem] font-medium text-slate transition hover:border-blue/40 hover:bg-blue-light hover:text-blue"
+                  data-quote-option
+                  data-quote-value="{{ quote }}"
+                >{{ quote }}</button>
+                {% endfor %}
+              </div>
+            </div>
+            {% else %}
+            <div class="mt-4 rounded-card border border-rule bg-surface px-3 py-2">
+              <p class="m-0 font-body text-[0.7rem] font-light text-slate">No quote suggestion yet. You can still approve, but adding a pull quote is recommended.</p>
+            </div>
+            {% endif %}
+            <div class="mt-4 flex flex-wrap gap-2">
+              <form method="post" class="m-0" data-approve-form>
+                {% csrf_token %}
+                <input type="hidden" name="submission_id" value="{{ submission.id }}">
+                <input type="hidden" name="action" value="approve">
+                <input
+                  type="hidden"
+                  name="pull_quote"
+                  value="{% if submission.pull_quote %}{{ submission.pull_quote }}{% elif submission.suggested_quotes %}{{ submission.suggested_quotes.0 }}{% endif %}"
+                  data-pull-quote-input
+                >
+                <button type="submit" class="h-9 rounded-full border border-blue bg-blue px-4 font-body text-[0.7rem] font-semibold uppercase tracking-wide-4 text-paper transition hover:bg-blue/90">Approve</button>
+              </form>
+              <form method="post" class="m-0">
+                {% csrf_token %}
+                <input type="hidden" name="submission_id" value="{{ submission.id }}">
+                <input type="hidden" name="action" value="reject">
+                <button type="submit" class="h-9 rounded-full border border-rule bg-paper px-4 font-body text-[0.7rem] font-semibold uppercase tracking-wide-4 text-muted transition hover:border-ink hover:text-ink">Reject</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+      {% else %}
+      <div class="rounded-card border border-rule bg-paper p-6 sm:p-7">
+        <p class="m-0 font-body text-[0.82rem] leading-relaxed text-slate">No submissions are waiting for approval.</p>
+        <a href="{% url 'pages:proof_testimonials_page' %}" class="mt-4 inline-flex h-9 items-center rounded-full border border-blue/30 bg-blue-light px-4 font-body text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-blue no-underline hover:border-blue/50">Go to my testimonials page</a>
+      </div>
+      {% endif %}
+    </section>
+
+    <aside class="rounded-card border border-rule bg-paper p-4 sm:p-5">
+      <h2 class="m-0 font-body text-[0.76rem] uppercase tracking-wide-4 text-muted">Recently reviewed</h2>
+      <div class="mt-4 space-y-3">
+        {% if recently_reviewed %}
+        {% for submission in recently_reviewed %}
+        <div class="rounded-card border border-rule bg-surface px-3 py-2.5">
+          <p class="m-0 font-body text-[0.77rem] font-medium text-ink">{{ submission.client_first_name }} {{ submission.client_last_initial }}.</p>
+          <p class="mt-1 mb-0 font-body text-[0.65rem] uppercase tracking-wide-4 {% if submission.status == 'approved' %}text-blue{% else %}text-muted{% endif %}">
+            {{ submission.get_status_display }}
+          </p>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="m-0 font-body text-[0.74rem] text-slate">No reviewed testimonials yet.</p>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+</section>
+<script>
+(function () {
+  var cards = document.querySelectorAll('[data-review-card]');
+  cards.forEach(function (card) {
+    var video = card.querySelector('[data-review-video]');
+    var button = card.querySelector('[data-review-play]');
+    var playIcon = card.querySelector('.proof-review-icon-play');
+    var pauseIcon = card.querySelector('.proof-review-icon-pause');
+    var meta = card.querySelector('[data-review-meta]');
+    if (!video || !button || !playIcon || !pauseIcon) return;
+
+    var isTouchUi =
+      window.matchMedia('(max-width: 768px)').matches ||
+      window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    var isPlaying = !video.paused && !video.ended;
+    var isHovering = false;
+
+    function render() {
+      if (meta) {
+        var hideMeta = isPlaying || (!isTouchUi && isHovering);
+        meta.classList.toggle('opacity-0', hideMeta);
+      }
+      var showButton = isTouchUi ? !isPlaying : (!isPlaying || isHovering);
+      var showPause = !isTouchUi && isPlaying && isHovering;
+      button.classList.toggle('hidden', !showButton);
+      playIcon.classList.toggle('hidden', showPause);
+      pauseIcon.classList.toggle('hidden', !showPause);
+      button.setAttribute('aria-label', showPause ? 'Pause video' : 'Play video');
+    }
+
+    function setHoverState(hovering) {
+      if (isTouchUi) return;
+      isHovering = hovering;
+      render();
+    }
+
+    button.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!video.paused) {
+        video.pause();
+        return;
+      }
+      var playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(function () {
+          isPlaying = false;
+          render();
+        });
+      }
+    });
+    card.addEventListener('mouseenter', function () {
+      setHoverState(true);
+    });
+    card.addEventListener('mouseleave', function () {
+      setHoverState(false);
+    });
+    card.addEventListener('pointerenter', function () {
+      setHoverState(true);
+    });
+    card.addEventListener('pointerleave', function () {
+      setHoverState(false);
+    });
+    card.addEventListener('mouseover', function () {
+      setHoverState(true);
+    });
+    card.addEventListener('mouseout', function () {
+      setHoverState(false);
+    });
+    video.addEventListener('click', function () {
+      if (!video.paused) {
+        video.pause();
+      }
+    });
+    video.addEventListener('play', function () {
+      isPlaying = true;
+      render();
+    });
+    video.addEventListener('pause', function () {
+      isPlaying = false;
+      render();
+    });
+    video.addEventListener('ended', function () {
+      isPlaying = false;
+      render();
+    });
+    render();
+  });
+
+  var quotePickers = document.querySelectorAll('[data-quote-picker]');
+  quotePickers.forEach(function (picker) {
+    var card = picker.closest('article');
+    var scope = card;
+    var article = picker.closest('article');
+    var quoteText = article ? article.querySelector('[data-review-quote-text]') : null;
+    if (!scope) return;
+    var form = scope.querySelector('[data-approve-form]');
+    var input = form ? form.querySelector('[data-pull-quote-input]') : null;
+    if (!form || !input) return;
+    var options = picker.querySelectorAll('[data-quote-option]');
+    var defaultQuote = quoteText ? (quoteText.textContent || '').trim() : '';
+    if (!input.value && options.length) {
+      var first = (options[0].getAttribute('data-quote-value') || '').trim();
+      if (first) input.value = first;
+    }
+
+    function paint() {
+      var selected = (input.value || '').trim();
+      options.forEach(function (btn) {
+        var value = (btn.getAttribute('data-quote-value') || '').trim();
+        var active = selected && value === selected;
+        btn.classList.toggle('border-blue/50', active);
+        btn.classList.toggle('bg-blue', active);
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('bg-paper', !active);
+        btn.classList.toggle('text-slate', !active);
+      });
+      if (quoteText) {
+        quoteText.textContent = selected || defaultQuote || 'Pull quote appears here';
+      }
+    }
+
+    options.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var value = (btn.getAttribute('data-quote-value') || '').trim();
+        var current = (input.value || '').trim();
+        input.value = current === value ? '' : value;
+        paint();
+      });
+    });
+    paint();
+  });
+
+  var approveForms = document.querySelectorAll('[data-approve-form]');
+  approveForms.forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      var input = form.querySelector('[data-pull-quote-input]');
+      var quote = input ? (input.value || '').trim() : '';
+      if (quote) return;
+      var ok = window.confirm('Are you sure you want to approve without a quote?');
+      if (!ok) {
+        e.preventDefault();
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,10 +1,20 @@
 import logging
+import os
 import secrets
+import json
+import re
+import threading
+import subprocess
+import tempfile
+import shutil
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.files import File
+from django.core.files.storage import default_storage
+from django.db import close_old_connections
 from django.db import transaction
 from django.db.models import Avg, Count, Prefetch
 from django.core.exceptions import ValidationError
@@ -27,6 +37,8 @@ from .forms import (
     TrainerGymFormSet,
     OnboardingStep6InstagramForm,
     OnboardingStep7ReviewsForm,
+    ProofDetailsForm,
+    ProofVideoUploadForm,
     ProfileEnquiryForm,
     StaffTrainerCreateForm,
     TrainerAdditionalQualificationFormSet,
@@ -44,8 +56,10 @@ from .forma_yaml_import import (
 )
 from .models import (
     QUICK_QUALIFICATION_CHOICES,
+    ProofOutcomeTag,
     ProfilePageView,
     ProfileScrollEvent,
+    ProofTestimonial,
     TrainerGym,
     TrainerProfile,
     TrainerSpecialism,
@@ -81,6 +95,207 @@ from .profile_display import (
 STEP_COUNT = 7
 
 logger = logging.getLogger(__name__)
+
+
+def _proof_draft_session_key(profile_id: int) -> str:
+    return f'proof_draft_{profile_id}'
+
+
+def _extract_json_array_from_text(raw: str) -> list:
+    text = (raw or '').strip()
+    if not text:
+        return []
+    try:
+        parsed = json.loads(text)
+        return parsed if isinstance(parsed, list) else []
+    except Exception:
+        pass
+    fenced = re.search(r'```(?:json)?\s*(\[[\s\S]*?\])\s*```', text, re.IGNORECASE)
+    if fenced:
+        try:
+            parsed = json.loads(fenced.group(1))
+            return parsed if isinstance(parsed, list) else []
+        except Exception:
+            return []
+    bracketed = re.search(r'(\[[\s\S]*\])', text)
+    if bracketed:
+        try:
+            parsed = json.loads(bracketed.group(1))
+            return parsed if isinstance(parsed, list) else []
+        except Exception:
+            return []
+    return []
+
+
+def _normalize_quote_candidates(raw_candidates) -> list[str]:
+    if not isinstance(raw_candidates, list):
+        return []
+    out: list[str] = []
+    for item in raw_candidates:
+        quote = (str(item or '')).strip()
+        if not quote:
+            continue
+        if len(quote) > 40:
+            continue
+        if quote in out:
+            continue
+        out.append(quote)
+        if len(out) >= 3:
+            break
+    return out
+
+
+def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> list[str]:
+    api_key = (getattr(settings, 'OPENAI_API_KEY', '') or '').strip()
+    if not api_key:
+        return []
+    filename = (submission.video.name or '').strip()
+    ext = os.path.splitext(filename)[1].lower()
+    supported_exts = {'.flac', '.m4a', '.mp3', '.mp4', '.mpeg', '.mpga', '.oga', '.ogg', '.wav', '.webm'}
+    upload_filename = os.path.basename(filename) or 'audio_upload'
+    upload_bytes = b''
+    source_bytes = b''
+    try:
+        with default_storage.open(submission.video.name, 'rb') as video_file:
+            source_bytes = video_file.read()
+    except Exception:
+        logger.exception('Could not read submission media for testimonial %s', submission.pk)
+        return []
+    if ext in supported_exts:
+        upload_bytes = source_bytes
+    elif ext == '.mov':
+        input_path = ''
+        output_path = ''
+        ffmpeg_bin = (os.getenv('IMAGEIO_FFMPEG_EXE') or '').strip() or shutil.which('ffmpeg')
+        if not ffmpeg_bin:
+            try:
+                import imageio_ffmpeg
+                ffmpeg_bin = imageio_ffmpeg.get_ffmpeg_exe()
+            except Exception:
+                ffmpeg_bin = None
+        if not ffmpeg_bin:
+            logger.warning('No ffmpeg binary available; cannot transcode .mov for testimonial %s', submission.pk)
+            return []
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mov') as in_tmp:
+                in_tmp.write(source_bytes)
+                input_path = in_tmp.name
+            fd, output_path = tempfile.mkstemp(suffix='.m4a')
+            os.close(fd)
+            extract_copy_cmd = [
+                ffmpeg_bin,
+                '-y',
+                '-i',
+                input_path,
+                '-vn',
+                '-map',
+                'a:0',
+                '-c:a',
+                'copy',
+                output_path,
+            ]
+            extract_encode_cmd = [
+                ffmpeg_bin,
+                '-y',
+                '-i',
+                input_path,
+                '-vn',
+                '-map',
+                'a:0',
+                '-c:a',
+                'aac',
+                '-b:a',
+                '128k',
+                output_path,
+            ]
+            try:
+                subprocess.run(
+                    extract_copy_cmd,
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            except subprocess.CalledProcessError:
+                subprocess.run(
+                    extract_encode_cmd,
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            with open(output_path, 'rb') as out_fh:
+                upload_bytes = out_fh.read()
+            upload_filename = f'{os.path.splitext(upload_filename)[0]}.m4a'
+        except Exception:
+            logger.warning('Failed to transcode .mov for testimonial %s', submission.pk)
+            return []
+        finally:
+            if input_path and os.path.exists(input_path):
+                os.remove(input_path)
+            if output_path and os.path.exists(output_path):
+                os.remove(output_path)
+    else:
+        logger.info('Skipping AI quote generation for unsupported extension: %s', ext or '(none)')
+        return []
+    if not upload_bytes:
+        return []
+    try:
+        from openai import OpenAI
+    except Exception:
+        logger.exception('OpenAI SDK import failed; skipping quote generation')
+        return []
+    try:
+        client = OpenAI(api_key=api_key)
+        transcript_res = client.audio.transcriptions.create(
+            model='whisper-1',
+            file=(upload_filename, upload_bytes),
+        )
+        transcript = (getattr(transcript_res, 'text', '') or '').strip()
+        if not transcript:
+            return []
+        quote_prompt = (
+            "Return the three most compelling sentences from this transcript "
+            "that would make a stranger want to watch the video. "
+            "Each must be under 60 characters. Return as a JSON array.\n\n"
+            f"Transcript:\n{transcript}"
+        )
+        quote_res = client.chat.completions.create(
+            model='gpt-4o',
+            messages=[{'role': 'user', 'content': quote_prompt}],
+            temperature=0.2,
+        )
+        content = ''
+        if quote_res.choices:
+            content = (quote_res.choices[0].message.content or '').strip()
+        return _normalize_quote_candidates(_extract_json_array_from_text(content))
+    except Exception:
+        logger.exception('AI quote generation failed for testimonial %s', submission.pk)
+        return []
+
+
+def _generate_and_store_suggested_quotes(submission_id: int) -> None:
+    close_old_connections()
+    try:
+        submission = ProofTestimonial.objects.get(pk=submission_id)
+    except ProofTestimonial.DoesNotExist:
+        return
+    if submission.status != ProofTestimonial.STATUS_PENDING:
+        return
+    if submission.suggested_quotes:
+        return
+    suggested_quotes = _suggested_quotes_from_submission_video(submission)
+    if suggested_quotes:
+        submission.suggested_quotes = suggested_quotes
+        submission.save(update_fields=['suggested_quotes'])
+
+
+def _enqueue_suggested_quotes_generation(submission_id: int) -> None:
+    worker = threading.Thread(
+        target=_generate_and_store_suggested_quotes,
+        args=(submission_id,),
+        daemon=True,
+        name=f'proof-quote-generator-{submission_id}',
+    )
+    worker.start()
 
 
 def _review_carousel_pages(reviews: list, page_size: int = 2) -> list:
@@ -281,6 +496,20 @@ def my_account(request):
     public_profile_url = ''
     if profile.completed_at and profile.is_published:
         public_profile_url = request.build_absolute_uri(profile.get_absolute_url())
+    proof_testimonial_url = request.build_absolute_uri(
+        reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})
+    )
+    testimonial_total_count = ProofTestimonial.objects.filter(
+        profile=profile,
+        status=ProofTestimonial.STATUS_APPROVED,
+    ).count()
+    testimonial_to_review_count = ProofTestimonial.objects.filter(
+        profile=profile,
+        status=ProofTestimonial.STATUS_PENDING,
+    ).count()
+    show_legacy_profile_admin = bool(
+        request.user.is_superuser and request.GET.get('legacy_profile_admin') == '1'
+    )
 
     return render(
         request,
@@ -290,6 +519,10 @@ def my_account(request):
             'accounts_profile': accounts_profile,
             'tab_labels': TAB_LABELS,
             'public_profile_url': public_profile_url,
+            'proof_testimonial_url': proof_testimonial_url,
+            'testimonial_total_count': testimonial_total_count,
+            'testimonial_to_review_count': testimonial_to_review_count,
+            'show_legacy_profile_admin': show_legacy_profile_admin,
         },
     )
 
@@ -758,6 +991,233 @@ def onboarding_complete(request):
 def trainer_profile_id_redirect(request, profile_id: int):
     profile = get_object_or_404(TrainerProfile, pk=profile_id)
     return redirect(profile, permanent=True)
+
+
+def trainer_proof_submit(request, profile_slug: str):
+    profile = get_object_or_404(
+        TrainerProfile.objects.select_related('primary_area__district'),
+        slug__iexact=profile_slug,
+        forma_made=False,
+    )
+    if not profile.is_published:
+        raise Http404
+    session_key = _proof_draft_session_key(profile.pk)
+    draft = request.session.get(session_key) or {}
+    step = (request.GET.get('step') or 'upload').strip().lower()
+    if step not in {'upload', 'details', 'preview'}:
+        step = 'upload'
+    if step in {'details', 'preview'} and not (draft.get('video_path') or '').strip():
+        return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=upload")
+    if step == 'preview' and not draft.get('details'):
+        return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=details")
+
+    upload_form = ProofVideoUploadForm()
+    details_form = ProofDetailsForm(initial=draft.get('details') or {})
+
+    if request.method == 'POST':
+        action = (request.POST.get('proof_action') or '').strip()
+        if action == 'upload_video':
+            upload_form = ProofVideoUploadForm(request.POST, request.FILES)
+            if upload_form.is_valid():
+                uploaded = upload_form.cleaned_data['video']
+                temp_name = default_storage.save(f'proof/tmp/{secrets.token_hex(8)}_{uploaded.name}', uploaded)
+                old_path = (draft.get('video_path') or '').strip()
+                if old_path and old_path != temp_name and default_storage.exists(old_path):
+                    default_storage.delete(old_path)
+                draft['video_path'] = temp_name
+                request.session[session_key] = draft
+                request.session.modified = True
+                return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=details")
+            step = 'upload'
+        elif action == 'save_details':
+            details_form = ProofDetailsForm(request.POST)
+            if details_form.is_valid():
+                draft['details'] = {
+                    'client_first_name': details_form.cleaned_data['client_first_name'],
+                    'client_last_initial': details_form.cleaned_data['client_last_initial'],
+                    'client_job_title': details_form.cleaned_data['client_job_title'],
+                    'star_rating': details_form.cleaned_data['star_rating'],
+                    'outcome_tags': details_form.cleaned_data['outcome_tags'],
+                }
+                request.session[session_key] = draft
+                request.session.modified = True
+                return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=preview")
+            step = 'details'
+        elif action == 'submit_testimonial':
+            details = draft.get('details') or {}
+            video_path = (draft.get('video_path') or '').strip()
+            if not video_path or not details:
+                return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=upload")
+            if not default_storage.exists(video_path):
+                messages.error(request, 'Your uploaded video could not be found. Please upload again.')
+                request.session.pop(session_key, None)
+                return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=upload")
+            submission = ProofTestimonial(
+                profile=profile,
+                client_first_name=details.get('client_first_name', ''),
+                client_last_initial=details.get('client_last_initial', ''),
+                client_job_title=details.get('client_job_title', ''),
+                star_rating=int(details.get('star_rating') or 0),
+                outcome_tags=list(details.get('outcome_tags') or []),
+                prompt_start='Submitted via Proof quick capture flow.',
+                prompt_change='Submitted via Proof quick capture flow.',
+                prompt_recommend='Submitted via Proof quick capture flow.',
+                status=ProofTestimonial.STATUS_PENDING,
+            )
+            with default_storage.open(video_path, 'rb') as fh:
+                submission.video.save(os.path.basename(video_path), File(fh), save=False)
+            submission.save()
+            _enqueue_suggested_quotes_generation(submission.pk)
+            default_storage.delete(video_path)
+            request.session.pop(session_key, None)
+            return redirect(reverse('pages:trainer_proof_submit_success', kwargs={'profile_slug': profile.slug}))
+
+    video_url = ''
+    video_path = (draft.get('video_path') or '').strip()
+    if video_path and default_storage.exists(video_path):
+        try:
+            video_url = default_storage.url(video_path)
+        except Exception:
+            video_url = ''
+
+    preview = draft.get('details') or {}
+    outcome_labels = dict(ProofOutcomeTag.objects.filter(is_active=True).values_list('key', 'label'))
+    preview_outcomes = [outcome_labels.get(k, k.replace('_', ' ').title()) for k in preview.get('outcome_tags', [])]
+
+    return render(
+        request,
+        'pages/proof_submit.html',
+        {
+            'profile': profile,
+            'step': step,
+            'upload_form': upload_form,
+            'details_form': details_form,
+            'video_url': video_url,
+            'preview': preview,
+            'preview_outcomes': preview_outcomes,
+            'preview_stars': range(int(preview.get('star_rating') or 0)),
+        },
+    )
+
+
+def trainer_proof_submit_success(request, profile_slug: str):
+    profile = get_object_or_404(
+        TrainerProfile.objects.select_related('primary_area__district'),
+        slug__iexact=profile_slug,
+        forma_made=False,
+    )
+    if not profile.is_published:
+        raise Http404
+    return render(
+        request,
+        'pages/proof_submit_success.html',
+        {
+            'profile': profile,
+            'proof_submit_url': reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+        },
+    )
+
+
+@login_required
+def proof_notifications(request):
+    profile = _get_profile(request.user)
+
+    if request.method == 'POST':
+        action = (request.POST.get('action') or '').strip().lower()
+        raw_id = (request.POST.get('submission_id') or '').strip()
+        try:
+            submission_id = int(raw_id)
+        except (TypeError, ValueError):
+            submission_id = 0
+        submission = get_object_or_404(
+            ProofTestimonial,
+            pk=submission_id,
+            profile=profile,
+            status=ProofTestimonial.STATUS_PENDING,
+        )
+
+        if action == 'approve':
+            selected_pull_quote = (request.POST.get('pull_quote') or '').strip()
+            allowed_quotes = [str(q).strip() for q in (submission.suggested_quotes or []) if str(q).strip()]
+            if selected_pull_quote and allowed_quotes and selected_pull_quote not in allowed_quotes:
+                messages.error(request, 'Choose one of the suggested pull quotes.')
+                return redirect('pages:proof_notifications')
+            submission.status = ProofTestimonial.STATUS_APPROVED
+            submission.pull_quote = selected_pull_quote[:120]
+            submission.reviewed_by = request.user
+            submission.reviewed_at = timezone.now()
+            submission.save(update_fields=['status', 'pull_quote', 'reviewed_by', 'reviewed_at'])
+            messages.success(request, 'Testimonial approved.')
+            return redirect('pages:proof_notifications')
+        if action == 'reject':
+            video_name = (submission.video.name or '').strip()
+            submission.delete()
+            if video_name and default_storage.exists(video_name):
+                default_storage.delete(video_name)
+            messages.success(request, 'Testimonial rejected and deleted.')
+            return redirect('pages:proof_notifications')
+        messages.error(request, 'Choose approve or reject.')
+        return redirect('pages:proof_notifications')
+
+    pending_submissions = list(
+        ProofTestimonial.objects.filter(
+            profile=profile,
+            status=ProofTestimonial.STATUS_PENDING,
+        ).order_by('-submitted_at')
+    )
+    recently_reviewed = list(
+        ProofTestimonial.objects.filter(
+            profile=profile,
+        )
+        .exclude(status=ProofTestimonial.STATUS_PENDING)
+        .order_by('-reviewed_at', '-submitted_at')[:20]
+    )
+    outcome_label_map = dict(ProofOutcomeTag.objects.filter(is_active=True).values_list('key', 'label'))
+    for item in pending_submissions + recently_reviewed:
+        item.outcome_labels = [outcome_label_map.get(k, str(k).replace('_', ' ').title()) for k in (item.outcome_tags or [])]
+
+    return render(
+        request,
+        'pages/proof_notifications.html',
+        {
+            'profile': profile,
+            'pending_submissions': pending_submissions,
+            'recently_reviewed': recently_reviewed,
+        },
+    )
+
+
+@login_required
+def proof_testimonials_page(request):
+    profile = _get_profile(request.user)
+    approved_testimonials = list(
+        ProofTestimonial.objects.filter(
+            profile=profile,
+            status=ProofTestimonial.STATUS_APPROVED,
+        ).order_by('-reviewed_at', '-submitted_at')
+    )
+    approved_count = len(approved_testimonials)
+    average_rating = 0.0
+    average_rating_rounded = 0
+    if approved_count:
+        total = sum(int(item.star_rating or 0) for item in approved_testimonials)
+        average_rating = round(total / approved_count, 1)
+        average_rating_rounded = max(1, min(5, int(round(average_rating))))
+    outcome_label_map = dict(ProofOutcomeTag.objects.filter(is_active=True).values_list('key', 'label'))
+    for item in approved_testimonials:
+        item.outcome_labels = [outcome_label_map.get(k, str(k).replace('_', ' ').title()) for k in (item.outcome_tags or [])]
+
+    return render(
+        request,
+        'pages/proof_testimonials_page.html',
+        {
+            'profile': profile,
+            'approved_testimonials': approved_testimonials,
+            'approved_count': approved_count,
+            'average_rating': average_rating,
+            'average_rating_rounded': average_rating_rounded,
+        },
+    )
 
 
 def keep_forma_profile_register(request, profile_slug: str, url_key: str):

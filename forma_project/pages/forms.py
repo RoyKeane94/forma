@@ -27,6 +27,8 @@ from .models import (
     QUICK_QUALIFICATION_CHOICES,
     TRAINING_LOCATION_CHOICES,
     PrimaryArea,
+    ProofOutcomeTag,
+    ProofTestimonial,
     ProfileEnquiry,
     SpecialismCatalog,
     TrainerAdditionalQualification,
@@ -81,6 +83,204 @@ class ProfileEnquiryForm(forms.ModelForm):
                 }
             ),
         }
+
+
+class ProofTestimonialSubmissionForm(forms.ModelForm):
+    """Client-facing Proof submission form for pending review."""
+
+    outcome_tags = forms.MultipleChoiceField(
+        label='Outcome tags',
+        required=True,
+        choices=[],
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = ProofTestimonial
+        fields = (
+            'client_first_name',
+            'client_last_initial',
+            'client_job_title',
+            'client_location',
+            'client_specialism',
+            'star_rating',
+            'outcome_tags',
+            'prompt_start',
+            'prompt_change',
+            'prompt_recommend',
+            'video',
+            'share_to_instagram',
+        )
+        labels = {
+            'client_first_name': 'First name',
+            'client_last_initial': 'Last initial',
+            'client_job_title': 'Job title',
+            'client_location': 'Location',
+            'client_specialism': 'Specialism',
+            'star_rating': 'Star rating',
+            'prompt_start': 'Where were you when you started?',
+            'prompt_change': 'What changed?',
+            'prompt_recommend': 'What would you tell someone considering this practitioner?',
+            'video': 'Record or upload your video',
+            'share_to_instagram': 'Show me a one-tap Instagram share prompt after submit',
+        }
+        widgets = {
+            'client_first_name': forms.TextInput(attrs=_forma_attrs({'autocomplete': 'given-name'})),
+            'client_last_initial': forms.TextInput(
+                attrs=_forma_attrs({'maxlength': 1, 'autocomplete': 'family-name'})
+            ),
+            'client_job_title': forms.TextInput(attrs=_forma_attrs({'autocomplete': 'organization-title'})),
+            'client_location': forms.TextInput(attrs=_forma_attrs({'autocomplete': 'address-level2'})),
+            'client_specialism': forms.TextInput(attrs=_forma_attrs({'placeholder': 'e.g. Strength training'})),
+            'star_rating': forms.Select(
+                choices=[(i, f'{i} star{"s" if i != 1 else ""}') for i in range(1, 6)],
+                attrs=_forma_attrs(),
+            ),
+            'prompt_start': forms.Textarea(attrs=_forma_attrs({'rows': 4})),
+            'prompt_change': forms.Textarea(attrs=_forma_attrs({'rows': 4})),
+            'prompt_recommend': forms.Textarea(attrs=_forma_attrs({'rows': 4})),
+            'video': forms.ClearableFileInput(
+                attrs={
+                    'class': FORMA_INPUT_CLASS,
+                    'accept': 'video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v',
+                    'capture': 'user',
+                }
+            ),
+        }
+
+    def __init__(self, *args, profile: TrainerProfile | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._profile = profile
+        self.fields['client_job_title'].required = False
+        self.fields['client_location'].required = False
+        self.fields['client_specialism'].required = False
+        self.fields['share_to_instagram'].required = False
+        self.fields['outcome_tags'].choices = list(
+            ProofOutcomeTag.objects.filter(is_active=True)
+            .order_by('sort_order', 'label')
+            .values_list('key', 'label')
+        )
+
+        profile_specialisms = list(dict.fromkeys(non_empty_specialisms(profile))) if profile is not None else []
+        if profile_specialisms:
+            self.fields['client_specialism'] = forms.ChoiceField(
+                label='Specialism',
+                required=False,
+                choices=[('', 'Choose one (optional)')] + [(s, s) for s in profile_specialisms],
+                widget=forms.Select(attrs=_forma_attrs()),
+            )
+
+    def clean_client_first_name(self):
+        return (self.cleaned_data.get('client_first_name') or '').strip()
+
+    def clean_client_last_initial(self):
+        value = (self.cleaned_data.get('client_last_initial') or '').strip().upper()
+        if len(value) != 1 or not value.isalpha():
+            raise ValidationError('Enter one letter for last initial.')
+        return value
+
+    def clean_client_job_title(self):
+        return (self.cleaned_data.get('client_job_title') or '').strip()
+
+    def clean_client_location(self):
+        return (self.cleaned_data.get('client_location') or '').strip()
+
+    def clean_client_specialism(self):
+        return (self.cleaned_data.get('client_specialism') or '').strip()
+
+    def clean_outcome_tags(self):
+        tags = list(self.cleaned_data.get('outcome_tags') or [])
+        if len(tags) < 1 or len(tags) > 2:
+            raise ValidationError('Choose one or two outcome tags.')
+        return tags
+
+    def clean_prompt_start(self):
+        return (self.cleaned_data.get('prompt_start') or '').strip()
+
+    def clean_prompt_change(self):
+        return (self.cleaned_data.get('prompt_change') or '').strip()
+
+    def clean_prompt_recommend(self):
+        return (self.cleaned_data.get('prompt_recommend') or '').strip()
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj.outcome_tags = list(self.cleaned_data.get('outcome_tags', []))
+        obj.status = ProofTestimonial.STATUS_PENDING
+        if commit:
+            obj.save()
+        return obj
+
+
+class ProofVideoUploadForm(forms.Form):
+    video = forms.FileField(
+        label='Video',
+        required=True,
+        widget=forms.ClearableFileInput(
+            attrs={
+                'class': FORMA_INPUT_CLASS,
+                'accept': 'video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v',
+                'capture': 'user',
+            }
+        ),
+    )
+
+
+class ProofDetailsForm(forms.Form):
+    client_first_name = forms.CharField(
+        label='First name',
+        max_length=80,
+        widget=forms.TextInput(attrs=_forma_attrs({'autocomplete': 'given-name'})),
+    )
+    client_last_initial = forms.CharField(
+        label='Last initial',
+        max_length=1,
+        widget=forms.TextInput(attrs=_forma_attrs({'maxlength': 1, 'autocomplete': 'family-name'})),
+    )
+    client_job_title = forms.CharField(
+        label='Job title',
+        required=False,
+        max_length=120,
+        widget=forms.TextInput(attrs=_forma_attrs({'autocomplete': 'organization-title'})),
+    )
+    star_rating = forms.IntegerField(
+        label='Star rating',
+        min_value=1,
+        max_value=5,
+        widget=forms.HiddenInput,
+    )
+    outcome_tags = forms.MultipleChoiceField(
+        label='Outcome tags',
+        required=True,
+        choices=[],
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['outcome_tags'].choices = list(
+            ProofOutcomeTag.objects.filter(is_active=True)
+            .order_by('sort_order', 'label')
+            .values_list('key', 'label')
+        )
+
+    def clean_client_first_name(self):
+        return (self.cleaned_data.get('client_first_name') or '').strip()
+
+    def clean_client_last_initial(self):
+        value = (self.cleaned_data.get('client_last_initial') or '').strip().upper()
+        if len(value) != 1 or not value.isalpha():
+            raise ValidationError('Enter one letter for last initial.')
+        return value
+
+    def clean_client_job_title(self):
+        return (self.cleaned_data.get('client_job_title') or '').strip()
+
+    def clean_outcome_tags(self):
+        tags = list(self.cleaned_data.get('outcome_tags') or [])
+        if len(tags) < 1 or len(tags) > 2:
+            raise ValidationError('Choose one or two outcome tags.')
+        return tags
 
 
 def _primary_area_queryset():

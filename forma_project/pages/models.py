@@ -39,6 +39,16 @@ TRAINING_LOCATION_CHOICES = [
     ('online', 'Online'),
 ]
 
+PROOF_OUTCOME_TAG_DEFAULTS = [
+    ('lost_weight', 'Lost weight'),
+    ('built_strength', 'Built strength'),
+    ('recovered_from_injury', 'Recovered from injury'),
+    ('improved_mental_health', 'Improved mental health'),
+    ('ran_first_race', 'Ran first race'),
+    ('back_pain_gone', 'Back pain gone'),
+    ('got_off_medication', 'Got off medication'),
+]
+
 CONTACT_PHONE_PREFERENCE_CHOICES = [
     ('call', 'Phone call'),
     ('whatsapp', 'WhatsApp'),
@@ -60,6 +70,7 @@ def _reserved_public_profile_slugs() -> frozenset[str]:
         'stripe',
         'api',
         'track',
+        'proof',
     }
     if admin_seg:
         out.add(admin_seg)
@@ -455,6 +466,109 @@ class TrainerProfile(models.Model):
                 extras.append('public_url_key')
             kwargs['update_fields'] = list(dict.fromkeys(list(update_fields) + extras))
         return super().save(*args, **kwargs)
+
+
+class ProofOutcomeTag(models.Model):
+    """Controlled catalogue for Proof outcome options shown to clients."""
+
+    key = models.SlugField(max_length=64, unique=True)
+    label = models.CharField(max_length=120, unique=True)
+    sort_order = models.PositiveIntegerField(default=0, db_index=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'pages_proof_outcome_tag'
+        ordering = ['sort_order', 'label']
+
+    def __str__(self):
+        return self.label
+
+
+class ProofTestimonial(models.Model):
+    """Client-submitted proof clip for a trainer; reviewed before it goes live."""
+
+    STATUS_PENDING = 'pending'
+    STATUS_APPROVED = 'approved'
+    STATUS_REJECTED = 'rejected'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending review'),
+        (STATUS_APPROVED, 'Approved'),
+        (STATUS_REJECTED, 'Rejected'),
+    ]
+
+    profile = models.ForeignKey(
+        TrainerProfile,
+        on_delete=models.CASCADE,
+        related_name='proof_testimonials',
+    )
+    client_first_name = models.CharField(max_length=80)
+    client_last_initial = models.CharField(max_length=1)
+    client_job_title = models.CharField(max_length=120, blank=True)
+    client_location = models.CharField(max_length=120, blank=True)
+    client_specialism = models.CharField(max_length=120, blank=True)
+    star_rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    outcome_tags = models.JSONField(
+        default=_empty_list,
+        blank=True,
+        help_text='One or two tags from PROOF_OUTCOME_TAG_CHOICES.',
+    )
+    suggested_quotes = models.JSONField(
+        default=_empty_list,
+        blank=True,
+        help_text='AI-suggested short pull-quote candidates.',
+    )
+    pull_quote = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text='PT-selected pull quote used when presenting the testimonial.',
+    )
+    prompt_start = models.TextField(
+        max_length=1200,
+        help_text='Where were you when you started working with this practitioner?',
+    )
+    prompt_change = models.TextField(
+        max_length=1200,
+        help_text='What changed?',
+    )
+    prompt_recommend = models.TextField(
+        max_length=1200,
+        help_text='What would you tell someone thinking about training with them?',
+    )
+    video = models.FileField(
+        upload_to='proof/videos/',
+        max_length=255,
+        validators=[
+            FileExtensionValidator(allowed_extensions=('mp4', 'webm', 'mov', 'm4v')),
+        ],
+    )
+    share_to_instagram = models.BooleanField(default=False)
+    status = models.CharField(
+        max_length=16,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+    )
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='proof_testimonials_reviewed',
+    )
+
+    class Meta:
+        db_table = 'pages_proof_testimonial'
+        ordering = ['-submitted_at']
+        indexes = [
+            models.Index(fields=['profile', 'status', '-submitted_at'], name='pages_proof_profile_status_idx'),
+        ]
+
+    def __str__(self):
+        label = f'{self.client_first_name} {self.client_last_initial}.'.strip()
+        return f'ProofTestimonial({self.profile_id}, {label})'
 
 
 class TrainerWhoIWorkWithItem(models.Model):
