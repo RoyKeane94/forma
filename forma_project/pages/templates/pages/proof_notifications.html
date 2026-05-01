@@ -3,7 +3,7 @@
 {% block title %}Notifications · Forma{% endblock %}
 
 {% block body %}
-<section class="mx-auto w-full max-w-6xl px-page py-10 sm:py-14">
+<section class="mx-auto w-full max-w-6xl px-3 py-10 sm:px-page sm:py-14">
   <header class="mb-8 flex flex-col gap-2 sm:mb-10">
     <p class="m-0 font-body text-[0.68rem] uppercase tracking-wide-4 text-muted">Proof</p>
     <h1 class="m-0 font-display text-[1.8rem] font-normal tracking-[0.06em] text-ink sm:text-[2.1rem]">Notifications</h1>
@@ -38,16 +38,16 @@
               playsinline
               data-review-video
             ></video>
-            <div class="pointer-events-none absolute bottom-14 left-3 z-10 rounded-lg bg-black/75 px-2.5 py-2 transition-opacity duration-200" data-review-meta>
-              <p class="m-0 font-body text-[1.15rem] font-semibold leading-none text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.45)]">
+            <div class="pointer-events-none absolute bottom-3 left-3 z-10 max-w-[68%] rounded-lg bg-black/75 px-2 py-1.5 transition-opacity duration-200" data-review-meta>
+              <p class="m-0 truncate font-body text-[0.95rem] font-semibold leading-none text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.45)] sm:text-[1.15rem]">
                 {{ submission.client_first_name }} {{ submission.client_last_initial }}.
               </p>
               {% if submission.client_job_title %}
-              <p class="mt-1 m-0 font-body text-[0.74rem] font-light uppercase tracking-wide-3 text-white/90 [text-shadow:0_1px_4px_rgba(0,0,0,0.35)]">{{ submission.client_job_title }}</p>
+              <p class="mt-0.5 m-0 truncate font-body text-[0.58rem] font-light uppercase tracking-wide-3 text-white/90 [text-shadow:0_1px_4px_rgba(0,0,0,0.35)] sm:text-[0.74rem]">{{ submission.client_job_title }}</p>
               {% endif %}
-              <div class="mt-1.5 flex items-center gap-0.5">
+              <div class="mt-0.5 flex items-center gap-0.5 sm:mt-1.5">
                 {% for _ in "12345" %}
-                <span class="text-[1.2rem] leading-none {% if forloop.counter <= submission.star_rating %}text-[#F3B71B]{% else %}text-white/45{% endif %} [text-shadow:0_1px_4px_rgba(0,0,0,0.35)]">★</span>
+                <span class="text-[0.95rem] leading-none {% if forloop.counter <= submission.star_rating %}text-[#F3B71B]{% else %}text-white/45{% endif %} [text-shadow:0_1px_4px_rgba(0,0,0,0.35)] sm:text-[1.2rem]">★</span>
                 {% endfor %}
               </div>
             </div>
@@ -65,17 +65,17 @@
                 <rect x="13.5" y="4" width="4.5" height="16"></rect>
               </svg>
             </button>
-            <div class="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-blue px-3 py-3.5" data-review-quote-bar>
-              <p class="m-0 truncate font-body text-[0.84rem] font-semibold leading-tight text-white" data-review-quote-text>
-                {% if submission.pull_quote %}
-                  {{ submission.pull_quote }}
-                {% elif submission.suggested_quotes %}
-                  {{ submission.suggested_quotes.0 }}
-                {% else %}
-                  Pull quote appears here
-                {% endif %}
-              </p>
-            </div>
+          </div>
+          <div class="mt-2 px-1">
+            <p class="m-0 truncate font-serif text-[0.98rem] font-light italic leading-tight text-ink sm:text-[1.06rem]" data-review-quote-text>
+              {% if submission.pull_quote %}
+                {{ submission.pull_quote }}
+              {% elif submission.suggested_quotes %}
+                {{ submission.suggested_quotes.0 }}
+              {% else %}
+                Pull quote appears here
+              {% endif %}
+            </p>
           </div>
           <div>
             <h2 class="m-0 font-body text-[1rem] font-medium tracking-wide-2 text-ink">{{ submission.client_first_name }} {{ submission.client_last_initial }}.</h2>
@@ -141,7 +141,6 @@
       {% else %}
       <div class="rounded-card border border-rule bg-paper p-6 sm:p-7">
         <p class="m-0 font-body text-[0.82rem] leading-relaxed text-slate">No submissions are waiting for approval.</p>
-        <a href="{% url 'pages:proof_testimonials_page' %}" class="mt-4 inline-flex h-9 items-center rounded-full border border-blue/30 bg-blue-light px-4 font-body text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-blue no-underline hover:border-blue/50">Go to my testimonials page</a>
       </div>
       {% endif %}
     </section>

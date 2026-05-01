@@ -3,12 +3,12 @@
 {% block content_shell_class %}pt-[60px] min-h-screen flex flex-col{% endblock %}
 {% block body %}
 <section class="border-t border-rule bg-paper px-4 py-8 sm:px-[4rem] sm:py-[5rem]">
-  <div class="mx-auto w-full max-w-6xl">
-    <p class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+  <div class="mx-auto w-full max-w-6xl text-center">
+    <p class="mx-auto mb-6 inline-flex items-center font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">
       The Proof
     </p>
     <h1 class="mb-4 font-display text-[clamp(2.2rem,10vw,4.5rem)] leading-heading tracking-[0.02em] text-ink sm:mb-5">
-      Share your experience with {{ profile.first_name }} {{ profile.last_name }}
+      Say something for {{ profile.first_name }}.
     </h1>
   </div>
 </section>
@@ -16,26 +16,28 @@
 <section class="border-t border-rule bg-white px-4 py-5 sm:px-[4rem] sm:py-10">
   <div class="mx-auto w-full max-w-6xl">
     <div class="mb-3 sm:mb-5">
-      <ol class="grid grid-cols-3 gap-2 sm:gap-3">
-        <li class="px-3 py-1 text-center font-body text-[1rem] leading-none tracking-[0.12em] {% if step == 'upload' %}font-semibold text-blue{% else %}font-semibold text-muted/70{% endif %}">
+      <ol class="mx-auto flex w-max list-none items-center gap-2 sm:gap-3">
+        <li class="w-7 text-center font-body text-[1rem] leading-none tracking-[0.12em] {% if step == 'upload' %}font-semibold text-blue{% else %}font-semibold text-muted/70{% endif %}">
           1
         </li>
-        <li class="px-3 py-1 text-center font-body text-[1rem] leading-none tracking-[0.12em] {% if step == 'details' %}font-semibold text-blue{% else %}font-semibold text-muted/70{% endif %}">
+        <li aria-hidden="true" class="h-px w-6 sm:w-8 {% if step == 'details' or step == 'preview' %}bg-blue{% else %}bg-rule{% endif %}"></li>
+        <li class="w-7 text-center font-body text-[1rem] leading-none tracking-[0.12em] {% if step == 'details' %}font-semibold text-blue{% else %}font-semibold text-muted/70{% endif %}">
           2
         </li>
-        <li class="px-3 py-1 text-center font-body text-[1rem] leading-none tracking-[0.12em] {% if step == 'preview' %}font-semibold text-blue{% else %}font-semibold text-muted/70{% endif %}">
+        <li aria-hidden="true" class="h-px w-6 sm:w-8 {% if step == 'preview' %}bg-blue{% else %}bg-rule{% endif %}"></li>
+        <li class="w-7 text-center font-body text-[1rem] leading-none tracking-[0.12em] {% if step == 'preview' %}font-semibold text-blue{% else %}font-semibold text-muted/70{% endif %}">
           3
         </li>
       </ol>
     </div>
 
     {% if step == 'upload' %}
-    <form method="post" enctype="multipart/form-data" novalidate class="max-w-xl border border-rule bg-paper p-5 sm:max-w-2xl sm:p-7">
+    <p class="mb-3 text-center font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">
+      Video
+    </p>
+    <form method="post" enctype="multipart/form-data" novalidate class="mx-auto max-w-xl border border-rule bg-paper p-5 sm:max-w-2xl sm:p-7">
       {% csrf_token %}
       <input type="hidden" name="proof_action" value="upload_video">
-      <p class="mb-3 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
-        Step 1 · Video
-      </p>
 
       {% if upload_form.errors %}
       <div role="alert" class="mb-8 border border-rule bg-blue-light px-4 py-4">
@@ -50,20 +52,21 @@
       </div>
       {% endif %}
 
-      <div class="mb-4 flex flex-wrap gap-2">
-        <button type="button" id="proof-record-btn" class="proof-mode-btn border border-rule bg-paper px-3 py-2 font-body text-[0.68rem] font-medium uppercase tracking-wide-3 text-slate hover:border-blue/30 hover:bg-blue-light hover:text-blue sm:px-4 sm:text-[0.72rem]">Record</button>
-        <button type="button" id="proof-upload-btn" class="proof-mode-btn border border-rule bg-paper px-3 py-2 font-body text-[0.68rem] font-medium uppercase tracking-wide-3 text-slate hover:border-blue/30 hover:bg-blue-light hover:text-blue sm:px-4 sm:text-[0.72rem]">Upload</button>
+      <div class="mb-4">
+        <button type="button" id="proof-record-btn" class="inline-flex border-0 bg-blue px-6 py-[0.8rem] font-body text-[0.72rem] font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-blue-mid sm:px-8 sm:py-[0.9rem] sm:text-[0.78rem]">Record</button>
+        <div class="mt-3">
+          <button type="button" id="proof-upload-btn" class="border-0 bg-transparent p-0 font-body text-[0.7rem] font-semibold uppercase tracking-wide-3 text-slate underline-offset-2 hover:text-blue hover:underline">Upload instead</button>
+        </div>
       </div>
 
       <div class="hidden">
         <input id="proof-video-record-input" type="file" name="video" accept="video/*" capture="user">
         <input id="proof-video-upload-input" type="file" name="video" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v">
       </div>
-      <p class="mt-3 font-body text-[0.72rem] font-light text-muted" id="video-help-copy">Choose Record or Upload to continue.</p>
       <p class="mt-2 hidden font-body text-[0.72rem] font-medium text-ink" id="video-file-name"></p>
 
       <div class="mt-5 sm:mt-6">
-        <button id="video-continue-btn" type="submit" disabled class="inline-flex border-0 bg-blue px-6 py-[0.8rem] font-body text-[0.72rem] font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-blue-mid disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-[0.9rem] sm:text-[0.78rem]">
+        <button id="video-continue-btn" type="submit" disabled class="inline-flex border border-rule bg-paper px-5 py-[0.68rem] font-body text-[0.66rem] font-medium uppercase tracking-[0.14em] text-muted transition-all duration-150 disabled:cursor-not-allowed sm:px-6 sm:py-[0.76rem] sm:text-[0.7rem]">
           Continue
         </button>
       </div>
@@ -76,12 +79,12 @@
     </form>
 
     {% elif step == 'details' %}
-    <form method="post" novalidate class="max-w-xl border border-rule bg-paper p-5 sm:max-w-3xl sm:p-7">
+    <p class="mb-3 text-center font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">
+      Details
+    </p>
+    <form method="post" novalidate class="mx-auto max-w-xl border border-rule bg-paper p-5 sm:max-w-3xl sm:p-7">
       {% csrf_token %}
       <input type="hidden" name="proof_action" value="save_details">
-      <p class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
-        Step 2 · Details
-      </p>
       <h2 class="mb-4 font-display text-[clamp(2rem,3.8vw,3rem)] leading-heading tracking-[0.02em] text-ink">Tell us about this testimonial</h2>
 
       {% if details_form.errors %}
@@ -137,7 +140,7 @@
       </div>
 
       <div class="mt-7 flex items-center gap-4 sm:mt-10">
-        <button type="submit" class="inline-flex border-0 bg-blue px-6 py-[0.8rem] font-body text-[0.72rem] font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-blue-mid sm:px-8 sm:py-[0.9rem] sm:text-[0.78rem]">
+        <button id="details-continue-btn" type="submit" disabled class="inline-flex border border-rule bg-paper px-5 py-[0.68rem] font-body text-[0.66rem] font-medium uppercase tracking-[0.14em] text-muted transition-all duration-150 disabled:cursor-not-allowed sm:px-6 sm:py-[0.76rem] sm:text-[0.7rem]">
           Continue to preview
         </button>
         <a href="?step=upload" class="font-body text-[0.72rem] uppercase tracking-wide-3 text-muted no-underline border-b border-rule pb-0.5 hover:text-ink hover:border-ink">Back to video</a>
@@ -145,13 +148,13 @@
     </form>
 
     {% elif step == 'preview' %}
-    <div class="max-w-lg sm:max-w-3xl">
-      <p class="mb-3 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
-        Preview
-      </p>
+    <p class="mb-3 text-center font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">
+      Preview
+    </p>
+    <div class="mx-auto max-w-lg text-center sm:max-w-3xl">
       <h2 class="mb-4 font-display text-[clamp(2rem,3.8vw,3rem)] leading-heading tracking-[0.02em] text-ink">Preview your testimonial card</h2>
 
-      <div id="proof-preview-card" class="group relative max-w-full overflow-hidden rounded-2xl border border-rule bg-ink sm:max-w-[32rem]">
+      <div id="proof-preview-card" class="group relative mx-auto max-w-full overflow-hidden border border-rule bg-ink sm:max-w-[32rem]">
         {% if video_url %}
         <video id="proof-preview-video" playsinline class="aspect-[4/3] w-full object-cover" src="{{ video_url }}"></video>
         <button
@@ -171,26 +174,26 @@
         {% else %}
         <div class="aspect-[4/3] w-full bg-surface"></div>
         {% endif %}
-        <div id="proof-preview-meta" class="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 via-black/35 to-transparent p-6 transition-opacity duration-200 group-hover:opacity-0">
-          <p class="font-body text-[2.1rem] font-semibold leading-[1] text-white">{{ preview.client_first_name }} {{ preview.client_last_initial }}.</p>
-          {% if preview.client_job_title %}<p class="mt-1 font-body text-[0.9rem] font-light text-white/90">{{ preview.client_job_title }}</p>{% endif %}
-          <div class="mt-3 flex items-center gap-1.5">
+        <div id="proof-preview-meta" class="pointer-events-none absolute bottom-2 left-2 z-10 rounded-lg border border-rule bg-[#F6F5F1]/95 px-2.5 py-1.5 transition-opacity duration-200 group-hover:opacity-0">
+          <p class="m-0 font-body text-[0.72rem] font-semibold leading-none text-ink sm:text-[1rem]">{{ preview.client_first_name }} {{ preview.client_last_initial }}.</p>
+          {% if preview.client_job_title %}<p class="mt-0.5 m-0 font-body text-[0.52rem] font-light uppercase tracking-wide-3 text-muted sm:text-[0.68rem]">{{ preview.client_job_title }}</p>{% endif %}
+          <div class="mt-1 flex items-center gap-0.5">
             {% for _ in preview_stars %}
-            <span class="text-[2rem] leading-none text-[#F3B71B]">★</span>
+            <span class="text-[0.7rem] leading-none text-[#F3B71B] sm:text-[1.05rem]">★</span>
             {% endfor %}
           </div>
         </div>
       </div>
 
       {% if preview_outcomes %}
-      <div class="mt-3 flex flex-wrap gap-2">
+      <div class="mt-3 flex flex-wrap justify-center gap-2">
         {% for label in preview_outcomes %}
         <span class="inline-block border border-blue/20 bg-blue-light px-[0.6rem] py-[0.2rem] font-body text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-blue">{{ label }}</span>
         {% endfor %}
       </div>
       {% endif %}
 
-      <form method="post" class="mt-5 flex items-center gap-4">
+      <form method="post" class="mt-5 flex items-center justify-center gap-4">
         {% csrf_token %}
         <input type="hidden" name="proof_action" value="submit_testimonial">
         <button type="submit" class="inline-flex border-0 bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-blue-mid">
@@ -211,22 +214,46 @@
     var uploadInput = document.getElementById('proof-video-upload-input');
     var recordBtn = document.getElementById('proof-record-btn');
     var uploadBtn = document.getElementById('proof-upload-btn');
-    var help = document.getElementById('video-help-copy');
     var fileName = document.getElementById('video-file-name');
     var cta = document.getElementById('video-continue-btn');
     if (!recordInput || !uploadInput) return;
 
+    function setContinueReady(isReady) {
+      if (!cta) return;
+      cta.disabled = !isReady;
+      cta.classList.toggle('border', !isReady);
+      cta.classList.toggle('border-rule', !isReady);
+      cta.classList.toggle('bg-paper', !isReady);
+      cta.classList.toggle('text-muted', !isReady);
+      cta.classList.toggle('px-5', !isReady);
+      cta.classList.toggle('py-[0.68rem]', !isReady);
+      cta.classList.toggle('text-[0.66rem]', !isReady);
+      cta.classList.toggle('sm:px-6', !isReady);
+      cta.classList.toggle('sm:py-[0.76rem]', !isReady);
+      cta.classList.toggle('sm:text-[0.7rem]', !isReady);
+
+      cta.classList.toggle('border-0', isReady);
+      cta.classList.toggle('bg-blue', isReady);
+      cta.classList.toggle('text-white', isReady);
+      cta.classList.toggle('px-6', isReady);
+      cta.classList.toggle('py-[0.8rem]', isReady);
+      cta.classList.toggle('text-[0.72rem]', isReady);
+      cta.classList.toggle('hover:-translate-y-0.5', isReady);
+      cta.classList.toggle('hover:bg-blue-mid', isReady);
+      cta.classList.toggle('sm:px-8', isReady);
+      cta.classList.toggle('sm:py-[0.9rem]', isReady);
+      cta.classList.toggle('sm:text-[0.78rem]', isReady);
+    }
+
     function markSelected(file) {
       if (file) {
-        if (cta) cta.disabled = false;
-        if (help) help.textContent = 'Video selected.';
+        setContinueReady(true);
         if (fileName) {
           fileName.classList.remove('hidden');
           fileName.textContent = file.name;
         }
       } else {
-        if (cta) cta.disabled = true;
-        if (help) help.textContent = 'Choose Record or Upload to continue.';
+        setContinueReady(false);
         if (fileName) {
           fileName.classList.add('hidden');
           fileName.textContent = '';
@@ -259,9 +286,57 @@
   }
 
   if (step === 'details') {
+    var detailsContinueBtn = document.getElementById('details-continue-btn');
+    var detailsFirstName = document.getElementById('{{ details_form.client_first_name.id_for_label }}');
+    var detailsLastInitial = document.getElementById('{{ details_form.client_last_initial.id_for_label }}');
+    var detailsJobTitle = document.getElementById('{{ details_form.client_job_title.id_for_label }}');
+    var outcomeCheckboxes = document.querySelectorAll('input[name="outcome_tags"]');
     var hidden = document.getElementById('{{ details_form.star_rating.id_for_label|default:"id_star_rating" }}');
     var stars = document.querySelectorAll('.star-btn[data-star-value]');
-    if (!hidden || !stars.length) return;
+    if (!hidden || !stars.length || !detailsContinueBtn) return;
+
+    function setDetailsContinueReady(isReady) {
+      detailsContinueBtn.disabled = !isReady;
+      detailsContinueBtn.classList.toggle('border', !isReady);
+      detailsContinueBtn.classList.toggle('border-rule', !isReady);
+      detailsContinueBtn.classList.toggle('bg-paper', !isReady);
+      detailsContinueBtn.classList.toggle('text-muted', !isReady);
+      detailsContinueBtn.classList.toggle('px-5', !isReady);
+      detailsContinueBtn.classList.toggle('py-[0.68rem]', !isReady);
+      detailsContinueBtn.classList.toggle('text-[0.66rem]', !isReady);
+      detailsContinueBtn.classList.toggle('sm:px-6', !isReady);
+      detailsContinueBtn.classList.toggle('sm:py-[0.76rem]', !isReady);
+      detailsContinueBtn.classList.toggle('sm:text-[0.7rem]', !isReady);
+
+      detailsContinueBtn.classList.toggle('border-0', isReady);
+      detailsContinueBtn.classList.toggle('bg-blue', isReady);
+      detailsContinueBtn.classList.toggle('text-white', isReady);
+      detailsContinueBtn.classList.toggle('px-6', isReady);
+      detailsContinueBtn.classList.toggle('py-[0.8rem]', isReady);
+      detailsContinueBtn.classList.toggle('text-[0.72rem]', isReady);
+      detailsContinueBtn.classList.toggle('hover:-translate-y-0.5', isReady);
+      detailsContinueBtn.classList.toggle('hover:bg-blue-mid', isReady);
+      detailsContinueBtn.classList.toggle('sm:px-8', isReady);
+      detailsContinueBtn.classList.toggle('sm:py-[0.9rem]', isReady);
+      detailsContinueBtn.classList.toggle('sm:text-[0.78rem]', isReady);
+    }
+
+    function detailsFormIsComplete() {
+      var firstNameOk = detailsFirstName && detailsFirstName.value.trim().length > 0;
+      var lastInitialOk = detailsLastInitial && detailsLastInitial.value.trim().length > 0;
+      var jobTitleOk = detailsJobTitle && detailsJobTitle.value.trim().length > 0;
+      var starOk = parseInt(hidden.value || '0', 10) > 0;
+      var checkedCount = 0;
+      outcomeCheckboxes.forEach(function (checkbox) {
+        if (checkbox.checked) checkedCount += 1;
+      });
+      var tagsOk = checkedCount >= 1 && checkedCount <= 2;
+      return firstNameOk && lastInitialOk && jobTitleOk && starOk && tagsOk;
+    }
+
+    function refreshDetailsContinueState() {
+      setDetailsContinueReady(detailsFormIsComplete());
+    }
 
     function paint(val) {
       var n = parseInt(val || '0', 10);
@@ -277,9 +352,17 @@
       s.addEventListener('click', function () {
         hidden.value = s.getAttribute('data-star-value');
         paint(hidden.value);
+        refreshDetailsContinueState();
       });
     });
+    if (detailsFirstName) detailsFirstName.addEventListener('input', refreshDetailsContinueState);
+    if (detailsLastInitial) detailsLastInitial.addEventListener('input', refreshDetailsContinueState);
+    if (detailsJobTitle) detailsJobTitle.addEventListener('input', refreshDetailsContinueState);
+    outcomeCheckboxes.forEach(function (checkbox) {
+      checkbox.addEventListener('change', refreshDetailsContinueState);
+    });
     paint(hidden.value);
+    refreshDetailsContinueState();
   }
 
   if (step === 'preview') {

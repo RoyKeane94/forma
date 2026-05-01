@@ -39,7 +39,7 @@
   <div class="grid gap-7 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
     {% for submission in approved_testimonials %}
     <article class="w-full">
-      <div class="proof-approved-card group relative overflow-hidden rounded-2xl bg-ink" data-approved-card>
+      <div class="proof-approved-card group relative mx-auto w-full max-w-[22rem] overflow-hidden rounded-2xl bg-ink sm:max-w-none" data-approved-card>
         <div class="relative">
           <video
             class="proof-approved-video aspect-[16/10] w-full object-cover sm:aspect-[4/3]"
@@ -75,7 +75,7 @@
           </button>
         </div>
       </div>
-      <div class="mt-2 px-1">
+      <div class="mx-auto mt-2 w-full max-w-[22rem] px-1 sm:max-w-none">
         <p class="m-0 truncate font-serif text-[0.98rem] font-light italic leading-tight text-ink sm:text-[1.06rem]">
           {% if submission.pull_quote %}
             {{ submission.pull_quote }}
@@ -86,7 +86,7 @@
           {% endif %}
         </p>
       </div>
-      <div class="mt-1.5 px-1">
+      <div class="mx-auto mt-1.5 w-full max-w-[22rem] px-1 sm:max-w-none">
         <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
         {% if submission.outcome_labels %}
         {% for label in submission.outcome_labels %}

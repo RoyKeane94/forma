@@ -8,10 +8,13 @@
     {% if user.is_superuser %}
     <a href="{% url 'pages:staff_forma_profiles' %}" class="hidden lg:inline-flex h-8 items-center rounded-full border border-blue/30 bg-blue-light px-3 font-body text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-blue no-underline hover:border-blue/50">Forma profiles</a>
     {% endif %}
-    <a href="{% url 'pages:proof_notifications' %}" class="inline-flex h-8 items-center gap-1.5 rounded-full border border-rule bg-paper px-2.5 sm:px-3 font-body text-[0.62rem] sm:text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted no-underline hover:border-ink hover:text-ink shrink-0">
-      Notifications
+    <a href="{% url 'pages:proof_notifications' %}" class="{% if proof_pending_approvals_count > 0 %}inline-flex{% else %}hidden sm:inline-flex{% endif %} h-8 items-center gap-1.5 rounded-full border border-rule bg-paper px-2.5 sm:px-3 font-body text-[0.62rem] sm:text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted no-underline hover:border-ink hover:text-ink shrink-0">
       {% if proof_pending_approvals_count > 0 %}
-      <span class="inline-flex min-w-5 items-center justify-center rounded-full bg-blue px-1.5 py-0.5 text-[0.62rem] leading-none tracking-normal text-paper">{{ proof_pending_approvals_count }}</span>
+      <span class="sm:hidden inline-flex min-w-5 items-center justify-center rounded-full bg-blue px-1.5 py-0.5 text-[0.62rem] leading-none tracking-normal text-paper">{{ proof_pending_approvals_count }}</span>
+      {% endif %}
+      <span class="hidden sm:inline">Notifications</span>
+      {% if proof_pending_approvals_count > 0 %}
+      <span class="hidden sm:inline-flex min-w-5 items-center justify-center rounded-full bg-blue px-1.5 py-0.5 text-[0.62rem] leading-none tracking-normal text-paper">{{ proof_pending_approvals_count }}</span>
       {% endif %}
     </a>
     <a href="{% url 'pages:my_account' %}" class="inline-flex h-8 items-center rounded-full border border-rule bg-paper px-2.5 sm:px-3 font-body text-[0.62rem] sm:text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted no-underline hover:border-ink hover:text-ink shrink-0">My Account</a>
