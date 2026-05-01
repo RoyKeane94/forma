@@ -3,27 +3,15 @@
 {% block title %}The Proof · Forma{% endblock %}
 {% block extra_head %}
   <style>
-    .proof-page-grid {
-      z-index: 0;
-      background-color: transparent;
-      --proof-grid-cell: 6rem;
-      --proof-grid-line: rgba(221, 219, 204, 0.36);
-      background-image:
-        linear-gradient(to right, var(--proof-grid-line) 1px, transparent 1px),
-        linear-gradient(to bottom, var(--proof-grid-line) 1px, transparent 1px);
-      background-size: var(--proof-grid-cell) var(--proof-grid-cell);
-    }
-    @media (max-width: 1023px) {
-      .proof-page-grid {
-        --proof-grid-cell: 4.5rem;
-      }
+    body {
+      background-color: #ffffff !important;
+      background-image: none !important;
     }
   </style>
 {% endblock %}
 
 {% block body %}
-<section class="relative overflow-hidden bg-paper py-10 sm:py-14">
-  <div class="proof-page-grid pointer-events-none absolute inset-0" aria-hidden="true"></div>
+<section class="relative overflow-hidden bg-white py-10 sm:py-14">
   <div class="relative z-[2] mx-auto w-full max-w-[100rem] px-page">
   <header class="mb-10 flex flex-col items-center gap-2 text-center sm:mb-12">
     <h1 class="m-0 font-display text-[clamp(2.6rem,10vw,5rem)] font-normal leading-[0.95] tracking-[0.06em] text-blue">The Proof</h1>
