@@ -36,10 +36,10 @@
   </header>
 
   {% if approved_testimonials %}
-  <div class="grid gap-7 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+  <div class="mx-auto grid w-full max-w-[22rem] justify-center gap-7 sm:max-w-[48rem] sm:grid-cols-2 lg:max-w-[72rem] xl:max-w-[72rem] xl:grid-cols-3">
     {% for submission in approved_testimonials %}
-    <article class="w-full">
-      <div class="proof-approved-card group relative mx-auto w-full max-w-[22rem] overflow-hidden rounded-2xl bg-ink sm:max-w-none" data-approved-card>
+    <article class="mx-auto w-full max-w-[22rem]">
+      <div class="proof-approved-card group relative w-full overflow-hidden rounded-2xl bg-ink" data-approved-card>
         <div class="relative">
           <video
             class="proof-approved-video aspect-[16/10] w-full object-cover sm:aspect-[4/3]"
@@ -75,7 +75,7 @@
           </button>
         </div>
       </div>
-      <div class="mx-auto mt-2 w-full max-w-[22rem] px-1 sm:max-w-none">
+      <div class="mt-2 w-full px-1 text-center">
         <p class="m-0 truncate font-serif text-[0.98rem] font-light italic leading-tight text-ink sm:text-[1.06rem]">
           {% if submission.pull_quote %}
             {{ submission.pull_quote }}
@@ -86,8 +86,8 @@
           {% endif %}
         </p>
       </div>
-      <div class="mx-auto mt-1.5 w-full max-w-[22rem] px-1 sm:max-w-none">
-        <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+      <div class="mt-1.5 w-full px-1">
+        <div class="mt-1.5 flex flex-wrap items-center justify-center gap-1.5">
         {% if submission.outcome_labels %}
         {% for label in submission.outcome_labels %}
         <span class="inline-block border border-blue/20 bg-blue-light px-[0.66rem] py-[0.26rem] font-body text-[0.62rem] font-semibold uppercase tracking-[0.13em] text-blue">{{ label }}</span>
