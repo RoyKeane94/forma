@@ -14,6 +14,8 @@ class RegistrationFlowTests(TestCase):
         response = self.client.post(
             reverse('accounts:register'),
             data={
+                'first_name': 'Agi',
+                'last_name': 'Alexander',
                 'email': 'new@example.com',
                 'password1': 'StrongPass123!',
                 'password2': 'StrongPass123!',
@@ -25,6 +27,27 @@ class RegistrationFlowTests(TestCase):
         self.assertEqual(response.request['PATH_INFO'], reverse('pages:my_account'))
         self.assertContains(response, 'Get your first testimonial')
         self.assertContains(response, 'Don&apos;t worry, you get to approve it before it goes live.')
+        User = get_user_model()
+        user = User.objects.get(email='new@example.com')
+        self.assertEqual(user.first_name, 'Agi')
+        self.assertEqual(user.last_name, 'Alexander')
+
+    def test_register_requires_first_and_last_name(self):
+        response = self.client.post(
+            reverse('accounts:register'),
+            data={
+                'email': 'missing-names@example.com',
+                'password1': 'StrongPass123!',
+                'password2': 'StrongPass123!',
+                'accept_terms': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Enter your first name.')
+        self.assertContains(response, 'Enter your last name.')
+        User = get_user_model()
+        self.assertFalse(User.objects.filter(email='missing-names@example.com').exists())
 
     def test_name_step_saves_names_and_shows_proof_link(self):
         User = get_user_model()
@@ -50,7 +73,7 @@ class RegistrationFlowTests(TestCase):
         self.assertEqual(user.first_name, 'Agi')
         self.assertEqual(user.last_name, 'Alexander')
         self.assertContains(response, 'Get your first testimonial')
-        self.assertContains(response, '/agi-alexander/')
+        self.assertContains(response, '/agi-alexander/submit/')
 
     def test_name_step_does_not_prefill_placeholder_names(self):
         User = get_user_model()

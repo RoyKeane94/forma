@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Edit testimonials · Forma{% endblock %}
+
+{% block body %}
+<section class="mx-auto w-full max-w-6xl px-3 py-10 sm:px-page sm:py-14">
+  <header class="mb-8 flex flex-col gap-2 sm:mb-10">
+    <p class="m-0 font-body text-[0.68rem] uppercase tracking-wide-4 text-muted">Proof</p>
+    <h1 class="m-0 font-display text-[1.8rem] font-normal tracking-[0.06em] text-ink sm:text-[2.1rem]">Edit testimonials</h1>
+    <p class="m-0 max-w-2xl font-body text-[0.9rem] font-light leading-relaxed text-slate">
+      Manage approved testimonials for {{ profile.first_name }} {{ profile.last_name }}.
+    </p>
+  </header>
+
+  {% if testimonials %}
+  <div class="space-y-3">
+    {% for submission in testimonials %}
+    <article class="rounded-card border border-rule bg-paper p-4 sm:p-5">
+      <div class="grid gap-3 sm:grid-cols-[140px_160px_minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-start sm:gap-4">
+        <div>
+          <p class="m-0 font-body text-[0.62rem] uppercase tracking-wide-4 text-muted">Date</p>
+          <p class="mt-1 mb-0 font-body text-[0.82rem] text-ink">{{ submission.reviewed_at|default:submission.submitted_at|date:"j M Y" }}</p>
+        </div>
+        <div>
+          <p class="m-0 font-body text-[0.62rem] uppercase tracking-wide-4 text-muted">Name</p>
+          <p class="mt-1 mb-0 font-body text-[0.82rem] text-ink">{{ submission.client_first_name }} {{ submission.client_last_initial }}.</p>
+        </div>
+        <div>
+          <p class="m-0 font-body text-[0.62rem] uppercase tracking-wide-4 text-muted">Job</p>
+          <p class="mt-1 mb-0 font-body text-[0.82rem] text-ink">{% if submission.client_job_title %}{{ submission.client_job_title }}{% else %}&mdash;{% endif %}</p>
+        </div>
+        <div>
+          <p class="m-0 font-body text-[0.62rem] uppercase tracking-wide-4 text-muted">Chosen comment</p>
+          <p class="mt-1 mb-0 font-body text-[0.82rem] text-ink">
+            {% if submission.pull_quote %}
+              {{ submission.pull_quote }}
+            {% elif submission.suggested_quotes %}
+              {{ submission.suggested_quotes.0 }}
+            {% else %}
+              &mdash;
+            {% endif %}
+          </p>
+        </div>
+        <div>
+          <form method="post" class="m-0">
+            {% csrf_token %}
+            <input type="hidden" name="submission_id" value="{{ submission.id }}">
+            <input type="hidden" name="action" value="delete">
+            <button type="submit" class="h-9 rounded-full border border-rule bg-paper px-4 font-body text-[0.7rem] font-semibold uppercase tracking-wide-4 text-muted transition hover:border-[#CC2A1A]/40 hover:text-[#CC2A1A]">Delete</button>
+          </form>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="rounded-card border border-rule bg-paper p-6 sm:p-7">
+    <p class="m-0 font-body text-[0.82rem] leading-relaxed text-slate">No approved testimonials yet.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

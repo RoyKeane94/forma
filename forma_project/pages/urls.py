@@ -19,6 +19,7 @@ urlpatterns = [
     path('enquire/', views.profile_enquiry, name='profile_enquiry'),
     path('account/', views.my_account, name='my_account'),
     path('account/notifications/', views.proof_notifications, name='proof_notifications'),
+    path('account/testimonials/edit/', views.proof_testimonials_edit, name='proof_testimonials_edit'),
     path('account/proof/', views.proof_testimonials_page, name='proof_testimonials_page'),
     path('account/testimonials/', views.proof_testimonials_page),
     path(
@@ -85,8 +86,9 @@ urlpatterns = [
     path('<slug:profile_slug>/success/', views.trainer_proof_submit_success, name='trainer_proof_submit_success'),
     path('<slug:profile_slug>/proof/success/', RedirectView.as_view(pattern_name='pages:trainer_proof_submit_success', permanent=True)),
     path('<slug:profile_slug>/proof/', RedirectView.as_view(pattern_name='pages:trainer_proof_submit', permanent=True)),
-    path('<slug:profile_slug>/profile/', views.trainer_public_profile, name='trainer_profile'),
-    path('<slug:profile_slug>/', views.trainer_proof_submit, name='trainer_proof_submit'),
+    path('<slug:profile_slug>/submit/', views.trainer_proof_submit, name='trainer_proof_submit'),
+    path('<slug:profile_slug>/profile/', RedirectView.as_view(pattern_name='pages:trainer_profile', permanent=True)),
+    path('<slug:profile_slug>/', views.trainer_public_profile, name='trainer_profile'),
     path(
         '<slug:profile_slug>/<slug:url_key>/keep-profile/',
         views.keep_forma_profile_register,

@@ -1226,6 +1226,44 @@ def proof_testimonials_page(request):
     )
 
 
+@login_required
+def proof_testimonials_edit(request):
+    profile = _get_profile(request.user)
+    if request.method == 'POST':
+        submission_id = request.POST.get('submission_id')
+        action = (request.POST.get('action') or '').strip()
+        submission = get_object_or_404(
+            ProofTestimonial,
+            pk=submission_id,
+            profile=profile,
+            status=ProofTestimonial.STATUS_APPROVED,
+        )
+        if action != 'delete':
+            messages.error(request, 'Choose a valid testimonial action.')
+            return redirect('pages:proof_testimonials_edit')
+        video_name = (submission.video.name or '').strip()
+        submission.delete()
+        if video_name and default_storage.exists(video_name):
+            default_storage.delete(video_name)
+        messages.success(request, 'Testimonial deleted.')
+        return redirect('pages:proof_testimonials_edit')
+
+    testimonials = list(
+        ProofTestimonial.objects.filter(
+            profile=profile,
+            status=ProofTestimonial.STATUS_APPROVED,
+        ).order_by('-reviewed_at', '-submitted_at')
+    )
+    return render(
+        request,
+        'pages/proof_testimonials_edit.html',
+        {
+            'profile': profile,
+            'testimonials': testimonials,
+        },
+    )
+
+
 def keep_forma_profile_register(request, profile_slug: str, url_key: str):
     """
     Forma-made public profiles: collect email/password, then Stripe Checkout.

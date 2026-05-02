@@ -417,6 +417,7 @@ class ProofApprovalWorkflowTests(TestCase):
         self.assertEqual(response.context['testimonial_total_count'], 1)
         self.assertEqual(response.context['testimonial_to_review_count'], 1)
         self.assertContains(response, reverse('pages:proof_notifications'))
+        self.assertContains(response, reverse('pages:proof_testimonials_edit'))
 
     def test_my_account_shows_submission_and_public_proof_links(self):
         profile = self._create_profile('account_links_owner')
@@ -459,3 +460,44 @@ class ProofApprovalWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Sam J.')
         self.assertNotContains(response, 'Pending J.')
+
+    def test_edit_testimonials_page_lists_approved_only(self):
+        profile = self._create_profile('edit_page_owner')
+        self.client.login(username='edit_page_owner', password='pass1234')
+        approved = self._create_pending_submission(profile)
+        approved.status = ProofTestimonial.STATUS_APPROVED
+        approved.reviewed_at = timezone.now()
+        approved.reviewed_by = profile.user
+        approved.pull_quote = 'Big confidence boost'
+        approved.save(update_fields=['status', 'reviewed_at', 'reviewed_by', 'pull_quote'])
+        pending = self._create_pending_submission(profile)
+        pending.client_first_name = 'Pending'
+        pending.save(update_fields=['client_first_name'])
+
+        response = self.client.get(reverse('pages:proof_testimonials_edit'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Edit testimonials')
+        self.assertContains(response, 'Sam J.')
+        self.assertContains(response, 'Designer')
+        self.assertContains(response, 'Big confidence boost')
+        self.assertNotContains(response, 'Pending J.')
+
+    def test_owner_can_delete_approved_testimonial_from_edit_page(self):
+        profile = self._create_profile('edit_delete_owner')
+        self.client.login(username='edit_delete_owner', password='pass1234')
+        approved = self._create_pending_submission(profile)
+        approved.status = ProofTestimonial.STATUS_APPROVED
+        approved.reviewed_at = timezone.now()
+        approved.reviewed_by = profile.user
+        approved.save(update_fields=['status', 'reviewed_at', 'reviewed_by'])
+        video_name = approved.video.name
+
+        response = self.client.post(
+            reverse('pages:proof_testimonials_edit'),
+            data={'submission_id': approved.pk, 'action': 'delete'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(ProofTestimonial.objects.filter(pk=approved.pk).exists())
+        self.assertFalse(default_storage.exists(video_name))

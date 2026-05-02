@@ -39,7 +39,7 @@ class RegisterForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ('email', 'password1', 'password2')
+        fields = ('first_name', 'last_name', 'email', 'password1', 'password2')
 
     accept_terms = forms.BooleanField(
         required=True,
@@ -69,6 +69,24 @@ class RegisterForm(UserCreationForm):
             },
             widget=forms.EmailInput(attrs={'autocomplete': 'email'}),
         )
+        self.fields['first_name'] = forms.CharField(
+            required=True,
+            max_length=150,
+            label='First name',
+            error_messages={
+                'required': _('Enter your first name.'),
+            },
+            widget=forms.TextInput(attrs={'autocomplete': 'given-name'}),
+        )
+        self.fields['last_name'] = forms.CharField(
+            required=True,
+            max_length=150,
+            label='Last name',
+            error_messages={
+                'required': _('Enter your last name.'),
+            },
+            widget=forms.TextInput(attrs={'autocomplete': 'family-name'}),
+        )
         if 'username' in self.fields:
             del self.fields['username']
         _apply_input_classes(self)
@@ -86,8 +104,12 @@ class RegisterForm(UserCreationForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         email = self.cleaned_data['email']
+        first_name = (self.cleaned_data.get('first_name') or '').strip()
+        last_name = (self.cleaned_data.get('last_name') or '').strip()
         user.username = email
         user.email = email
+        user.first_name = first_name
+        user.last_name = last_name
         if commit:
             user.save()
         return user
