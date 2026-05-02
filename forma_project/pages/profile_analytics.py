@@ -27,11 +27,14 @@ def is_trackable_public_profile_path(path: str) -> bool:
         return False
     segments = [s for s in inner.split('/') if s]
     if len(segments) == 1:
+        # Legacy self-serve profile URLs were one segment (e.g. /first-last/).
         return segments[0].lower() not in _reserved_public_profile_slugs()
     if len(segments) == 2:
         a, b = segments[0].lower(), segments[1]
         if a in _reserved_public_profile_slugs():
             return False
+        if b == 'profile':
+            return True
         if a == 'trainer' and b.isdigit():
             return True
         if len(b) == 5 and b.isalnum():

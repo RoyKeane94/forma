@@ -50,7 +50,7 @@ class RegistrationFlowTests(TestCase):
         self.assertEqual(user.first_name, 'Agi')
         self.assertEqual(user.last_name, 'Alexander')
         self.assertContains(response, 'Get your first testimonial')
-        self.assertContains(response, '/agi-alexander/proof/')
+        self.assertContains(response, '/agi-alexander/')
 
     def test_name_step_does_not_prefill_placeholder_names(self):
         User = get_user_model()

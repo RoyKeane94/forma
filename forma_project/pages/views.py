@@ -172,6 +172,10 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> lis
                 import imageio_ffmpeg
                 ffmpeg_bin = imageio_ffmpeg.get_ffmpeg_exe()
             except Exception:
+                logger.exception(
+                    'imageio-ffmpeg failed to provide ffmpeg binary for testimonial %s',
+                    submission.pk,
+                )
                 ffmpeg_bin = None
         if not ffmpeg_bin:
             logger.warning('No ffmpeg binary available; cannot transcode .mov for testimonial %s', submission.pk)
@@ -493,9 +497,10 @@ def my_account(request):
             messages.success(request, 'Your page is unpublished — only you can open your profile link while signed in.')
         return redirect('pages:my_account')
 
+    proof_public_url = request.build_absolute_uri(profile.get_absolute_url())
     public_profile_url = ''
     if profile.completed_at and profile.is_published:
-        public_profile_url = request.build_absolute_uri(profile.get_absolute_url())
+        public_profile_url = proof_public_url
     proof_testimonial_url = request.build_absolute_uri(
         reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})
     )
@@ -519,6 +524,7 @@ def my_account(request):
             'accounts_profile': accounts_profile,
             'tab_labels': TAB_LABELS,
             'public_profile_url': public_profile_url,
+            'proof_public_url': proof_public_url,
             'proof_testimonial_url': proof_testimonial_url,
             'testimonial_total_count': testimonial_total_count,
             'testimonial_to_review_count': testimonial_to_review_count,

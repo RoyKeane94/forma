@@ -31,19 +31,42 @@
         <p class="mb-4">
           <a href="{% url 'pages:proof_testimonials_page' %}" class="font-body text-[0.64rem] font-semibold uppercase tracking-wide-3 text-blue no-underline border-b border-blue/40 pb-0.5 hover:border-blue">See my Testimonials</a>
         </p>
-        <p class="mb-2 font-body text-[0.64rem] font-semibold uppercase tracking-wide-3 text-muted">Share with your clients to get a testimonial</p>
-        <div class="mb-3 flex flex-col items-stretch gap-2">
-          <a href="{{ proof_testimonial_url }}" class="min-w-0 w-full overflow-hidden text-ellipsis whitespace-nowrap border border-rule bg-white px-4 py-3 font-body text-[0.8rem] font-light text-blue no-underline transition-colors hover:bg-blue-light">
+        <p class="mb-1.5 font-body text-[0.6rem] font-semibold uppercase tracking-wide-3 text-muted">Client testimonial link</p>
+        <p class="mb-1.5 font-body text-[0.66rem] font-medium leading-[1.45] text-muted">
+          Share this with clients so they can submit a review.
+        </p>
+        <div class="mb-2.5 flex items-stretch gap-1.5">
+          <a href="{{ proof_testimonial_url }}" class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap border border-rule bg-white px-3 py-2 font-body text-[0.72rem] font-light text-blue no-underline transition-colors hover:bg-blue-light">
             {{ proof_testimonial_url }}
           </a>
           <button
             id="proof-link-copy-btn"
             type="button"
-            class="inline-flex h-11 w-full items-center justify-center border border-rule bg-paper px-4 font-body text-[0.64rem] font-semibold uppercase tracking-wide-3 text-ink transition-colors hover:border-ink hover:bg-surface sm:w-auto"
+            class="inline-flex h-8 shrink-0 items-center justify-center border border-rule bg-paper px-2.5 font-body text-[0.52rem] font-semibold uppercase tracking-wide-3 text-ink transition-colors hover:border-ink hover:bg-surface"
             data-copy-value="{{ proof_testimonial_url|escape }}"
+            data-copy-button="1"
             aria-label="Copy testimonial link"
           >
-            Copy link
+            Copy
+          </button>
+        </div>
+        <p class="mb-1.5 font-body text-[0.6rem] font-semibold uppercase tracking-wide-3 text-muted">Public proof page</p>
+        <p class="mb-1.5 font-body text-[0.66rem] font-medium leading-[1.45] text-muted">
+          Share this with prospects so they can view your proof page.
+        </p>
+        <div class="mb-2.5 flex items-stretch gap-1.5">
+          <a href="{{ proof_public_url }}" class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap border border-rule bg-white px-3 py-2 font-body text-[0.72rem] font-light text-blue no-underline transition-colors hover:bg-blue-light">
+            {{ proof_public_url }}
+          </a>
+          <button
+            id="proof-public-link-copy-btn"
+            type="button"
+            class="inline-flex h-8 shrink-0 items-center justify-center border border-rule bg-paper px-2.5 font-body text-[0.52rem] font-semibold uppercase tracking-wide-3 text-ink transition-colors hover:border-ink hover:bg-surface"
+            data-copy-value="{{ proof_public_url|escape }}"
+            data-copy-button="1"
+            aria-label="Copy public proof page link"
+          >
+            Copy
           </button>
         </div>
         <p class="mb-5 font-body text-[0.8rem] font-medium leading-[1.55] text-ink">
@@ -168,28 +191,30 @@
 </div>
 <script>
 (function () {
-  var btn = document.getElementById('proof-link-copy-btn');
-  if (!btn) return;
-  function setCopiedState(ok) {
+  function setCopiedState(btn, ok) {
     var original = btn.getAttribute('data-original-label') || btn.textContent;
     btn.textContent = ok ? 'Copied' : 'Failed';
     setTimeout(function () {
       btn.textContent = original;
     }, ok ? 1600 : 2200);
   }
-  btn.setAttribute('data-original-label', btn.textContent);
-  btn.addEventListener('click', function () {
-    var value = btn.getAttribute('data-copy-value') || '';
-    if (!value) return;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(value).then(function () {
-        setCopiedState(true);
-      }).catch(function () {
-        setCopiedState(false);
-      });
-      return;
-    }
-    setCopiedState(false);
+  var buttons = document.querySelectorAll('[data-copy-button="1"]');
+  if (!buttons.length) return;
+  buttons.forEach(function (btn) {
+    btn.setAttribute('data-original-label', btn.textContent);
+    btn.addEventListener('click', function () {
+      var value = btn.getAttribute('data-copy-value') || '';
+      if (!value) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(value).then(function () {
+          setCopiedState(btn, true);
+        }).catch(function () {
+          setCopiedState(btn, false);
+        });
+        return;
+      }
+      setCopiedState(btn, false);
+    });
   });
 })();
 </script>

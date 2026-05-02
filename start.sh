@@ -4,6 +4,27 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${ROOT}/forma_project"
 export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-forma_project.settings}"
+
+# Ensure testimonial .mov transcoding can find ffmpeg in Railway.
+if [ -z "${IMAGEIO_FFMPEG_EXE:-}" ]; then
+  if command -v ffmpeg >/dev/null 2>&1; then
+    export IMAGEIO_FFMPEG_EXE="$(command -v ffmpeg)"
+  else
+    _IMAGEIO_FFMPEG_EXE="$(python - <<'PY'
+try:
+    import imageio_ffmpeg
+    path = imageio_ffmpeg.get_ffmpeg_exe()
+    print(path if path else "")
+except Exception:
+    print("")
+PY
+)"
+    if [ -n "${_IMAGEIO_FFMPEG_EXE}" ] && [ -x "${_IMAGEIO_FFMPEG_EXE}" ]; then
+      export IMAGEIO_FFMPEG_EXE="${_IMAGEIO_FFMPEG_EXE}"
+    fi
+  fi
+fi
+
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
 # Recycle workers after a bounded number of requests to limit unbounded memory growth

@@ -418,6 +418,21 @@ class ProofApprovalWorkflowTests(TestCase):
         self.assertEqual(response.context['testimonial_to_review_count'], 1)
         self.assertContains(response, reverse('pages:proof_notifications'))
 
+    def test_my_account_shows_submission_and_public_proof_links(self):
+        profile = self._create_profile('account_links_owner')
+        self.client.login(username='account_links_owner', password='pass1234')
+
+        response = self.client.get(reverse('pages:my_account'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Client testimonial link')
+        self.assertContains(response, 'Public proof page')
+        self.assertContains(
+            response,
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+        )
+        self.assertContains(response, profile.get_absolute_url())
+
     def test_notifications_page_includes_my_testimonials_link(self):
         self._create_profile('notifications_link_owner')
         self.client.login(username='notifications_link_owner', password='pass1234')
