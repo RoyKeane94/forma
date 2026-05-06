@@ -23,7 +23,7 @@
       <button type="submit" class="inline-flex h-8 items-center rounded-full border border-rule bg-paper px-2.5 sm:px-3 font-body text-[0.62rem] sm:text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted cursor-pointer hover:border-ink hover:text-ink">Log out</button>
     </form>
     {% else %}
-    <a href="{% url 'pages:profile_enquiry' %}" class="font-body text-[0.75rem] sm:text-[0.78rem] font-medium uppercase tracking-wide-2 text-blue border-b border-blue/30 pb-0.5 no-underline hover:border-blue shrink-0">Enquire about a profile</a>
+    <a href="{% url 'accounts:register' %}" class="font-body text-[0.75rem] sm:text-[0.78rem] font-medium uppercase tracking-wide-2 text-blue border-b border-blue/30 pb-0.5 no-underline hover:border-blue shrink-0">Register</a>
     <a href="{% url 'accounts:login' %}" class="font-body text-[0.75rem] sm:text-[0.78rem] font-medium uppercase tracking-wide-2 text-muted border-b border-rule pb-0.5 no-underline hover:text-ink hover:border-ink shrink-0">Log in</a>
     {% endif %}
   </div>
