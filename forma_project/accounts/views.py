@@ -8,7 +8,10 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import TemplateView
 
 from pages.models import TrainerProfile, ensure_onboarding_children
-from pages.stripe_keep_profile import cancel_stripe_subscription_immediately
+from pages.stripe_keep_profile import (
+    cancel_stripe_subscription_immediately,
+    save_checkout_billing_ids,
+)
 
 from .forms import (
     CancelSubscriptionDeleteAccountForm,
@@ -19,6 +22,17 @@ from .forms import (
     RegisterNameForm,
 )
 from .models import Profile
+from .stripe_register import (
+    checkout_session_metadata_dict,
+    complete_pending_registration_from_stripe_session,
+    create_register_checkout_session,
+    delete_pending_registration,
+    register_checkout_metadata_ok,
+    retrieve_checkout_session,
+    store_pending_registration,
+    stripe_register_configured,
+)
+import secrets
 
 
 class FormaLoginView(LoginView):
@@ -99,17 +113,80 @@ def delete_account(request):
 def register(request):
     if request.user.is_authenticated:
         return redirect('home')
+    if request.GET.get('checkout') == 'canceled':
+        messages.info(request, 'Checkout was cancelled. Your account has not been charged.')
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            Profile.objects.get_or_create(user=user)
-            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            messages.success(request, 'Welcome to Forma.')
-            return redirect('pages:my_account')
+            if not stripe_register_configured():
+                form.add_error(
+                    None,
+                    'Payments are not configured on this server. Add STRIPE_SK and STRIPE_PRICE_ID.',
+                )
+            else:
+                pending_token = secrets.token_urlsafe(32)
+                email = form.cleaned_data['email']
+                store_pending_registration(
+                    pending_token=pending_token,
+                    first_name=form.cleaned_data['first_name'],
+                    last_name=form.cleaned_data['last_name'],
+                    email=email,
+                    password=form.cleaned_data['password1'],
+                )
+                success_url = request.build_absolute_uri(
+                    reverse('accounts:register_checkout_success'),
+                ) + '?session_id={CHECKOUT_SESSION_ID}'
+                cancel_url = request.build_absolute_uri(reverse('accounts:register')) + '?checkout=canceled'
+                try:
+                    checkout_url = create_register_checkout_session(
+                        success_url=success_url,
+                        cancel_url=cancel_url,
+                        customer_email=email,
+                        pending_token=pending_token,
+                    )
+                except Exception:
+                    delete_pending_registration(pending_token)
+                    form.add_error(
+                        None,
+                        'Could not start checkout. Check Stripe key and price configuration, then try again.',
+                    )
+                else:
+                    return redirect(checkout_url)
     else:
         form = RegisterForm()
     return render(request, 'accounts/register.html', {'form': form})
+
+
+def register_checkout_success(request):
+    if request.user.is_authenticated:
+        return redirect('pages:my_account')
+
+    session_id = (request.GET.get('session_id') or '').strip()
+    if not session_id or not stripe_register_configured():
+        messages.error(request, 'Missing payment session. Please register again.')
+        return redirect('accounts:register')
+
+    try:
+        stripe_session = retrieve_checkout_session(session_id)
+    except Exception:
+        messages.error(request, 'Could not verify payment. Please contact support.')
+        return redirect('accounts:register')
+
+    meta = checkout_session_metadata_dict(stripe_session)
+    if not register_checkout_metadata_ok(meta):
+        messages.error(request, 'This payment session is not valid for registration.')
+        return redirect('accounts:register')
+
+    user, err_msg = complete_pending_registration_from_stripe_session(stripe_session)
+    if err_msg:
+        messages.error(request, err_msg)
+        return redirect('accounts:register')
+
+    Profile.objects.get_or_create(user=user)
+    save_checkout_billing_ids(user, stripe_session)
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    messages.success(request, 'Welcome to Forma.')
+    return redirect('pages:my_account')
 
 
 def _ensure_trainer_profile_for_user(user):

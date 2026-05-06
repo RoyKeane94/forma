@@ -27,6 +27,10 @@ from django.views.decorators.http import require_POST
 
 from accounts.forms import RegisterForm
 from accounts.models import Profile as AccountsProfile
+from accounts.stripe_register import (
+    complete_pending_registration_from_stripe_session,
+    register_checkout_metadata_ok,
+)
 
 from .forms import (
     OnboardingStep1Form,
@@ -1429,6 +1433,21 @@ def stripe_webhook(request):
     meta = session.get('metadata') or {}
     if not isinstance(meta, dict):
         meta = _stripe_metadata_dict(meta)
+    if register_checkout_metadata_ok(meta):
+        try:
+            stripe_session = retrieve_checkout_session(session['id'])
+        except Exception:
+            logger.exception('Webhook could not reload checkout session for register flow')
+            return HttpResponse(status=500)
+
+        user, err_msg = complete_pending_registration_from_stripe_session(stripe_session)
+        if user is not None:
+            AccountsProfile.objects.get_or_create(user=user)
+            save_checkout_billing_ids(user, stripe_session)
+        if err_msg and user is None:
+            logger.warning('Stripe webhook register-flow incomplete: %s', err_msg)
+        return HttpResponse(status=200)
+
     if not _keep_profile_checkout_metadata_ok(meta):
         return HttpResponse(status=200)
 

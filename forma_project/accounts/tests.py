@@ -1,16 +1,27 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from unittest import mock
 
 from pages.models import PostcodeDistrict, PrimaryArea
 
 
 class RegistrationFlowTests(TestCase):
     def setUp(self):
-        district = PostcodeDistrict.objects.create(code='SW12')
-        self.primary_area = PrimaryArea.objects.create(name='Clapham', district=district)
+        district, _ = PostcodeDistrict.objects.get_or_create(code='SW12')
+        self.primary_area, _ = PrimaryArea.objects.get_or_create(
+            name='Clapham',
+            defaults={'district': district},
+        )
 
-    def test_register_redirects_to_my_account_with_testimonial_next_step(self):
+    @mock.patch('accounts.views.create_register_checkout_session')
+    @mock.patch('accounts.views.stripe_register_configured', return_value=True)
+    def test_register_redirects_to_stripe_checkout_without_creating_account(
+        self,
+        _stripe_configured_mock,
+        create_checkout_mock,
+    ):
+        create_checkout_mock.return_value = 'https://checkout.stripe.com/test-session'
         response = self.client.post(
             reverse('accounts:register'),
             data={
@@ -21,16 +32,47 @@ class RegistrationFlowTests(TestCase):
                 'password2': 'StrongPass123!',
                 'accept_terms': 'on',
             },
-            follow=True,
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.request['PATH_INFO'], reverse('pages:my_account'))
-        self.assertContains(response, 'Get your first testimonial')
-        self.assertContains(response, 'Don&apos;t worry, you get to approve it before it goes live.')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, 'https://checkout.stripe.com/test-session')
+        create_checkout_mock.assert_called_once()
         User = get_user_model()
-        user = User.objects.get(email='new@example.com')
-        self.assertEqual(user.first_name, 'Agi')
-        self.assertEqual(user.last_name, 'Alexander')
+        self.assertFalse(User.objects.filter(email='new@example.com').exists())
+
+    @mock.patch('accounts.views.stripe_register_configured', return_value=True)
+    @mock.patch('accounts.views.retrieve_checkout_session')
+    @mock.patch('accounts.views.complete_pending_registration_from_stripe_session')
+    def test_register_checkout_success_creates_session_login_and_redirects(
+        self,
+        complete_pending_mock,
+        retrieve_session_mock,
+        _stripe_configured_mock,
+    ):
+        class FakeStripeSession:
+            status = 'complete'
+            mode = 'subscription'
+            payment_status = 'paid'
+            customer = None
+            subscription = None
+            metadata = {'purpose': 'register_account', 'pending_token': 'abc123'}
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username='paid@example.com',
+            email='paid@example.com',
+            password='StrongPass123!',
+            first_name='Paid',
+            last_name='User',
+        )
+        retrieve_session_mock.return_value = FakeStripeSession()
+        complete_pending_mock.return_value = (user, None)
+
+        response = self.client.get(
+            reverse('accounts:register_checkout_success') + '?session_id=cs_test_123'
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('pages:my_account'))
+        self.assertTrue('_auth_user_id' in self.client.session)
 
     def test_register_requires_first_and_last_name(self):
         response = self.client.post(
