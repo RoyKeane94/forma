@@ -26,83 +26,76 @@
         <div class="flex flex-wrap items-start justify-between gap-4">
           <p class="m-0 font-body text-[0.72rem] uppercase tracking-wide-4 text-muted">Submitted {{ submission.submitted_at|date:"j M Y" }}</p>
         </div>
-        <div class="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_260px]">
+        <div class="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_300px]">
           <div
-            class="proof-review-card group relative max-w-full overflow-hidden rounded-2xl border border-rule bg-paper"
+            class="proof-review-card group relative mx-auto w-full max-w-[22rem] overflow-hidden rounded-2xl border border-rule bg-paper"
             data-review-card
           >
-            <video
-              class="proof-review-video block aspect-square w-full object-cover bg-ink"
-              src="{{ submission.video.url }}#t=0.001"
-              preload="metadata"
-              playsinline
-              data-review-video
-            ></video>
-            <div class="pointer-events-none absolute bottom-3 left-3 z-10 max-w-[68%] rounded-lg bg-black/75 px-2 py-1.5 transition-opacity duration-200" data-review-meta>
-              <p class="m-0 truncate font-body text-[0.95rem] font-semibold leading-none text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.45)] sm:text-[1.15rem]">
-                {{ submission.client_first_name }} {{ submission.client_last_initial }}.
-              </p>
-              {% if submission.client_job_title %}
-              <p class="mt-0.5 m-0 truncate font-body text-[0.58rem] font-light uppercase tracking-wide-3 text-white/90 [text-shadow:0_1px_4px_rgba(0,0,0,0.35)] sm:text-[0.74rem]">{{ submission.client_job_title }}</p>
-              {% endif %}
-              <div class="mt-0.5 flex items-center gap-0.5 sm:mt-1.5">
-                {% for _ in "12345" %}
-                <span class="text-[0.95rem] leading-none {% if forloop.counter <= submission.star_rating %}text-[#F3B71B]{% else %}text-white/45{% endif %} [text-shadow:0_1px_4px_rgba(0,0,0,0.35)] sm:text-[1.2rem]">★</span>
+            <div class="relative">
+              <video
+                class="proof-review-video block aspect-square w-full object-cover bg-ink"
+                src="{{ submission.video.url }}#t=0.001"
+                preload="metadata"
+                playsinline
+                data-review-video
+              ></video>
+              <div class="pointer-events-none absolute bottom-2 left-2 z-10 rounded-lg border border-rule bg-[#F6F5F1]/95 px-2.5 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.18)] transition-opacity duration-200" data-review-meta>
+                <p class="m-0 font-body text-[0.72rem] font-semibold leading-none text-ink sm:text-[1rem]">
+                  {{ submission.client_first_name }} {{ submission.client_last_initial }}.
+                </p>
+                {% if submission.client_job_title %}
+                <p class="mt-0.5 m-0 font-body text-[0.52rem] font-light uppercase tracking-wide-3 text-muted sm:text-[0.68rem]">{{ submission.client_job_title }}</p>
+                {% endif %}
+                <div class="mt-1 flex items-center gap-0.5">
+                  {% for _ in "12345" %}
+                  <span class="text-[0.7rem] leading-none sm:text-[1.05rem] {% if forloop.counter <= submission.star_rating %}text-[#F3B71B]{% else %}text-rule{% endif %}">★</span>
+                  {% endfor %}
+                </div>
+              </div>
+              <button
+                type="button"
+                class="proof-review-play absolute left-1/2 top-1/2 z-20 flex h-[5.2rem] w-[5.2rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-blue/70 text-white transition-transform duration-200 hover:scale-[1.06] hover:bg-blue-mid"
+                aria-label="Play video"
+                data-review-play
+              >
+                <svg class="proof-review-icon-play ml-1 h-10 w-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <polygon points="6,3 20,12 6,21"></polygon>
+                </svg>
+                <svg class="proof-review-icon-pause hidden h-10 w-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <rect x="6" y="4" width="4.5" height="16"></rect>
+                  <rect x="13.5" y="4" width="4.5" height="16"></rect>
+                </svg>
+              </button>
+            </div>
+            <div class="bg-paper px-3 pb-3 pt-2">
+              {% if submission.outcome_labels %}
+              <div class="flex flex-wrap gap-2">
+                {% for label in submission.outcome_labels %}
+                <span class="inline-block border border-blue/20 bg-blue-light px-[0.6rem] py-[0.2rem] font-body text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-blue">{{ label }}</span>
                 {% endfor %}
               </div>
-            </div>
-            <button
-              type="button"
-              class="proof-review-play absolute left-1/2 top-1/2 z-20 flex h-[5.2rem] w-[5.2rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-blue/70 text-white transition-transform duration-200 hover:scale-[1.06] hover:bg-blue-mid"
-              aria-label="Play video"
-              data-review-play
-            >
-              <svg class="proof-review-icon-play ml-1 h-10 w-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <polygon points="6,3 20,12 6,21"></polygon>
-              </svg>
-              <svg class="proof-review-icon-pause hidden h-10 w-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <rect x="6" y="4" width="4.5" height="16"></rect>
-                <rect x="13.5" y="4" width="4.5" height="16"></rect>
-              </svg>
-            </button>
-          </div>
-          <div class="mt-2 px-1">
-            <p class="m-0 truncate font-serif text-[0.98rem] font-light italic leading-tight text-ink sm:text-[1.06rem]" data-review-quote-text>
-              {% if submission.pull_quote %}
-                {{ submission.pull_quote }}
-              {% elif submission.suggested_quotes %}
-                {{ submission.suggested_quotes.0 }}
-              {% else %}
-                Pull quote appears here
               {% endif %}
-            </p>
+            </div>
+            <div class="bg-blue px-4 py-3 text-center">
+              <p
+                class="m-0 font-serif text-[0.92rem] font-semibold italic leading-[1.3] text-white sm:text-[1rem]"
+                data-review-quote-text
+                data-default-quote="{% if submission.pull_quote %}{{ submission.pull_quote }}{% elif submission.suggested_quotes %}{{ submission.suggested_quotes.0 }}{% else %}Pull quote appears here{% endif %}"
+              >
+                "{% if submission.pull_quote %}{{ submission.pull_quote }}{% elif submission.suggested_quotes %}{{ submission.suggested_quotes.0 }}{% else %}Pull quote appears here{% endif %}"
+              </p>
+            </div>
           </div>
           <div>
-            <h2 class="m-0 font-body text-[1rem] font-medium tracking-wide-2 text-ink">{{ submission.client_first_name }} {{ submission.client_last_initial }}.</h2>
-            {% if submission.client_job_title %}
-            <p class="mt-1 mb-0 font-body text-[0.78rem] uppercase tracking-wide-3 text-muted">{{ submission.client_job_title }}</p>
-            {% endif %}
-            <div class="mt-3 flex items-center gap-1.5" aria-label="Star rating: {{ submission.star_rating }} out of 5">
-              {% for _ in "12345" %}
-              <span class="text-[1.2rem] leading-none {% if forloop.counter <= submission.star_rating %}text-[#F3B71B]{% else %}text-rule{% endif %}">★</span>
-              {% endfor %}
-            </div>
-            {% if submission.outcome_labels %}
-            <div class="mt-3 flex flex-wrap gap-2">
-              {% for label in submission.outcome_labels %}
-              <span class="inline-block border border-blue/20 bg-blue-light px-[0.6rem] py-[0.2rem] font-body text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-blue">{{ label }}</span>
-              {% endfor %}
-            </div>
-            {% endif %}
             {% if submission.suggested_quotes %}
             <div class="mt-4">
               <p class="m-0 font-body text-[0.62rem] font-bold uppercase tracking-wide-4 text-blue">Pick a pull quote before approving</p>
               <p class="mt-1 mb-0 font-body text-[0.72rem] font-light text-slate">Choose one of these AI suggestions to highlight this testimonial.</p>
-              <div class="mt-2 flex flex-wrap gap-2" data-quote-picker>
+              <div class="mt-2 flex flex-col items-start gap-2" data-quote-picker>
                 {% for quote in submission.suggested_quotes %}
                 <button
                   type="button"
-                  class="quote-option rounded-full border border-rule bg-paper px-3 py-1.5 font-body text-[0.68rem] font-medium text-slate transition hover:border-blue/40 hover:bg-blue-light hover:text-blue"
+                  class="quote-option w-full rounded border border-rule bg-paper px-3 py-2 text-left font-body text-[0.68rem] font-medium text-slate transition hover:border-blue/40 hover:bg-blue-light hover:text-blue"
                   data-quote-option
                   data-quote-value="{{ quote }}"
                 >{{ quote }}</button>
@@ -264,7 +257,7 @@
     var input = form ? form.querySelector('[data-pull-quote-input]') : null;
     if (!form || !input) return;
     var options = picker.querySelectorAll('[data-quote-option]');
-    var defaultQuote = quoteText ? (quoteText.textContent || '').trim() : '';
+    var defaultQuote = quoteText ? (quoteText.getAttribute('data-default-quote') || '').trim() : '';
     if (!input.value && options.length) {
       var first = (options[0].getAttribute('data-quote-value') || '').trim();
       if (first) input.value = first;
@@ -282,15 +275,15 @@
         btn.classList.toggle('text-slate', !active);
       });
       if (quoteText) {
-        quoteText.textContent = selected || defaultQuote || 'Pull quote appears here';
+        var text = selected || defaultQuote || 'Pull quote appears here';
+        quoteText.textContent = '"' + text + '"';
       }
     }
 
     options.forEach(function (btn) {
       btn.addEventListener('click', function () {
         var value = (btn.getAttribute('data-quote-value') || '').trim();
-        var current = (input.value || '').trim();
-        input.value = current === value ? '' : value;
+        input.value = value;
         paint();
       });
     });
