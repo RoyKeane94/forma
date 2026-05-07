@@ -7,6 +7,41 @@
       background-color: #ffffff !important;
       background-image: none !important;
     }
+    @media (max-width: 639px) {
+      .proof-page-title {
+        font-size: clamp(2.05rem, 8.4vw, 3.2rem) !important;
+      }
+      .proof-approved-play {
+        width: 3.25rem !important;
+        height: 3.25rem !important;
+        background: rgba(26, 63, 204, 0.56) !important;
+      }
+      .proof-approved-icon-play,
+      .proof-approved-icon-pause {
+        width: 1.6rem !important;
+        height: 1.6rem !important;
+      }
+      .proof-approved-meta-wrap {
+        margin-top: 0.35rem !important;
+      }
+      .proof-approved-quote {
+        margin-top: 0 !important;
+      }
+      .proof-approved-tags {
+        margin-top: 0.45rem !important;
+        gap: 0.35rem !important;
+        flex-wrap: nowrap !important;
+        justify-content: flex-start !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+      .proof-approved-tags::-webkit-scrollbar {
+        display: none;
+      }
+      .proof-approved-tag {
+        white-space: nowrap;
+      }
+    }
   </style>
 {% endblock %}
 
@@ -14,7 +49,7 @@
 <section class="relative overflow-hidden bg-white py-10 sm:py-14">
   <div class="relative z-[2] mx-auto w-full max-w-[100rem] px-page">
   <header class="mb-10 flex flex-col items-center gap-2 text-center sm:mb-12">
-    <h1 class="m-0 font-display text-[clamp(2.6rem,10vw,5rem)] font-normal leading-[0.95] tracking-[0.06em] text-blue">The Proof</h1>
+    <h1 class="proof-page-title m-0 font-display text-[clamp(2.6rem,10vw,5rem)] font-normal leading-[0.95] tracking-[0.06em] text-blue">The Proof</h1>
     <p class="m-0 font-body text-[0.88rem] font-medium uppercase tracking-wide-4 text-ink">
       {% if profile.first_name or profile.last_name %}
         {{ profile.first_name }} {{ profile.last_name }}
@@ -33,7 +68,7 @@
   <div class="mx-auto grid w-full max-w-[22rem] justify-center gap-7 sm:max-w-[48rem] sm:grid-cols-2 lg:max-w-[72rem] xl:max-w-[72rem] xl:grid-cols-3">
     {% for submission in approved_testimonials %}
     <article class="mx-auto w-full max-w-[22rem]">
-      <div class="proof-approved-card group relative w-full overflow-hidden rounded-2xl bg-ink" data-approved-card>
+      <div class="proof-approved-card group relative w-full overflow-hidden bg-ink" style="border-radius: 0.85rem;" data-approved-card>
         <div class="relative">
           <video
             class="proof-approved-video aspect-[16/10] w-full object-cover sm:aspect-[4/3]"
@@ -69,8 +104,8 @@
           </button>
         </div>
       </div>
-      <div class="mt-2 w-full px-1 text-center">
-        <p class="m-0 truncate font-serif text-[0.98rem] font-light italic leading-tight text-ink sm:text-[1.06rem]">
+      <div class="proof-approved-meta-wrap mt-2 w-full px-1 text-center">
+        <p class="proof-approved-quote m-0 truncate font-serif text-[0.98rem] font-light italic leading-tight text-ink sm:text-[1.06rem]">
           {% if submission.pull_quote %}
             {{ submission.pull_quote }}
           {% elif submission.suggested_quotes %}
@@ -81,10 +116,10 @@
         </p>
       </div>
       <div class="mt-1.5 w-full px-1">
-        <div class="mt-1.5 flex flex-wrap items-center justify-center gap-1.5">
+        <div class="proof-approved-tags mt-1.5 flex flex-wrap items-center justify-center gap-1.5">
         {% if submission.outcome_labels %}
         {% for label in submission.outcome_labels %}
-        <span class="inline-block border border-blue/20 bg-blue-light px-[0.66rem] py-[0.26rem] font-body text-[0.62rem] font-semibold uppercase tracking-[0.13em] text-blue">{{ label }}</span>
+        <span class="proof-approved-tag inline-block border border-blue/20 bg-blue-light px-[0.66rem] py-[0.26rem] font-body text-[0.62rem] font-semibold uppercase tracking-[0.13em] text-blue">{{ label }}</span>
         {% endfor %}
         {% endif %}
         </div>
