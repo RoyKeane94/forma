@@ -72,8 +72,9 @@
         <div class="relative">
           <video
             class="proof-approved-video aspect-[16/10] w-full object-cover sm:aspect-[4/3]"
-            src="{{ submission.video.url }}#t=0.001"
-            preload="metadata"
+            src="{{ submission.video.url }}"
+            {% if submission.poster %}poster="{{ submission.poster.url }}"{% endif %}
+            preload="none"
             playsinline
             data-approved-video
           ></video>

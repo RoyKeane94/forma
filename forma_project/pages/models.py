@@ -543,6 +543,10 @@ class ProofTestimonial(models.Model):
             FileExtensionValidator(allowed_extensions=('mp4', 'webm', 'mov', 'm4v')),
         ],
     )
+    poster = models.ImageField(
+        upload_to='proof/posters/',
+        blank=True,
+    )
     share_to_instagram = models.BooleanField(default=False)
     status = models.CharField(
         max_length=16,

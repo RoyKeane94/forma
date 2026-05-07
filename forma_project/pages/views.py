@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.files import File
+from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db import close_old_connections
 from django.db import transaction
@@ -149,6 +150,65 @@ def _normalize_quote_candidates(raw_candidates) -> list[str]:
     return out
 
 
+def _resolve_ffmpeg_binary() -> str:
+    ffmpeg_bin = (os.getenv('IMAGEIO_FFMPEG_EXE') or '').strip() or shutil.which('ffmpeg')
+    if ffmpeg_bin:
+        return ffmpeg_bin
+    try:
+        import imageio_ffmpeg
+
+        ffmpeg_bin = imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        ffmpeg_bin = ''
+    return (ffmpeg_bin or '').strip()
+
+
+def _poster_bytes_from_video_file(*, source_bytes: bytes, source_ext: str) -> bytes:
+    input_path = ''
+    output_path = ''
+    ffmpeg_bin = _resolve_ffmpeg_binary()
+    if not ffmpeg_bin:
+        return b''
+
+    ext = source_ext if source_ext.startswith('.') else f'.{source_ext}'
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext or '.mp4') as in_tmp:
+            in_tmp.write(source_bytes)
+            input_path = in_tmp.name
+        fd, output_path = tempfile.mkstemp(suffix='.jpg')
+        os.close(fd)
+        cmd = [
+            ffmpeg_bin,
+            '-y',
+            '-ss',
+            '00:00:00.20',
+            '-i',
+            input_path,
+            '-frames:v',
+            '1',
+            '-q:v',
+            '4',
+            '-vf',
+            'scale=960:-2:force_original_aspect_ratio=decrease',
+            output_path,
+        ]
+        subprocess.run(
+            cmd,
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        with open(output_path, 'rb') as out_fh:
+            return out_fh.read()
+    except Exception:
+        return b''
+    finally:
+        if input_path and os.path.exists(input_path):
+            os.remove(input_path)
+        if output_path and os.path.exists(output_path):
+            os.remove(output_path)
+
+
 def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> list[str]:
     api_key = (getattr(settings, 'OPENAI_API_KEY', '') or '').strip()
     if not api_key:
@@ -170,17 +230,7 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> lis
     elif ext == '.mov':
         input_path = ''
         output_path = ''
-        ffmpeg_bin = (os.getenv('IMAGEIO_FFMPEG_EXE') or '').strip() or shutil.which('ffmpeg')
-        if not ffmpeg_bin:
-            try:
-                import imageio_ffmpeg
-                ffmpeg_bin = imageio_ffmpeg.get_ffmpeg_exe()
-            except Exception:
-                logger.exception(
-                    'imageio-ffmpeg failed to provide ffmpeg binary for testimonial %s',
-                    submission.pk,
-                )
-                ffmpeg_bin = None
+        ffmpeg_bin = _resolve_ffmpeg_binary()
         if not ffmpeg_bin:
             logger.warning('No ffmpeg binary available; cannot transcode .mov for testimonial %s', submission.pk)
             return []
@@ -1084,9 +1134,18 @@ def trainer_proof_submit(request, profile_slug: str):
                 prompt_recommend='Submitted via Proof quick capture flow.',
                 status=ProofTestimonial.STATUS_PENDING,
             )
+            source_bytes = b''
+            source_ext = os.path.splitext(video_path)[1].lower() or '.mp4'
             with default_storage.open(video_path, 'rb') as fh:
+                source_bytes = fh.read()
+                fh.seek(0)
                 submission.video.save(os.path.basename(video_path), File(fh), save=False)
             submission.save()
+            poster_bytes = _poster_bytes_from_video_file(source_bytes=source_bytes, source_ext=source_ext)
+            if poster_bytes:
+                poster_name = f'{os.path.splitext(os.path.basename(video_path))[0]}.jpg'
+                submission.poster.save(poster_name, ContentFile(poster_bytes), save=False)
+                submission.save(update_fields=['poster'])
             _enqueue_suggested_quotes_generation(submission.pk)
             default_storage.delete(video_path)
             request.session.pop(session_key, None)
@@ -1171,9 +1230,12 @@ def proof_notifications(request):
             return redirect('pages:proof_notifications')
         if action == 'reject':
             video_name = (submission.video.name or '').strip()
+            poster_name = (submission.poster.name or '').strip()
             submission.delete()
             if video_name and default_storage.exists(video_name):
                 default_storage.delete(video_name)
+            if poster_name and default_storage.exists(poster_name):
+                default_storage.delete(poster_name)
             messages.success(request, 'Testimonial rejected and deleted.')
             return redirect('pages:proof_notifications')
         messages.error(request, 'Choose approve or reject.')
@@ -1256,9 +1318,12 @@ def proof_testimonials_edit(request):
             messages.error(request, 'Choose a valid testimonial action.')
             return redirect('pages:proof_testimonials_edit')
         video_name = (submission.video.name or '').strip()
+        poster_name = (submission.poster.name or '').strip()
         submission.delete()
         if video_name and default_storage.exists(video_name):
             default_storage.delete(video_name)
+        if poster_name and default_storage.exists(poster_name):
+            default_storage.delete(poster_name)
         messages.success(request, 'Testimonial deleted.')
         return redirect('pages:proof_testimonials_edit')
 
