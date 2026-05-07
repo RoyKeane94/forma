@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 from unittest import mock
 
-from pages.models import PostcodeDistrict, PrimaryArea
+from pages.models import PostcodeDistrict, PrimaryArea, TrainerProfile
 
 
 class RegistrationFlowTests(TestCase):
@@ -42,8 +42,10 @@ class RegistrationFlowTests(TestCase):
     @mock.patch('accounts.views.stripe_register_configured', return_value=True)
     @mock.patch('accounts.views.retrieve_checkout_session')
     @mock.patch('accounts.views.complete_pending_registration_from_stripe_session')
+    @mock.patch('accounts.views.send_mail')
     def test_register_checkout_success_creates_session_login_and_redirects(
         self,
+        send_mail_mock,
         complete_pending_mock,
         retrieve_session_mock,
         _stripe_configured_mock,
@@ -73,6 +75,11 @@ class RegistrationFlowTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('pages:my_account'))
         self.assertTrue('_auth_user_id' in self.client.session)
+        profile = TrainerProfile.objects.get(user=user)
+        expected_link = f"/{profile.slug}/submit/"
+        send_mail_mock.assert_called_once()
+        self.assertIn('Welcome to Forma', send_mail_mock.call_args.kwargs['subject'])
+        self.assertIn(expected_link, send_mail_mock.call_args.kwargs['message'])
 
     def test_register_requires_first_and_last_name(self):
         response = self.client.post(

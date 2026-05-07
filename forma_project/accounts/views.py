@@ -1,8 +1,13 @@
+import logging
+import secrets
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
+from django.core.mail import send_mail
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import TemplateView
@@ -32,7 +37,8 @@ from .stripe_register import (
     store_pending_registration,
     stripe_register_configured,
 )
-import secrets
+
+logger = logging.getLogger(__name__)
 
 
 class FormaLoginView(LoginView):
@@ -185,6 +191,7 @@ def register_checkout_success(request):
     Profile.objects.get_or_create(user=user)
     save_checkout_billing_ids(user, stripe_session)
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    _send_founder_welcome_email(request, user)
     messages.success(request, 'Welcome to Forma.')
     return redirect('pages:my_account')
 
@@ -213,6 +220,43 @@ def _ensure_trainer_profile_for_user(user):
         profile.last_name = ''
         profile.save(update_fields=['first_name', 'last_name'])
     return profile
+
+
+def _send_founder_welcome_email(request, user) -> None:
+    email = (user.email or '').strip()
+    if not email:
+        return
+    profile = _ensure_trainer_profile_for_user(user)
+    testimonial_link = request.build_absolute_uri(
+        reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})
+    )
+    first_name = (user.first_name or '').strip() or 'there'
+    message = f"""Hi {first_name},
+
+Thanks for joining.
+
+I built Forma because the best trainers I've seen lose clients they've already won - not because their work isn't good, but because there's nowhere credible for that work to land. Your Proof page fixes that.
+
+One thing to do now: send your testimonial link to three clients you trust.
+
+Your link: {testimonial_link}
+
+Once those first videos come in, you have something worth sharing.
+
+Reply to this email if you need anything. I read every one.
+
+Tom
+Founder, Forma"""
+    try:
+        send_mail(
+            subject='Welcome to Forma',
+            message=message,
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', ''),
+            recipient_list=[email],
+            fail_silently=False,
+        )
+    except Exception:
+        logger.exception('Failed to send founder welcome email for user_id=%s', user.pk)
 
 
 @login_required

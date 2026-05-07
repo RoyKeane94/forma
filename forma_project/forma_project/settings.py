@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+import re
+from email.utils import formataddr
 
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
@@ -25,6 +27,10 @@ load_dotenv(BASE_DIR / '.env')
 
 def _split_csv(value: str) -> list[str]:
     return [part.strip() for part in value.split(',') if part.strip()]
+
+
+def _looks_like_plain_email(value: str) -> bool:
+    return bool(re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', value))
 
 
 # Quick-start development settings - unsuitable for production
@@ -256,6 +262,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/logged-out/'
+
+# SMTP (founder welcome and account emails)
+_personal_email_host = os.getenv('PERSONAL_EMAIL_HOST', '').strip()
+if _personal_email_host:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = _personal_email_host
+    EMAIL_PORT = int(os.getenv('PERSONAL_EMAIL_PORT', '587') or 587)
+    EMAIL_HOST_USER = os.getenv('PERSONAL_EMAIL_HOST_USER', '').strip()
+    EMAIL_HOST_PASSWORD = os.getenv('PERSONAL_EMAIL_HOST_PASSWORD', '')
+    EMAIL_USE_TLS = os.getenv('PERSONAL_EMAIL_USE_TLS', '1').lower() in ('1', 'true', 'yes')
+    EMAIL_USE_SSL = os.getenv('PERSONAL_EMAIL_USE_SSL', '0').lower() in ('1', 'true', 'yes')
+    EMAIL_TIMEOUT = int(os.getenv('PERSONAL_EMAIL_TIMEOUT', '10') or 10)
+    _personal_default_from = os.getenv('PERSONAL_DEFAULT_FROM_EMAIL', '').strip()
+    if _personal_default_from:
+        if _looks_like_plain_email(_personal_default_from):
+            DEFAULT_FROM_EMAIL = _personal_default_from
+        elif EMAIL_HOST_USER:
+            DEFAULT_FROM_EMAIL = formataddr((_personal_default_from, EMAIL_HOST_USER))
+        else:
+            DEFAULT_FROM_EMAIL = _personal_default_from
+    else:
+        DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'webmaster@localhost'
+else:
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'webmaster@localhost').strip()
 
 # Stripe (keep-profile checkout — use test keys in .env for development)
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SK', '').strip()
