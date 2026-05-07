@@ -17,8 +17,8 @@ module.exports = {
       },
       colors: {
         ink: '#0F0F0F',
-        paper: '#FCFCFA',
-        surface: '#F6F5F1',
+        paper: '#FFFFFF',
+        surface: '#FFFFFF',
         rule: '#E8E6DF',
         slate: '#3D4A5C',
         muted: 'rgba(15,15,15,0.45)',
