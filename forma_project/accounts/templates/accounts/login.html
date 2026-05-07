@@ -1,8 +1,24 @@
 {% extends "base.html" %}
 {% block title %}Sign in — Forma{% endblock %}
+{% block extra_head %}
+<style>
+  @keyframes accountFadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .account-anim-1 { animation: accountFadeUp 0.65s ease both; animation-delay: 0.05s; }
+  .account-anim-2 { animation: accountFadeUp 0.65s ease both; animation-delay: 0.18s; }
+</style>
+{% endblock %}
 {% block body %}
-<section class="border-t border-rule bg-surface min-h-[calc(100vh-60px)] px-page py-section">
-  <div class="max-w-md mx-auto">
+<section class="relative min-h-[calc(100vh-60px)] overflow-hidden bg-blue px-6 py-14 sm:px-10 md:px-16">
+  <div
+    class="pointer-events-none absolute inset-0"
+    aria-hidden="true"
+    style="background-image: linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 80px 80px;"
+  ></div>
+  <div class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap font-display text-[clamp(8rem,40vw,34rem)] leading-none tracking-[0.08em] text-white/[0.04]" aria-hidden="true">FORMA</div>
+  <div class="account-anim-1 relative z-[1] max-w-md mx-auto rounded-none border border-white/20 bg-white p-8 sm:p-10">
     <p class="flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue mb-6 after:block after:h-px after:bg-rule after:max-w-[3rem] after:flex-1">
       Account
     </p>
@@ -13,7 +29,7 @@
       Access your Forma profile and settings.
     </p>
 
-    <form method="post" action="" class="border-t border-rule pt-10" id="login-form" novalidate>
+    <form method="post" action="" class="account-anim-2 border-t border-rule pt-10" id="login-form" novalidate>
       {% csrf_token %}
 
       {% if form.errors %}
