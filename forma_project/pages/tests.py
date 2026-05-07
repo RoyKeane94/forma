@@ -157,7 +157,7 @@ class TrainerProofSubmissionTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    @mock.patch('pages.views._poster_bytes_from_video_file', return_value=b'poster-bytes')
+    @mock.patch('pages.views.poster_bytes_from_video_file', return_value=b'poster-bytes')
     def test_multistep_submission_creates_pending_proof_testimonial(self, _poster_mock):
         profile = self._create_profile()
         upload_payload = {
