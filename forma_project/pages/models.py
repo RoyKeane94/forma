@@ -47,6 +47,9 @@ PROOF_OUTCOME_TAG_DEFAULTS = [
     ('ran_first_race', 'Ran first race'),
     ('back_pain_gone', 'Back pain gone'),
     ('got_off_medication', 'Got off medication'),
+    ('more_energy', 'More energy'),
+    ('first_time_in_the_gym', 'First time in the gym'),
+    ('trained_through_pregnancy', 'Trained through pregnancy'),
 ]
 
 CONTACT_PHONE_PREFERENCE_CHOICES = [

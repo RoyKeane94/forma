@@ -4,11 +4,11 @@
 {% block body %}
 <section class="border-t border-rule bg-paper px-4 py-8 sm:px-[4rem] sm:py-[5rem]">
   <div class="mx-auto w-full max-w-6xl text-center">
-    <p class="mx-auto mb-6 inline-flex items-center font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">
+    <p class="mx-auto mb-6 inline-flex items-center font-body text-[0.78rem] font-semibold uppercase tracking-[0.22em] text-blue">
       The Proof
     </p>
-    <h1 class="mb-4 font-display text-[clamp(2.2rem,10vw,4.5rem)] leading-heading tracking-[0.02em] text-ink sm:mb-5">
-      Say something for {{ profile.first_name }}.
+    <h1 class="mb-4 font-display text-[clamp(1.8rem,8vw,3.6rem)] leading-heading tracking-[0.02em] text-ink sm:mb-5">
+      Say something for {% if profile.first_name %}{{ profile.first_name }}{% else %}this trainer{% endif %}.
     </h1>
   </div>
 </section>
@@ -250,7 +250,7 @@
         setContinueReady(true);
         if (fileName) {
           fileName.classList.remove('hidden');
-          fileName.textContent = file.name;
+          fileName.textContent = 'Upload successful';
         }
       } else {
         setContinueReady(false);
