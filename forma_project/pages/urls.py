@@ -85,7 +85,7 @@ urlpatterns = [
     path('trainer/<int:profile_id>/', views.trainer_profile_id_redirect, name='trainer_profile_legacy'),
     path('<slug:profile_slug>/success/', views.trainer_proof_submit_success, name='trainer_proof_submit_success'),
     path('<slug:profile_slug>/proof/success/', RedirectView.as_view(pattern_name='pages:trainer_proof_submit_success', permanent=True)),
-    path('<slug:profile_slug>/proof/', RedirectView.as_view(pattern_name='pages:trainer_proof_submit', permanent=True)),
+    path('<slug:profile_slug>/proof/', views.trainer_public_proof_page, name='trainer_profile_proof'),
     path('<slug:profile_slug>/submit/', views.trainer_proof_submit, name='trainer_proof_submit'),
     path('<slug:profile_slug>/profile/', RedirectView.as_view(pattern_name='pages:trainer_profile', permanent=True)),
     path('<slug:profile_slug>/', views.trainer_public_profile, name='trainer_profile'),
@@ -94,5 +94,6 @@ urlpatterns = [
         views.keep_forma_profile_register,
         name='keep_forma_profile',
     ),
+    path('<slug:profile_slug>/<slug:url_key>/proof/', views.trainer_public_proof_page, name='trainer_profile_forma_proof'),
     path('<slug:profile_slug>/<slug:url_key>/', views.trainer_public_profile, name='trainer_profile_forma'),
 ]

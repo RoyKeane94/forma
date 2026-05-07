@@ -15,7 +15,13 @@
   <div class="relative z-[2] mx-auto w-full max-w-[100rem] px-page">
   <header class="mb-10 flex flex-col items-center gap-2 text-center sm:mb-12">
     <h1 class="m-0 font-display text-[clamp(2.6rem,10vw,5rem)] font-normal leading-[0.95] tracking-[0.06em] text-blue">The Proof</h1>
-    <p class="m-0 font-body text-[0.88rem] font-medium uppercase tracking-wide-4 text-ink">{{ profile.first_name }} {{ profile.last_name }}</p>
+    <p class="m-0 font-body text-[0.88rem] font-medium uppercase tracking-wide-4 text-ink">
+      {% if profile.first_name or profile.last_name %}
+        {{ profile.first_name }} {{ profile.last_name }}
+      {% else %}
+        Trainer profile
+      {% endif %}
+    </p>
     <div class="mt-2" aria-label="{{ approved_count }} testimonials">
       <span class="font-body text-[0.72rem] font-semibold uppercase tracking-wide-3 text-ink">
         {{ approved_count }} testimonial{% if approved_count != 1 %}s{% endif %}
@@ -94,7 +100,7 @@
 
   <div class="mt-12 border-t border-rule pt-8 text-center">
     <p class="m-0 font-body text-[1rem] font-medium leading-relaxed text-ink">
-      Work with {{ profile.first_name }}?
+      Work with {% if profile.first_name %}{{ profile.first_name }}{% else %}this trainer{% endif %}?
       <a href="{% url 'pages:trainer_proof_submit' profile_slug=profile.slug %}" class="font-body text-[1rem] font-medium text-blue no-underline border-b border-blue/40 pb-0.5 hover:border-blue">
         Add your voice.
       </a>

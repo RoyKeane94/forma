@@ -501,7 +501,17 @@ def my_account(request):
             messages.success(request, 'Your page is unpublished — only you can open your profile link while signed in.')
         return redirect('pages:my_account')
 
-    proof_public_url = request.build_absolute_uri(profile.get_absolute_url())
+    if profile.forma_made and profile.public_url_key:
+        proof_public_url = request.build_absolute_uri(
+            reverse(
+                'pages:trainer_profile_forma_proof',
+                kwargs={'profile_slug': profile.slug, 'url_key': profile.public_url_key},
+            )
+        )
+    else:
+        proof_public_url = request.build_absolute_uri(
+            reverse('pages:trainer_profile_proof', kwargs={'profile_slug': profile.slug})
+        )
     public_profile_url = ''
     if profile.completed_at and profile.is_published:
         public_profile_url = proof_public_url
@@ -1566,6 +1576,75 @@ def trainer_public_profile(request, profile_slug: str, url_key: str | None = Non
         'media_preconnect_origin': media_storage_preconnect_origin(),
     }
     return render(request, 'pages/trainer_profile.html', context)
+
+
+def trainer_public_proof_page(request, profile_slug: str, url_key: str | None = None):
+    if url_key is not None and len(url_key) != 5:
+        raise Http404
+
+    qs = TrainerProfile.objects.select_related(
+        'user',
+        'primary_area__district',
+    )
+    if url_key is not None:
+        profile = get_object_or_404(
+            qs,
+            slug__iexact=profile_slug,
+            public_url_key__iexact=url_key,
+            forma_made=True,
+        )
+    else:
+        profile = get_object_or_404(
+            qs,
+            slug__iexact=profile_slug,
+            forma_made=False,
+        )
+
+    is_owner = request.user.is_authenticated and request.user.pk == profile.user_id
+    is_forma_creator = (
+        request.user.is_authenticated
+        and request.user.is_superuser
+        and profile.forma_made
+        and profile.created_by_id == request.user.pk
+    )
+    if not is_owner and not is_forma_creator:
+        if not profile.forma_made and not profile.is_published:
+            raise Http404
+        if not profile.forma_made and not profile.completed_at:
+            raise Http404
+
+    approved_testimonials = list(
+        ProofTestimonial.objects.filter(
+            profile=profile,
+            status=ProofTestimonial.STATUS_APPROVED,
+        ).order_by('-reviewed_at', '-submitted_at')
+    )
+    approved_count = len(approved_testimonials)
+    average_rating = 0.0
+    average_rating_rounded = 0
+    if approved_count:
+        total = sum(int(item.star_rating or 0) for item in approved_testimonials)
+        average_rating = round(total / approved_count, 1)
+        average_rating_rounded = max(1, min(5, int(round(average_rating))))
+
+    outcome_label_map = dict(ProofOutcomeTag.objects.filter(is_active=True).values_list('key', 'label'))
+    for item in approved_testimonials:
+        item.outcome_labels = [
+            outcome_label_map.get(k, str(k).replace('_', ' ').title()) for k in (item.outcome_tags or [])
+        ]
+
+    return render(
+        request,
+        'pages/proof_testimonials_page.html',
+        {
+            'profile': profile,
+            'approved_testimonials': approved_testimonials,
+            'approved_count': approved_count,
+            'average_rating': average_rating,
+            'average_rating_rounded': average_rating_rounded,
+            'media_preconnect_origin': media_storage_preconnect_origin(),
+        },
+    )
 
 
 def _pricing_row_has_content(cleaned: dict | None) -> bool:

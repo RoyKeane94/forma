@@ -72,6 +72,23 @@ class TrainerPublicProfileVisibilityTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_public_proof_route_uses_same_template_as_account_proof_page(self):
+        profile = self._create_profile(
+            username='proof_page_trainer',
+            first_name='Agi',
+            last_name='Alexander',
+            forma_made=False,
+            is_published=True,
+            completed=True,
+        )
+
+        response = self.client.get(
+            reverse('pages:trainer_profile_proof', kwargs={'profile_slug': profile.slug})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'pages/proof_testimonials_page.html')
+
     def test_claiming_forma_profile_marks_it_published(self):
         profile = self._create_profile(
             username='forma_claim_source',
