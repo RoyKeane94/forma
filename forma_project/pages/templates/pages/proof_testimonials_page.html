@@ -104,25 +104,19 @@
             </svg>
           </button>
         </div>
-      </div>
-      <div class="proof-approved-meta-wrap mt-2 w-full px-1 text-center">
-        <p class="proof-approved-quote m-0 truncate font-serif text-[0.98rem] font-light italic leading-tight text-ink sm:text-[1.06rem]">
-          {% if submission.pull_quote %}
-            {{ submission.pull_quote }}
-          {% elif submission.suggested_quotes %}
-            {{ submission.suggested_quotes.0 }}
-          {% else %}
-            Verified client testimonial
-          {% endif %}
-        </p>
-      </div>
-      <div class="mt-1.5 w-full px-1">
-        <div class="proof-approved-tags mt-1.5 flex flex-wrap items-center justify-center gap-1.5">
+        <div class="bg-paper px-3 pb-3 pt-2">
+          <div class="proof-approved-tags flex flex-wrap items-center justify-start gap-1.5">
         {% if submission.outcome_labels %}
         {% for label in submission.outcome_labels %}
         <span class="proof-approved-tag inline-block border border-blue/20 bg-blue-light px-[0.66rem] py-[0.26rem] font-body text-[0.62rem] font-semibold uppercase tracking-[0.13em] text-blue">{{ label }}</span>
         {% endfor %}
         {% endif %}
+          </div>
+        </div>
+        <div class="bg-blue px-4 py-3 text-center">
+          <p class="proof-approved-quote m-0 truncate font-serif text-[1.02rem] font-semibold italic leading-tight text-white sm:text-[1.08rem]">
+            "{% if submission.pull_quote %}{{ submission.pull_quote }}{% elif submission.suggested_quotes %}{{ submission.suggested_quotes.0 }}{% else %}Verified client testimonial{% endif %}"
+          </p>
         </div>
       </div>
     </article>

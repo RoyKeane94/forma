@@ -96,6 +96,7 @@ from .profile_display import (
     training_location_items,
     visible_price_tiers,
 )
+from .posters import poster_bytes_from_video_file, resolve_ffmpeg_binary
 
 STEP_COUNT = 7
 
@@ -150,65 +151,6 @@ def _normalize_quote_candidates(raw_candidates) -> list[str]:
     return out
 
 
-def _resolve_ffmpeg_binary() -> str:
-    ffmpeg_bin = (os.getenv('IMAGEIO_FFMPEG_EXE') or '').strip() or shutil.which('ffmpeg')
-    if ffmpeg_bin:
-        return ffmpeg_bin
-    try:
-        import imageio_ffmpeg
-
-        ffmpeg_bin = imageio_ffmpeg.get_ffmpeg_exe()
-    except Exception:
-        ffmpeg_bin = ''
-    return (ffmpeg_bin or '').strip()
-
-
-def _poster_bytes_from_video_file(*, source_bytes: bytes, source_ext: str) -> bytes:
-    input_path = ''
-    output_path = ''
-    ffmpeg_bin = _resolve_ffmpeg_binary()
-    if not ffmpeg_bin:
-        return b''
-
-    ext = source_ext if source_ext.startswith('.') else f'.{source_ext}'
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=ext or '.mp4') as in_tmp:
-            in_tmp.write(source_bytes)
-            input_path = in_tmp.name
-        fd, output_path = tempfile.mkstemp(suffix='.jpg')
-        os.close(fd)
-        cmd = [
-            ffmpeg_bin,
-            '-y',
-            '-ss',
-            '00:00:00.20',
-            '-i',
-            input_path,
-            '-frames:v',
-            '1',
-            '-q:v',
-            '4',
-            '-vf',
-            'scale=960:-2:force_original_aspect_ratio=decrease',
-            output_path,
-        ]
-        subprocess.run(
-            cmd,
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        with open(output_path, 'rb') as out_fh:
-            return out_fh.read()
-    except Exception:
-        return b''
-    finally:
-        if input_path and os.path.exists(input_path):
-            os.remove(input_path)
-        if output_path and os.path.exists(output_path):
-            os.remove(output_path)
-
-
 def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> list[str]:
     api_key = (getattr(settings, 'OPENAI_API_KEY', '') or '').strip()
     if not api_key:
@@ -230,7 +172,7 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> lis
     elif ext == '.mov':
         input_path = ''
         output_path = ''
-        ffmpeg_bin = _resolve_ffmpeg_binary()
+        ffmpeg_bin = resolve_ffmpeg_binary()
         if not ffmpeg_bin:
             logger.warning('No ffmpeg binary available; cannot transcode .mov for testimonial %s', submission.pk)
             return []
@@ -1141,7 +1083,7 @@ def trainer_proof_submit(request, profile_slug: str):
                 fh.seek(0)
                 submission.video.save(os.path.basename(video_path), File(fh), save=False)
             submission.save()
-            poster_bytes = _poster_bytes_from_video_file(source_bytes=source_bytes, source_ext=source_ext)
+            poster_bytes = poster_bytes_from_video_file(source_bytes=source_bytes, source_ext=source_ext)
             if poster_bytes:
                 poster_name = f'{os.path.splitext(os.path.basename(video_path))[0]}.jpg'
                 submission.poster.save(poster_name, ContentFile(poster_bytes), save=False)
