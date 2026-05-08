@@ -15,39 +15,60 @@
   {% if testimonials %}
   <div class="space-y-3">
     {% for submission in testimonials %}
-    <article class="rounded-card border border-rule bg-paper p-4 sm:p-5">
-      <div class="grid gap-3 sm:grid-cols-[140px_160px_minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-start sm:gap-4">
-        <div>
-          <p class="m-0 font-body text-[0.62rem] uppercase tracking-wide-4 text-muted">Date</p>
-          <p class="mt-1 mb-0 font-body text-[0.82rem] text-ink">{{ submission.reviewed_at|default:submission.submitted_at|date:"j M Y" }}</p>
-        </div>
-        <div>
-          <p class="m-0 font-body text-[0.62rem] uppercase tracking-wide-4 text-muted">Name</p>
-          <p class="mt-1 mb-0 font-body text-[0.82rem] text-ink">{{ submission.client_first_name }} {{ submission.client_last_initial }}.</p>
-        </div>
-        <div>
-          <p class="m-0 font-body text-[0.62rem] uppercase tracking-wide-4 text-muted">Job</p>
-          <p class="mt-1 mb-0 font-body text-[0.82rem] text-ink">{% if submission.client_job_title %}{{ submission.client_job_title }}{% else %}&mdash;{% endif %}</p>
-        </div>
-        <div>
-          <p class="m-0 font-body text-[0.62rem] uppercase tracking-wide-4 text-muted">Chosen comment</p>
-          <p class="mt-1 mb-0 font-body text-[0.82rem] text-ink">
-            {% if submission.pull_quote %}
-              {{ submission.pull_quote }}
-            {% elif submission.suggested_quotes %}
-              {{ submission.suggested_quotes.0 }}
+    <article class="rounded-card border border-rule bg-paper p-3 sm:p-4">
+      <div class="grid gap-4 sm:grid-cols-[185px_minmax(0,1fr)_220px] sm:items-center sm:gap-5">
+        <div class="flex items-start gap-3">
+          <div class="shrink-0 overflow-hidden rounded-lg bg-ink/10" style="width: 72px; height: 72px; flex-shrink: 0;">
+            {% if submission.poster %}
+            <img src="{{ submission.poster.url }}" alt="Thumbnail for {{ submission.client_first_name }} testimonial" class="h-full w-full object-cover" style="width: 100%; height: 100%; object-fit: cover; display: block;">
             {% else %}
-              &mdash;
+            <video class="h-full w-full object-cover" src="{{ submission.video.url }}" preload="metadata" muted playsinline style="width: 100%; height: 100%; object-fit: cover; display: block;"></video>
             {% endif %}
+          </div>
+          <div class="min-w-0">
+            <p class="m-0 font-body text-[0.92rem] font-semibold text-ink">{{ submission.client_first_name }} {{ submission.client_last_initial }}.</p>
+            <p class="mt-0.5 mb-0 font-body text-[0.78rem] text-slate">{% if submission.client_job_title %}{{ submission.client_job_title }}{% else %}Client{% endif %}</p>
+            <p class="mt-1.5 mb-0 font-body text-[0.66rem] uppercase tracking-wide-3 text-muted">{{ submission.reviewed_at|default:submission.submitted_at|date:"j M Y" }}</p>
+          </div>
+        </div>
+
+        <div>
+          <p class="m-0 font-serif text-[1.02rem] font-semibold italic leading-tight text-ink sm:text-[1.1rem]">
+            "{% if submission.pull_quote %}{{ submission.pull_quote }}{% elif submission.suggested_quotes %}{{ submission.suggested_quotes.0 }}{% else %}Verified client testimonial{% endif %}"
           </p>
         </div>
+
         <div>
-          <form method="post" class="m-0">
-            {% csrf_token %}
-            <input type="hidden" name="submission_id" value="{{ submission.id }}">
-            <input type="hidden" name="action" value="delete">
-            <button type="submit" class="h-9 rounded-full border border-rule bg-paper px-4 font-body text-[0.7rem] font-semibold uppercase tracking-wide-4 text-muted transition hover:border-[#CC2A1A]/40 hover:text-[#CC2A1A]">Delete</button>
-          </form>
+          <div class="flex flex-col gap-2 sm:items-end">
+            <button
+              type="button"
+              class="h-9 rounded-full border border-blue/20 bg-blue px-4 font-body text-[0.7rem] font-semibold uppercase tracking-wide-4 text-white transition hover:bg-blue-mid"
+              data-instagram-share
+              data-video-url="{{ submission.video.url }}"
+              data-caption="&quot;{% if submission.pull_quote %}{{ submission.pull_quote }}{% elif submission.suggested_quotes %}{{ submission.suggested_quotes.0 }}{% else %}Verified client testimonial{% endif %}&quot; - {{ submission.client_first_name }} {{ submission.client_last_initial }}.{% if submission.client_job_title %}, {{ submission.client_job_title }}{% endif %}"
+            >
+              Share to Instagram
+            </button>
+            <p class="m-0 max-w-[15rem] text-left font-body text-[0.62rem] leading-snug text-muted sm:text-right">
+              Video will be downloaded and quote copied for you to paste.
+            </p>
+            <button
+              type="button"
+              class="h-9 rounded-full border border-rule bg-paper px-4 font-body text-[0.7rem] font-semibold uppercase tracking-wide-4 text-muted transition hover:border-blue/30 hover:text-blue"
+              data-download-video
+              data-video-url="{{ submission.video.url }}"
+            >
+              Download video
+            </button>
+            <form method="post" class="m-0">
+              {% csrf_token %}
+              <input type="hidden" name="submission_id" value="{{ submission.id }}">
+              <input type="hidden" name="action" value="delete">
+              <button type="submit" class="m-0 border-0 bg-transparent p-0 font-body text-[0.68rem] font-semibold uppercase tracking-wide-3 text-[#B7493E] transition hover:text-[#9B2F24]">
+                Delete
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </article>
@@ -59,4 +80,65 @@
   </div>
   {% endif %}
 </section>
+<script>
+(function () {
+  var shareButtons = document.querySelectorAll('[data-instagram-share]');
+  var downloadButtons = document.querySelectorAll('[data-download-video]');
+  if (downloadButtons.length) {
+    downloadButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        var videoUrl = button.getAttribute('data-video-url') || '';
+        startVideoDownload(videoUrl);
+      });
+    });
+  }
+  if (!shareButtons.length) return;
+  var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  var isAndroid = /Android/i.test(navigator.userAgent || '');
+
+  function openInstagramApp() {
+    var fallbackUrl = 'https://www.instagram.com/';
+    var deepLink = isAndroid
+      ? 'intent://instagram.com/_u/instagram/#Intent;package=com.instagram.android;scheme=https;end'
+      : 'instagram://camera';
+    var startedAt = Date.now();
+    window.location.href = deepLink;
+    setTimeout(function () {
+      if (Date.now() - startedAt < 1700) {
+        window.location.href = fallbackUrl;
+      }
+    }, 1200);
+  }
+
+  function startVideoDownload(videoUrl) {
+    if (!videoUrl) return;
+    var anchor = document.createElement('a');
+    anchor.href = videoUrl;
+    anchor.download = 'testimonial-video';
+    anchor.rel = 'noopener';
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  }
+
+  shareButtons.forEach(function (button) {
+    button.addEventListener('click', function () {
+      var videoUrl = button.getAttribute('data-video-url') || '';
+      var caption = button.getAttribute('data-caption') || '';
+      if (!isMobile) {
+        alert('Instagram sharing works best on iPhone or Android. Open this page on mobile and tap Share.');
+        return;
+      }
+
+      if (caption && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(caption).catch(function () {});
+      }
+
+      startVideoDownload(videoUrl);
+      setTimeout(openInstagramApp, 350);
+    });
+  });
+})();
+</script>
 {% endblock %}
