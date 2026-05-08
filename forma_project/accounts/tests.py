@@ -3,7 +3,13 @@ from django.test import TestCase
 from django.urls import reverse
 from unittest import mock
 
-from pages.models import PostcodeDistrict, PrimaryArea, TrainerProfile
+from pages.models import (
+    PostcodeDistrict,
+    PrimaryArea,
+    ProofTestimonial,
+    TrainerGalleryPhoto,
+    TrainerProfile,
+)
 
 
 class RegistrationFlowTests(TestCase):
@@ -135,6 +141,70 @@ class RegistrationFlowTests(TestCase):
         response = self.client.get(reverse('accounts:register_name'))
         self.assertNotContains(response, 'value="Mark"')
         self.assertNotContains(response, 'value="Jobs"')
+
+
+class AccountDeletionMediaCleanupTests(TestCase):
+    def test_delete_account_removes_associated_media_files(self):
+        User = get_user_model()
+        user = User.objects.create_user(
+            username='delete-media-user@example.com',
+            email='delete-media-user@example.com',
+            password='StrongPass123!',
+        )
+        profile = TrainerProfile.objects.create(
+            user=user,
+            first_name='Delete',
+            last_name='Media',
+            tagline='Trainer',
+            bio='Bio',
+        )
+        profile.portrait = 'trainer/portraits/portrait.jpg'
+        profile.intro_video = 'trainer/intro/intro.mp4'
+        profile.save(update_fields=['portrait', 'intro_video'])
+        TrainerGalleryPhoto.objects.create(
+            profile=profile,
+            slot=7,
+            image='trainer/gallery/gallery.jpg',
+        )
+        ProofTestimonial.objects.create(
+            profile=profile,
+            client_first_name='Sam',
+            client_last_initial='J',
+            client_job_title='Designer',
+            star_rating=5,
+            outcome_tags=['built_strength'],
+            prompt_start='Before',
+            prompt_change='After',
+            prompt_recommend='Recommend',
+            video='proof/videos/testimonial.mp4',
+            poster='proof/posters/testimonial.jpg',
+            status=ProofTestimonial.STATUS_APPROVED,
+        )
+
+        self.client.login(username=user.username, password='StrongPass123!')
+        with mock.patch('accounts.media_cleanup.default_storage.exists', return_value=True), mock.patch(
+            'accounts.media_cleanup.default_storage.delete'
+        ) as delete_mock:
+            response = self.client.post(
+                reverse('accounts:delete_account'),
+                data={'password': 'StrongPass123!'},
+            )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('accounts:account_deleted'))
+        self.assertFalse(User.objects.filter(pk=user.pk).exists())
+
+        deleted_paths = {call.args[0] for call in delete_mock.call_args_list}
+        self.assertEqual(
+            deleted_paths,
+            {
+                'trainer/portraits/portrait.jpg',
+                'trainer/intro/intro.mp4',
+                'trainer/gallery/gallery.jpg',
+                'proof/videos/testimonial.mp4',
+                'proof/posters/testimonial.jpg',
+            },
+        )
 
     def test_name_step_clears_legacy_mark_jobs_profile_values(self):
         User = get_user_model()

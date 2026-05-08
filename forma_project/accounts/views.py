@@ -27,6 +27,7 @@ from .forms import (
     RegisterNameForm,
 )
 from .models import Profile
+from .media_cleanup import delete_user_and_associated_media
 from .stripe_register import (
     checkout_session_metadata_dict,
     complete_pending_registration_from_stripe_session,
@@ -84,9 +85,9 @@ def cancel_subscription_and_account(request):
             if not ok:
                 form.add_error(None, stripe_err or 'Could not cancel your subscription with Stripe.')
             else:
-                user_pk = request.user.pk
+                user_to_delete = request.user
                 logout(request)
-                get_user_model().objects.filter(pk=user_pk).delete()
+                delete_user_and_associated_media(user_to_delete)
                 messages.success(
                     request,
                     'Your subscription has been cancelled and your Forma account and trainer page have been removed.',
@@ -107,9 +108,9 @@ def delete_account(request):
     if request.method == 'POST':
         form = DeleteAccountForm(request.user, request.POST)
         if form.is_valid():
-            user_pk = request.user.pk
+            user_to_delete = request.user
             logout(request)
-            get_user_model().objects.filter(pk=user_pk).delete()
+            delete_user_and_associated_media(user_to_delete)
             return redirect('accounts:account_deleted')
     else:
         form = DeleteAccountForm(request.user)

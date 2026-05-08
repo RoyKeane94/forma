@@ -27,6 +27,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from accounts.forms import RegisterForm
+from accounts.media_cleanup import delete_user_and_associated_media
 from accounts.models import Profile as AccountsProfile
 from accounts.stripe_register import (
     complete_pending_registration_from_stripe_session,
@@ -341,7 +342,7 @@ def _finalize_keep_forma_profile(*, profile_id: int, email: str, password: str):
         profile.is_published = True
         profile.save()
         if old_user.pk != new_user.pk:
-            old_user.delete()
+            delete_user_and_associated_media(old_user)
         return new_user, None
 
 
@@ -927,7 +928,7 @@ def staff_forma_profile_delete(request, profile_pk: int):
     label = f'{profile.first_name} {profile.last_name}'.strip() or profile.user.get_username()
     user = profile.user
     with transaction.atomic():
-        user.delete()
+        delete_user_and_associated_media(user)
     messages.success(request, f'Deleted profile for {label}.')
     return redirect('pages:staff_forma_profiles')
 
