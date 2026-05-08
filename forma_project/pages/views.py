@@ -1461,6 +1461,11 @@ def stripe_webhook(request):
         if user is not None:
             AccountsProfile.objects.get_or_create(user=user)
             save_checkout_billing_ids(user, stripe_session)
+            # Registration can complete via webhook when the success page is skipped.
+            # Send the same founder welcome email used in checkout-success path.
+            from accounts.views import _send_founder_welcome_email
+
+            _send_founder_welcome_email(request, user)
         if err_msg and user is None:
             logger.warning('Stripe webhook register-flow incomplete: %s', err_msg)
         return HttpResponse(status=200)

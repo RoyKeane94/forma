@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from unittest import mock
@@ -520,3 +520,54 @@ class ProofApprovalWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertFalse(ProofTestimonial.objects.filter(pk=approved.pk).exists())
         self.assertFalse(default_storage.exists(video_name))
+
+
+class StripeWebhookRegistrationTests(TestCase):
+    @override_settings(STRIPE_WEBHOOK_SECRET='whsec_test')
+    @mock.patch('accounts.views._send_founder_welcome_email')
+    @mock.patch('pages.views.save_checkout_billing_ids')
+    @mock.patch('pages.views.complete_pending_registration_from_stripe_session')
+    @mock.patch('pages.views.retrieve_checkout_session')
+    @mock.patch('stripe.Webhook.construct_event')
+    def test_register_webhook_sends_founder_welcome_email(
+        self,
+        construct_event_mock,
+        retrieve_session_mock,
+        complete_pending_mock,
+        _save_billing_ids_mock,
+        welcome_email_mock,
+    ):
+        User = get_user_model()
+        user = User.objects.create_user(
+            username='webhook-new-user@example.com',
+            email='webhook-new-user@example.com',
+            password='StrongPass123!',
+            first_name='Webhook',
+            last_name='User',
+        )
+
+        class FakeStripeSession:
+            status = 'complete'
+            mode = 'subscription'
+            payment_status = 'paid'
+            customer = None
+            subscription = None
+            metadata = {'purpose': 'register_account', 'pending_token': 'abc123'}
+
+        construct_event_mock.return_value = {
+            'type': 'checkout.session.completed',
+            'data': {'object': {'id': 'cs_test_123', 'metadata': {'purpose': 'register_account'}}},
+        }
+        retrieve_session_mock.return_value = FakeStripeSession()
+        complete_pending_mock.return_value = (user, None)
+
+        response = self.client.post(
+            reverse('pages:stripe_webhook'),
+            data='{}',
+            content_type='application/json',
+            HTTP_STRIPE_SIGNATURE='t=1,v1=fake',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        welcome_email_mock.assert_called_once()
+        self.assertEqual(welcome_email_mock.call_args.args[1], user)
