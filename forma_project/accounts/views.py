@@ -8,8 +8,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.core.mail import send_mail
+from django.db import transaction
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.views.generic import TemplateView
 
 from pages.models import TrainerProfile, ensure_onboarding_children
@@ -227,12 +229,18 @@ def _send_founder_welcome_email(request, user) -> None:
     email = (user.email or '').strip()
     if not email:
         return
-    profile = _ensure_trainer_profile_for_user(user)
-    testimonial_link = request.build_absolute_uri(
-        reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})
-    )
-    first_name = (user.first_name or '').strip() or 'there'
-    message = f"""Hi {first_name},
+    accounts_profile, _ = Profile.objects.get_or_create(user=user)
+    with transaction.atomic():
+        locked_profile = Profile.objects.select_for_update().get(pk=accounts_profile.pk)
+        if locked_profile.welcome_email_sent_at is not None:
+            return
+
+        profile = _ensure_trainer_profile_for_user(user)
+        testimonial_link = request.build_absolute_uri(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})
+        )
+        first_name = (user.first_name or '').strip() or 'there'
+        message = f"""Hi {first_name},
 
 Thanks for joining.
 
@@ -248,16 +256,20 @@ Reply to this email if you need anything. I read every one.
 
 Tom
 Founder, Forma"""
-    try:
-        send_mail(
-            subject='Welcome to Forma',
-            message=message,
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', ''),
-            recipient_list=[email],
-            fail_silently=False,
-        )
-    except Exception:
-        logger.exception('Failed to send founder welcome email for user_id=%s', user.pk)
+        try:
+            send_mail(
+                subject='Welcome to Forma',
+                message=message,
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', ''),
+                recipient_list=[email],
+                fail_silently=False,
+            )
+        except Exception:
+            logger.exception('Failed to send founder welcome email for user_id=%s', user.pk)
+            return
+
+        locked_profile.welcome_email_sent_at = timezone.now()
+        locked_profile.save(update_fields=['welcome_email_sent_at'])
 
 
 @login_required

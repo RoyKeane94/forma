@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from unittest import mock
 
+from accounts.models import Profile
+from accounts.views import _send_founder_welcome_email
 from pages.models import (
     PostcodeDistrict,
     PrimaryArea,
@@ -141,6 +143,28 @@ class RegistrationFlowTests(TestCase):
         response = self.client.get(reverse('accounts:register_name'))
         self.assertNotContains(response, 'value="Mark"')
         self.assertNotContains(response, 'value="Jobs"')
+
+
+class WelcomeEmailIdempotencyTests(TestCase):
+    def test_founder_welcome_email_sends_only_once_per_user(self):
+        User = get_user_model()
+        user = User.objects.create_user(
+            username='welcome-once@example.com',
+            email='welcome-once@example.com',
+            password='StrongPass123!',
+            first_name='Welcome',
+            last_name='Once',
+        )
+        rf = RequestFactory()
+        request = rf.get('/')
+
+        with mock.patch('accounts.views.send_mail') as send_mail_mock:
+            _send_founder_welcome_email(request, user)
+            _send_founder_welcome_email(request, user)
+
+        self.assertEqual(send_mail_mock.call_count, 1)
+        profile = Profile.objects.get(user=user)
+        self.assertIsNotNone(profile.welcome_email_sent_at)
 
 
 class AccountDeletionMediaCleanupTests(TestCase):

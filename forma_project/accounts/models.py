@@ -22,6 +22,11 @@ class Profile(models.Model):
         default='',
         help_text='Stripe Subscription id for Forma billing (sub_…).',
     )
+    welcome_email_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Timestamp of the founder welcome email send (set once to avoid duplicates).',
+    )
 
     class Meta:
         db_table = 'accounts_profile'
