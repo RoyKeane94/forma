@@ -45,7 +45,7 @@ PROOF_OUTCOME_TAG_DEFAULTS = [
     ('recovered_from_injury', 'Recovered from injury'),
     ('improved_mental_health', 'Improved mental health'),
     ('ran_first_race', 'Ran first race'),
-    ('back_pain_gone', 'Back pain gone'),
+    ('back_pain_gone', 'Pain gone'),
     ('got_off_medication', 'Got off medication'),
     ('more_energy', 'More energy'),
     ('first_time_in_the_gym', 'First time in the gym'),
