@@ -7,6 +7,14 @@
       background-color: #ffffff !important;
       background-image: none !important;
     }
+    .proof-approved-video {
+      aspect-ratio: 16 / 13;
+    }
+    @media (min-width: 640px) {
+      .proof-approved-video {
+        aspect-ratio: 40 / 39;
+      }
+    }
     @media (max-width: 639px) {
       .proof-page-title {
         font-size: clamp(2.05rem, 8.4vw, 3.2rem) !important;
@@ -71,7 +79,7 @@
       <div class="proof-approved-card group relative w-full overflow-hidden bg-ink" style="border-radius: 0.85rem;" data-approved-card>
         <div class="relative">
           <video
-            class="proof-approved-video aspect-[16/10] w-full object-cover sm:aspect-[4/3]"
+            class="proof-approved-video w-full object-cover"
             src="{{ submission.video.url }}"
             {% if submission.poster %}poster="{{ submission.poster.url }}"{% endif %}
             preload="none"
