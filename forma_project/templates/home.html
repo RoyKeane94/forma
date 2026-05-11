@@ -1,8 +1,11 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Forma{% endblock %}
 {% block content_shell_class %}pt-[60px] min-h-screen flex flex-col{% endblock %}
 
 {% block extra_head %}
+  <link rel="preload" href="{% static 'video/IMG_2403-poster.jpg' %}" as="image">
+  <link rel="preload" href="{% static 'video/IMG_2403.MOV' %}" as="video" type="video/quicktime">
   <style>
     @keyframes homeFadeUp {
       from { opacity: 0; transform: translateY(18px); }
@@ -13,6 +16,14 @@
     .home-anim-3 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.3s; }
     .home-anim-4 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.42s; }
     .home-anim-5 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.54s; }
+    .home-demo-video {
+      aspect-ratio: 16 / 13;
+    }
+    @media (min-width: 640px) {
+      .home-demo-video {
+        aspect-ratio: 40 / 39;
+      }
+    }
   </style>
 {% endblock %}
 
@@ -61,21 +72,230 @@
     </div>
   </section>
 
-  <section id="demo" class="border-t-4 border-ink bg-white px-6 py-14 sm:px-10 md:px-16">
-    <div class="mx-auto w-full max-w-5xl">
-      <p class="mb-5 flex items-center gap-2.5 font-body text-[0.58rem] font-semibold uppercase tracking-[0.2em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+  <section id="demo" class="border-t border-rule bg-white py-section sm:py-[5.5rem] lg:py-[6rem]">
+    <div class="mx-auto w-full max-w-[100rem] px-6 sm:px-10 md:px-page">
+      <p class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
         Your Proof page
       </p>
-      <div class="rounded-none border border-rule bg-paper p-8 sm:p-10">
-        <p class="font-display text-[clamp(1.8rem,4vw,2.8rem)] leading-[0.92] tracking-[0.02em] text-ink">
-          Demo placeholder
-        </p>
-        <p class="mt-3 max-w-2xl font-serif text-[0.95rem] font-light italic leading-[1.65] text-slate">
-          Proof page preview section coming next.
-        </p>
+
+      <div class="border border-rule bg-white">
+        <div class="grid grid-cols-1 lg:grid-cols-2 lg:items-center">
+          <div class="flex justify-center items-center border-b border-rule px-6 py-10 sm:px-10 sm:py-12 lg:border-b-0 lg:border-r lg:border-rule lg:p-[4rem_2.5rem] xl:p-[5rem_4rem]">
+            <article class="w-full max-w-[22rem] shrink-0">
+              <header class="mb-8 flex w-full flex-col items-center gap-2 text-center lg:items-center">
+                <h2 class="proof-page-title m-0 font-display text-[clamp(2.05rem,7vw,3.2rem)] font-normal leading-[0.95] tracking-[0.06em] text-blue">The Proof</h2>
+                <p class="m-0 font-body text-[0.88rem] font-medium uppercase tracking-wide-4 text-ink">James Smith</p>
+                <div class="mt-2">
+                  <span class="font-body text-[0.72rem] font-semibold uppercase tracking-wide-3 text-ink">1 testimonial</span>
+                </div>
+              </header>
+              <div class="group relative w-full overflow-hidden bg-ink" style="border-radius: 0.85rem;" data-home-demo-card>
+                <div class="relative">
+                  <video
+                    class="home-demo-video w-full object-cover"
+                    src="{% static 'video/IMG_2403.MOV' %}#t=0.001"
+                    poster="{% static 'video/IMG_2403-poster.jpg' %}"
+                    preload="none"
+                    playsinline
+                    data-home-demo-video
+                  ></video>
+                  <div
+                    class="pointer-events-none absolute bottom-2 left-2 z-10 rounded-lg border border-rule bg-[#F6F5F1]/95 px-2.5 py-1.5 transition-opacity duration-200"
+                    data-home-demo-meta
+                  >
+                    <p class="m-0 font-body text-[0.72rem] font-semibold leading-none text-ink sm:text-[1rem]">Tom R.</p>
+                    <p class="mt-0.5 m-0 font-body text-[0.52rem] font-light uppercase tracking-wide-3 text-muted sm:text-[0.68rem]">Lawyer · London</p>
+                    <div class="mt-1 flex items-center gap-0.5" aria-hidden="true">
+                      {% for _ in "12345" %}
+                      <span class="text-[0.7rem] leading-none text-[#F3B71B] sm:text-[1.05rem]">★</span>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="absolute left-1/2 top-1/2 z-20 flex h-[4.8rem] w-[4.8rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-blue/70 text-white transition-transform duration-200 hover:scale-[1.06] hover:bg-blue-mid"
+                    aria-label="Play video"
+                    data-home-demo-play
+                  >
+                    <svg class="home-demo-icon-play ml-1 h-10 w-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <polygon points="6,3 20,12 6,21"></polygon>
+                    </svg>
+                    <svg class="home-demo-icon-pause hidden h-10 w-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <rect x="6" y="4" width="4.5" height="16"></rect>
+                      <rect x="13.5" y="4" width="4.5" height="16"></rect>
+                    </svg>
+                  </button>
+                </div>
+                <div class="bg-paper px-3 pb-4 pt-3">
+                  <div class="flex flex-wrap items-center justify-start gap-2">
+                    <span class="inline-block border border-blue/20 bg-blue-light px-[0.66rem] py-[0.26rem] font-body text-[0.62rem] font-semibold uppercase tracking-[0.13em] text-blue">Recovered from injury</span>
+                    <span class="inline-block border border-blue/20 bg-blue-light px-[0.66rem] py-[0.26rem] font-body text-[0.62rem] font-semibold uppercase tracking-[0.13em] text-blue">Built strength</span>
+                  </div>
+                </div>
+                <div class="bg-blue px-4 py-3 text-center">
+                  <p class="m-0 truncate font-serif text-[1.02rem] font-semibold italic leading-tight text-white sm:text-[1.08rem]">"James rebuilt me from scratch."</p>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 lg:p-[4rem_2.5rem] xl:p-[5rem_4rem]">
+            <div class="border-b border-rule pb-8">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <span class="font-body text-[0.85rem] font-semibold uppercase tracking-[0.06em] text-ink">Star rating</span>
+                <div class="flex flex-wrap items-center justify-end gap-3">
+                  <span class="font-body text-[1rem] leading-none tracking-tight text-[#F3B71B]" aria-hidden="true">★★★★★</span>
+                  <span class="border border-rule bg-white px-[0.65rem] py-1 font-body text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-slate shrink-0">Low trust</span>
+                </div>
+              </div>
+              <p class="mt-5 m-0 font-serif text-[1.02rem] font-light italic leading-body text-slate">
+                A number with no name behind it. It tells you nothing about who, or why.
+              </p>
+              <div class="mt-6 h-[3px] w-full bg-rule">
+                <div class="h-full bg-very-muted" style="width: 20%"></div>
+              </div>
+            </div>
+
+            <div class="border-b border-rule py-8">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <span class="font-body text-[0.85rem] font-semibold uppercase tracking-[0.06em] text-ink">Written testimonial</span>
+                <span class="border border-blue/20 bg-blue-light px-[0.65rem] py-1 font-body text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-blue shrink-0">Moderate trust</span>
+              </div>
+              <p class="mt-5 m-0 font-serif text-[1.02rem] font-light italic leading-body text-slate">
+                Anyone could have written it. Nobody can prove otherwise.
+              </p>
+              <div class="mt-6 h-[3px] w-full bg-rule">
+                <div class="h-full bg-blue/45" style="width: 50%"></div>
+              </div>
+            </div>
+
+            <div class="border-b border-rule pt-8 lg:border-b-0 lg:pb-0">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <span class="font-body text-[0.85rem] font-semibold uppercase tracking-[0.06em] text-ink">Forma testimonial</span>
+                <span class="border border-blue/20 bg-blue-light px-[0.65rem] py-1 font-body text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-blue shrink-0">Undeniable</span>
+              </div>
+              <p class="mt-5 m-0 font-serif text-[1.02rem] font-light italic leading-body text-blue">
+                A face. A name. A job. Unrehearsed words on camera, sent by a unique link only a real client could receive. The one signal that cannot be gamed.
+              </p>
+              <div class="mt-6 h-[4px] w-full bg-rule">
+                <div class="h-full w-full bg-blue"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-rule bg-white px-6 py-section sm:px-page lg:min-h-[min(42vh,32rem)] lg:flex lg:flex-col lg:justify-center">
+          <div class="mx-auto grid w-full max-w-[92rem] gap-10 lg:grid-cols-12 lg:items-start lg:gap-x-14 lg:gap-y-10 xl:gap-x-28">
+            <h2 class="m-0 text-balance font-display text-[clamp(2rem,4.8vw,3.85rem)] leading-[0.95] tracking-[0.02em] text-ink lg:col-span-5 xl:col-span-4">
+              Your reputation, captured before it fades.
+            </h2>
+            <div class="lg:col-span-7 xl:col-span-8 lg:pt-1">
+              <p class="m-0 max-w-none font-serif text-[clamp(1.05rem,1.85vw,1.25rem)] font-light italic leading-[1.75] text-slate">
+                Your best clients are already saying it. Forma gives you a personal page at thisisforma.co.uk/[your-name] where all your testimonials live permanently.
+              </p>
+              <div class="mt-10 flex flex-wrap gap-3 md:gap-3.5">
+                <span class="font-body text-[0.76rem] font-medium tracking-wide-5 text-blue border border-blue/20 bg-blue-light px-[1.05rem] py-[0.52rem]">Permanent</span>
+                <span class="font-body text-[0.76rem] font-medium tracking-wide-5 text-blue border border-blue/20 bg-blue-light px-[1.05rem] py-[0.52rem]">Shareable anywhere</span>
+                <span class="font-body text-[0.76rem] font-medium tracking-wide-5 text-blue border border-blue/20 bg-blue-light px-[1.05rem] py-[0.52rem]">Builds over time</span>
+                <span class="font-body text-[0.76rem] font-medium tracking-wide-5 text-blue border border-blue/20 bg-blue-light px-[1.05rem] py-[0.52rem]">Nothing goes live without you</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
+
+  <script>
+  (function () {
+    var card = document.querySelector('[data-home-demo-card]');
+    if (!card) return;
+    var video = card.querySelector('[data-home-demo-video]');
+    var button = card.querySelector('[data-home-demo-play]');
+    var playIcon = card.querySelector('.home-demo-icon-play');
+    var pauseIcon = card.querySelector('.home-demo-icon-pause');
+    var meta = card.querySelector('[data-home-demo-meta]');
+    if (!video || !button || !playIcon || !pauseIcon) return;
+
+    var isTouchUi =
+      window.matchMedia('(max-width: 768px)').matches ||
+      window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    var isPlaying = !video.paused && !video.ended;
+    var isHovering = false;
+
+    function render() {
+      if (meta) {
+        var hideMeta = isPlaying || (!isTouchUi && isHovering);
+        meta.classList.toggle('opacity-0', hideMeta);
+      }
+      var showButton = isTouchUi ? !isPlaying : (!isPlaying || isHovering);
+      var showPause = !isTouchUi && isPlaying && isHovering;
+      button.classList.toggle('hidden', !showButton);
+      playIcon.classList.toggle('hidden', showPause);
+      pauseIcon.classList.toggle('hidden', !showPause);
+      button.setAttribute('aria-label', showPause ? 'Pause video' : 'Play video');
+    }
+
+    function setHoverState(hovering) {
+      if (isTouchUi) return;
+      isHovering = hovering;
+      render();
+    }
+
+    button.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!video.paused) {
+        video.pause();
+        return;
+      }
+      video.muted = false;
+      var playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(function () {
+          isPlaying = false;
+          render();
+        });
+      }
+    });
+    card.addEventListener('mouseenter', function () {
+      setHoverState(true);
+    });
+    card.addEventListener('mouseleave', function () {
+      setHoverState(false);
+    });
+    card.addEventListener('pointerenter', function () {
+      setHoverState(true);
+    });
+    card.addEventListener('pointerleave', function () {
+      setHoverState(false);
+    });
+    card.addEventListener('mouseover', function () {
+      setHoverState(true);
+    });
+    card.addEventListener('mouseout', function () {
+      setHoverState(false);
+    });
+    video.addEventListener('click', function () {
+      if (!video.paused) {
+        video.pause();
+      }
+    });
+    video.addEventListener('play', function () {
+      isPlaying = true;
+      render();
+    });
+    video.addEventListener('pause', function () {
+      isPlaying = false;
+      render();
+    });
+    video.addEventListener('ended', function () {
+      isPlaying = false;
+      render();
+    });
+    render();
+  })();
+  </script>
 
   <section class="border-t border-rule bg-[#EEF3FF] px-6 py-14 sm:px-10 md:px-16">
     <div class="mx-auto w-full max-w-5xl">
