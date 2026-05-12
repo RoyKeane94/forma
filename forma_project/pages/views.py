@@ -1613,19 +1613,6 @@ def trainer_public_proof_page(request, profile_slug: str, url_key: str | None = 
             forma_made=False,
         )
 
-    is_owner = request.user.is_authenticated and request.user.pk == profile.user_id
-    is_forma_creator = (
-        request.user.is_authenticated
-        and request.user.is_superuser
-        and profile.forma_made
-        and profile.created_by_id == request.user.pk
-    )
-    if not is_owner and not is_forma_creator:
-        if not profile.forma_made and not profile.is_published:
-            raise Http404
-        if not profile.forma_made and not profile.completed_at:
-            raise Http404
-
     approved_testimonials = list(
         ProofTestimonial.objects.filter(
             profile=profile,
