@@ -415,4 +415,35 @@
   .forma-star-row__btn[aria-pressed='true'] {
     @apply text-amber-600;
   }
+
+  /* Proof testimonial cards (public wall, home demo, submit preview, PT notifications) */
+  .proof-approved-video {
+    aspect-ratio: 1 / 1;
+  }
+}
+
+@media (max-width: 639px) {
+  .proof-approved-play {
+    width: 3.5rem !important;
+    height: 3.5rem !important;
+  }
+  .proof-approved-icon-play,
+  .proof-approved-icon-pause {
+    width: 1.35rem !important;
+    height: 1.35rem !important;
+  }
+  .proof-approved-tags {
+    margin-top: 0.5rem !important;
+    gap: 0.35rem !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .proof-approved-tags::-webkit-scrollbar {
+    display: none;
+  }
+  .proof-approved-tag {
+    white-space: nowrap;
+  }
 }
