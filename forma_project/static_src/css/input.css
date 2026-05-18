@@ -435,15 +435,15 @@
   .proof-approved-tags {
     margin-top: 0.5rem !important;
     gap: 0.35rem !important;
-    flex-wrap: nowrap !important;
+    flex-wrap: wrap !important;
     justify-content: flex-start !important;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-  .proof-approved-tags::-webkit-scrollbar {
-    display: none;
+    overflow: visible;
   }
   .proof-approved-tag {
-    white-space: nowrap;
+    white-space: normal;
+    max-width: 100%;
+    word-break: break-word;
+    text-align: left;
+    line-height: 1.25;
   }
 }
