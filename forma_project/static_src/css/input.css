@@ -420,6 +420,10 @@
   .proof-approved-video {
     aspect-ratio: 1 / 1;
   }
+
+  .proof-approved-video--tall {
+    aspect-ratio: 2 / 3;
+  }
 }
 
 @media (max-width: 639px) {
