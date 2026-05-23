@@ -59,7 +59,6 @@
             playsinline
             data-approved-video
           ></video>
-          <div class="proof-approved-overlay pointer-events-none absolute inset-x-0 bottom-0 h-[72%] bg-gradient-to-t from-black/92 via-black/65 to-transparent" aria-hidden="true"></div>
           <div class="absolute inset-x-0 bottom-0 z-10 px-3 pb-3 pt-7 text-white transition-opacity duration-200 sm:px-4 sm:pb-4 sm:pt-10" data-approved-meta>
             <p class="proof-approved-quote m-0 line-clamp-2 font-body text-[0.88rem] font-normal leading-snug text-white/95 sm:text-[0.95rem] lg:text-[1.03rem]">
               "{% if submission.pull_quote %}{{ submission.pull_quote }}{% elif submission.suggested_quotes %}{{ submission.suggested_quotes.0 }}{% else %}Verified client testimonial{% endif %}"
@@ -130,6 +129,7 @@
       if (meta) {
         var hideMeta = isPlaying || (!isTouchUi && isHovering);
         meta.classList.toggle('opacity-0', hideMeta);
+        card.classList.toggle('proof-approved-card--meta-hidden', hideMeta);
       }
       var showButton = isTouchUi ? !isPlaying : (!isPlaying || isHovering);
       var showPause = !isTouchUi && isPlaying && isHovering;
