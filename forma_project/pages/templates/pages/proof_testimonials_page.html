@@ -59,15 +59,15 @@
             playsinline
             data-approved-video
           ></video>
-          <div class="absolute inset-x-0 bottom-0 z-10 px-3 pb-3 pt-7 text-white transition-opacity duration-200 sm:px-4 sm:pb-4 sm:pt-10" data-approved-meta>
-            <p class="proof-approved-quote m-0 line-clamp-2 font-body text-[0.88rem] font-normal leading-snug text-white/95 sm:text-[0.95rem] lg:text-[1.03rem]">
+          <div class="proof-approved-meta absolute inset-x-0 bottom-0 z-10 px-3 pb-3 pt-7 text-white transition-opacity duration-200 sm:px-4 sm:pb-4 sm:pt-10" data-approved-meta>
+            <p class="proof-approved-quote proof-approved-quote--mobile-hide m-0 line-clamp-1 font-body text-[0.74rem] font-normal leading-snug text-white/95 sm:line-clamp-2 sm:text-[0.95rem] lg:text-[1.03rem]">
               "{% if submission.pull_quote %}{{ submission.pull_quote }}{% elif submission.suggested_quotes %}{{ submission.suggested_quotes.0 }}{% else %}Verified client testimonial{% endif %}"
             </p>
-            <p class="mt-2 m-0 min-w-0 font-body text-[0.86rem] font-semibold leading-tight text-white sm:text-[1rem] lg:text-[1.05rem]">{{ submission.client_first_name }} {{ submission.client_last_initial }}.<span class="mx-1.5 text-white/45">&middot;</span><span class="font-normal text-white/72">{{ submission.client_job_title|default:"Client" }}</span></p>
-            <div class="proof-approved-tags mt-2 flex flex-wrap items-center justify-start gap-1.5 sm:mt-3 sm:gap-2">
+            <p class="mt-1.5 m-0 min-w-0 font-body text-[0.72rem] font-semibold leading-tight text-white sm:mt-2 sm:text-[1rem] lg:text-[1.05rem]">{{ submission.client_first_name }} {{ submission.client_last_initial }}.<span class="mx-1 text-white/45 sm:mx-1.5">&middot;</span><span class="font-normal text-white/72">{{ submission.client_job_title|default:"Client" }}</span></p>
+            <div class="proof-approved-tags mt-1.5 flex flex-wrap items-center justify-start gap-1 sm:mt-3 sm:gap-2">
           {% if submission.outcome_labels %}
           {% for label in submission.outcome_labels %}
-          <span class="proof-approved-tag inline-block max-w-full rounded-[0.65rem] border border-white/25 bg-black/15 px-[0.45rem] py-[0.18rem] text-left font-body text-[0.5rem] font-medium uppercase leading-snug tracking-[0.08em] text-white/85 sm:max-w-none sm:rounded-full sm:px-[0.62rem] sm:py-[0.22rem] sm:text-[0.6rem] sm:leading-normal sm:tracking-[0.1em]">{{ label }}</span>
+          <span class="proof-approved-tag inline-block max-w-full rounded-[0.58rem] border border-white/25 bg-black/15 px-[0.38rem] py-[0.14rem] text-left font-body text-[0.44rem] font-medium uppercase leading-snug tracking-[0.08em] text-white/85 sm:max-w-none sm:rounded-full sm:px-[0.62rem] sm:py-[0.22rem] sm:text-[0.6rem] sm:leading-normal sm:tracking-[0.1em]">{{ label }}</span>
           {% endfor %}
           {% endif %}
             </div>
