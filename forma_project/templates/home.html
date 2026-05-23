@@ -4,7 +4,7 @@
 {% block content_shell_class %}pt-[60px] min-h-screen flex flex-col{% endblock %}
 
 {% block extra_head %}
-  <link rel="preload" href="{% static 'video/IMG_2403-poster.jpg' %}" as="image">
+  <link rel="preload" href="{% static 'video/IMG_2403-poster-hq.jpg' %}" as="image">
   <link rel="preload" href="{% static 'video/IMG_2403.MOV' %}" as="video" type="video/quicktime">
   <style>
     @keyframes homeFadeUp {
@@ -78,16 +78,26 @@
                 <h2 class="proof-page-title m-0 font-display text-[clamp(2.05rem,7vw,3.2rem)] font-normal leading-[0.95] tracking-[0.06em] text-blue">The Proof</h2>
                 <p class="m-0 font-body text-[0.88rem] font-medium uppercase tracking-wide-4 text-ink">James Smith</p>
               </header>
-              <div class="group relative w-full overflow-hidden rounded-[0.95rem] border border-[#e8e8ea] bg-white shadow-[0_1px_0_rgba(15,15,15,0.04)]" data-home-demo-card>
+              <div class="proof-approved-card group relative w-full overflow-hidden rounded-[0.95rem] border border-[#e8e8ea] bg-white shadow-[0_1px_0_rgba(15,15,15,0.04)]" data-home-demo-card>
                 <div class="relative bg-[#f4f5f7]">
                   <video
-                    class="proof-approved-video w-full object-cover"
+                    class="proof-approved-video proof-approved-video--tall w-full object-cover"
                     src="{% static 'video/IMG_2403.MOV' %}#t=0.001"
-                    poster="{% static 'video/IMG_2403-poster.jpg' %}"
+                    poster="{% static 'video/IMG_2403-poster-hq.jpg' %}"
                     preload="none"
                     playsinline
                     data-home-demo-video
                   ></video>
+                  <div class="proof-approved-meta absolute inset-x-0 bottom-0 z-10 px-3 pb-3 pt-7 text-white transition-opacity duration-200 sm:px-4 sm:pb-4 sm:pt-10" data-home-demo-meta>
+                    <p class="proof-approved-quote proof-approved-quote--mobile-hide m-0 line-clamp-2 font-body text-[0.88rem] font-normal leading-snug text-white/95 sm:text-[0.95rem] lg:text-[1.03rem]">
+                      "James rebuilt me from scratch."
+                    </p>
+                    <p class="mt-2 m-0 min-w-0 font-body text-[0.86rem] font-semibold leading-tight text-white sm:text-[1rem] lg:text-[1.05rem]">Tom R.<span class="mx-1.5 text-white/45">&middot;</span><span class="font-normal text-white/72">Lawyer, London</span></p>
+                    <div class="proof-approved-tags mt-2 flex flex-wrap items-center justify-start gap-1.5 sm:mt-3 sm:gap-2">
+                      <span class="proof-approved-tag inline-block max-w-full rounded-[0.65rem] border border-white/25 bg-black/15 px-[0.45rem] py-[0.18rem] text-left font-body text-[0.5rem] font-medium uppercase leading-snug tracking-[0.08em] text-white/85 sm:max-w-none sm:rounded-full sm:px-[0.62rem] sm:py-[0.22rem] sm:text-[0.6rem] sm:leading-normal sm:tracking-[0.1em]">Recovered from injury</span>
+                      <span class="proof-approved-tag inline-block max-w-full rounded-[0.65rem] border border-white/25 bg-black/15 px-[0.45rem] py-[0.18rem] text-left font-body text-[0.5rem] font-medium uppercase leading-snug tracking-[0.08em] text-white/85 sm:max-w-none sm:rounded-full sm:px-[0.62rem] sm:py-[0.22rem] sm:text-[0.6rem] sm:leading-normal sm:tracking-[0.1em]">Built strength</span>
+                    </div>
+                  </div>
                   <button
                     type="button"
                     class="proof-approved-play absolute left-1/2 top-1/2 z-20 flex h-[4.25rem] w-[4.25rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/35 text-[#f0f0f0] shadow-[0_0_0_1px_rgba(100,200,255,0.12)] backdrop-blur-[2px] transition-[transform,background-color,border-color] duration-200 hover:scale-[1.04] hover:border-[#6eb8ff]/45 hover:bg-black/45"
@@ -102,15 +112,6 @@
                       <rect x="13.5" y="4" width="4.5" height="16"></rect>
                     </svg>
                   </button>
-                </div>
-                <div class="border-t border-[#ececef] bg-white px-4 pb-4 pt-3.5">
-                  <p class="m-0 min-w-0 font-body text-[0.95rem] font-semibold leading-tight text-ink sm:text-[1rem]">Tom R.</p>
-                  <p class="mt-1 m-0 font-body text-[0.78rem] font-normal leading-snug text-muted sm:text-[0.82rem]">Lawyer · London</p>
-                  <p class="mt-2.5 m-0 line-clamp-2 font-body text-[0.88rem] font-normal leading-snug text-slate sm:text-[0.92rem]">"James rebuilt me from scratch."</p>
-                  <div class="proof-approved-tags mt-3 flex flex-wrap items-center justify-start gap-2">
-                    <span class="proof-approved-tag inline-block rounded-full border border-[#e6e6ea] bg-[#f5f5f6] px-[0.62rem] py-[0.22rem] font-body text-[0.6rem] font-medium uppercase tracking-[0.1em] text-[#5f6368]">Recovered from injury</span>
-                    <span class="proof-approved-tag inline-block rounded-full border border-[#e6e6ea] bg-[#f5f5f6] px-[0.62rem] py-[0.22rem] font-body text-[0.6rem] font-medium uppercase tracking-[0.1em] text-[#5f6368]">Built strength</span>
-                  </div>
                 </div>
               </div>
             </article>
@@ -191,6 +192,7 @@
     var button = card.querySelector('[data-home-demo-play]');
     var playIcon = card.querySelector('.proof-approved-icon-play');
     var pauseIcon = card.querySelector('.proof-approved-icon-pause');
+    var meta = card.querySelector('[data-home-demo-meta]');
     if (!video || !button || !playIcon || !pauseIcon) return;
 
     var isTouchUi =
@@ -200,6 +202,11 @@
     var isHovering = false;
 
     function render() {
+      if (meta) {
+        var hideMeta = isPlaying || (!isTouchUi && isHovering);
+        meta.classList.toggle('opacity-0', hideMeta);
+        card.classList.toggle('proof-approved-card--meta-hidden', hideMeta);
+      }
       var showButton = isTouchUi ? !isPlaying : (!isPlaying || isHovering);
       var showPause = !isTouchUi && isPlaying && isHovering;
       button.classList.toggle('hidden', !showButton);
