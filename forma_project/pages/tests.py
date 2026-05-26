@@ -208,7 +208,7 @@ class TrainerProofSubmissionTests(TestCase):
         submission = ProofTestimonial.objects.get(profile=profile)
         self.assertEqual(submission.status, ProofTestimonial.STATUS_PENDING)
         self.assertEqual(submission.client_first_name, 'Sam')
-        self.assertTrue((submission.poster.name or '').startswith('proof/posters/'))
+        self.assertTrue((submission.video.name or '').startswith('proof/videos/'))
         self.assertEqual(
             submission.outcome_tags,
             ['built_strength', 'improved_mental_health'],

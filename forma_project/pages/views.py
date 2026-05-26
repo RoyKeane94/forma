@@ -136,6 +136,44 @@ def _proof_upload_size_ok(size_bytes: int) -> bool:
     return 1 <= size_bytes <= _PROOF_DIRECT_UPLOAD_MAX_BYTES
 
 
+def _storage_supports_server_side_copy() -> bool:
+    return bool(
+        getattr(default_storage, 'bucket_name', None)
+        and getattr(getattr(default_storage, 'connection', None), 'meta', None)
+    )
+
+
+def _copy_storage_object(source_name: str, destination_name: str) -> bool:
+    if not _storage_supports_server_side_copy():
+        return False
+    bucket_name = getattr(default_storage, 'bucket_name', '')
+    client = getattr(getattr(default_storage, 'connection', None), 'meta', None)
+    client = getattr(client, 'client', None)
+    if not bucket_name or client is None:
+        return False
+    try:
+        client.copy_object(
+            Bucket=bucket_name,
+            CopySource={'Bucket': bucket_name, 'Key': source_name},
+            Key=destination_name,
+        )
+        return True
+    except Exception:
+        logger.warning('Could not copy storage object %s -> %s', source_name, destination_name)
+        return False
+
+
+def _fast_copy_temp_video_to_submission(submission: ProofTestimonial, temp_video_path: str) -> bool:
+    video_basename = os.path.basename(temp_video_path)
+    generated_name = submission.video.field.generate_filename(submission, video_basename)
+    final_name = default_storage.get_available_name(generated_name)
+    if not _copy_storage_object(temp_video_path, final_name):
+        return False
+    submission.video.name = final_name
+    submission.save(update_fields=['video'])
+    return True
+
+
 def _proof_draft_session_key(profile_id: int) -> str:
     return f'proof_draft_{profile_id}'
 
@@ -374,6 +412,60 @@ def _enqueue_suggested_quotes_generation(submission_id: int) -> None:
         args=(submission_id,),
         daemon=True,
         name=f'proof-quote-generator-{submission_id}',
+    )
+    worker.start()
+
+
+def _generate_and_store_submission_poster(submission_id: int) -> None:
+    close_old_connections()
+    print(f'[proof-poster] worker started for submission={submission_id}', flush=True)
+    try:
+        try:
+            submission = ProofTestimonial.objects.get(pk=submission_id)
+        except ProofTestimonial.DoesNotExist:
+            print(f'[proof-poster] submission missing id={submission_id}', flush=True)
+            return
+        if not (submission.video and submission.video.name):
+            print(f'[proof-poster] submission={submission_id} has no video', flush=True)
+            return
+        if submission.poster:
+            print(f'[proof-poster] submission={submission_id} poster already exists', flush=True)
+            return
+        source_ext = os.path.splitext(submission.video.name)[1].lower() or '.mp4'
+        try:
+            with default_storage.open(submission.video.name, 'rb') as fh:
+                source_bytes = fh.read()
+        except Exception:
+            logger.exception('Could not read video for poster generation on testimonial %s', submission.pk)
+            print(f'[proof-poster] submission={submission_id} read failed', flush=True)
+            return
+        try:
+            poster_bytes = poster_bytes_from_video_file(source_bytes=source_bytes, source_ext=source_ext)
+        except Exception:
+            logger.exception('Poster generation failed for testimonial %s', submission.pk)
+            print(f'[proof-poster] submission={submission_id} generation failed', flush=True)
+            return
+        if not poster_bytes:
+            print(f'[proof-poster] submission={submission_id} no poster bytes generated', flush=True)
+            return
+        poster_name = f'{os.path.splitext(os.path.basename(submission.video.name))[0]}.jpg'
+        submission.poster.save(poster_name, ContentFile(poster_bytes), save=False)
+        submission.save(update_fields=['poster'])
+        print(f'[proof-poster] submission={submission_id} poster saved', flush=True)
+    except OperationalError:
+        logger.warning('Poster worker could not update testimonial %s due to DB lock', submission_id)
+        print(f'[proof-poster] submission={submission_id} db lock', flush=True)
+    except Exception:
+        logger.exception('Poster worker crashed for testimonial %s', submission_id)
+        print(f'[proof-poster] submission={submission_id} crashed', flush=True)
+
+
+def _enqueue_submission_poster_generation(submission_id: int) -> None:
+    worker = threading.Thread(
+        target=_generate_and_store_submission_poster,
+        args=(submission_id,),
+        daemon=True,
+        name=f'proof-poster-generator-{submission_id}',
     )
     worker.start()
 
@@ -1227,26 +1319,19 @@ def trainer_proof_submit(request, profile_slug: str):
                 prompt_recommend='Submitted via Proof quick capture flow.',
                 status=ProofTestimonial.STATUS_PENDING,
             )
-            source_bytes = b''
             source_ext = os.path.splitext(video_path)[1].lower() or '.mp4'
-            with default_storage.open(video_path, 'rb') as fh:
-                source_bytes = fh.read()
-                fh.seek(0)
-                submission.video.save(os.path.basename(video_path), File(fh), save=False)
             submission.save()
+            copied_via_storage = _fast_copy_temp_video_to_submission(submission, video_path)
+            if not copied_via_storage:
+                with default_storage.open(video_path, 'rb') as fh:
+                    submission.video.save(os.path.basename(video_path), File(fh), save=False)
+                submission.save(update_fields=['video'])
             print(
-                f'[proof-submit] created submission={submission.pk} profile={profile.pk} ext={source_ext}',
+                f'[proof-submit] created submission={submission.pk} profile={profile.pk} ext={source_ext} '
+                f'copy_mode={"server-copy" if copied_via_storage else "stream-upload"}',
                 flush=True,
             )
-            poster_bytes = poster_bytes_from_video_file(source_bytes=source_bytes, source_ext=source_ext)
-            if poster_bytes:
-                poster_name = f'{os.path.splitext(os.path.basename(video_path))[0]}.jpg'
-                submission.poster.save(poster_name, ContentFile(poster_bytes), save=False)
-                submission.save(update_fields=['poster'])
-                print(
-                    f'[proof-submit] submission={submission.pk} poster generated',
-                    flush=True,
-                )
+            _enqueue_submission_poster_generation(submission.pk)
             _enqueue_suggested_quotes_generation(submission.pk)
             default_storage.delete(video_path)
             request.session.pop(session_key, None)

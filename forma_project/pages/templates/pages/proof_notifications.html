@@ -82,9 +82,6 @@
               <p class="m-0 font-body text-[0.62rem] font-bold uppercase tracking-wide-4 text-muted">Quote generation</p>
               <p class="mt-1 mb-0 font-body text-[0.72rem] font-light text-slate">
                 {{ submission.get_quote_generation_status_display }}
-                {% if submission.quote_generation_updated_at %}
-                · {{ submission.quote_generation_updated_at|date:"j M Y, H:i" }}
-                {% endif %}
               </p>
             </div>
             {% endif %}
