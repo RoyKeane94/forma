@@ -245,6 +245,7 @@ class ProofDetailsForm(forms.Form):
     )
     star_rating = forms.IntegerField(
         label='Star rating',
+        required=False,
         min_value=1,
         max_value=5,
         widget=forms.HiddenInput,
@@ -281,6 +282,13 @@ class ProofDetailsForm(forms.Form):
         if len(tags) < 1 or len(tags) > 2:
             raise ValidationError('Choose one or two outcome tags.')
         return tags
+
+    def clean_star_rating(self):
+        raw = self.cleaned_data.get('star_rating')
+        if raw in (None, ''):
+            # Star rating is no longer collected in the quick submit flow.
+            return 5
+        return int(raw)
 
 
 def _primary_area_queryset():

@@ -292,6 +292,31 @@ class TrainerProofSubmissionTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('step=upload', response.url)
 
+    @mock.patch('pages.views.default_storage')
+    def test_details_step_allows_missing_star_rating(self, storage_mock):
+        profile = self._create_profile()
+        video_key = 'proof/tmp/direct_clip.mp4'
+        storage_mock.exists.return_value = True
+        storage_mock.size.return_value = len(b'fake-video-content')
+        self.client.post(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+            data={
+                'proof_action': 'upload_video_direct',
+                'video_key': video_key,
+                'video_name': 'clip.mp4',
+            },
+        )
+        payload = self._details_payload()
+        payload.pop('star_rating', None)
+        response = self.client.post(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+            data=payload,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('step=preview', response.url)
+        draft = self.client.session.get(f'proof_draft_{profile.pk}') or {}
+        self.assertEqual(int((draft.get('details') or {}).get('star_rating') or 0), 5)
+
     def test_post_rejects_more_than_two_outcome_tags(self):
         # Backwards-compatibility regression guard: direct details post still validated.
         profile = self._create_profile()
@@ -320,6 +345,69 @@ class TrainerProofSubmissionTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Choose one or two outcome tags.')
         self.assertEqual(ProofTestimonial.objects.filter(profile=profile).count(), 0)
+
+    @mock.patch('pages.views.default_storage')
+    def test_direct_upload_reference_moves_to_details_step(self, storage_mock):
+        profile = self._create_profile()
+        video_key = 'proof/tmp/direct_clip.mp4'
+        storage_mock.exists.return_value = True
+        storage_mock.size.return_value = len(b'fake-video-content')
+
+        response = self.client.post(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+            data={
+                'proof_action': 'upload_video_direct',
+                'video_key': video_key,
+                'video_name': 'clip.mp4',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('step=details', response.url)
+        draft = self.client.session.get(f'proof_draft_{profile.pk}')
+        self.assertEqual(draft.get('video_path'), video_key)
+
+    @override_settings(AWS_STORAGE_BUCKET_NAME='')
+    def test_presign_endpoint_returns_400_when_direct_upload_disabled(self):
+        profile = self._create_profile()
+        response = self.client.post(
+            reverse('pages:trainer_proof_upload_presign', kwargs={'profile_slug': profile.slug}),
+            data={
+                'filename': 'clip.mp4',
+                'content_type': 'video/mp4',
+                'size': '1024',
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.json())
+
+    @override_settings(
+        AWS_STORAGE_BUCKET_NAME='forma-test-bucket',
+        AWS_S3_REGION_NAME='eu-north-1',
+        AWS_ACCESS_KEY_ID='key',
+        AWS_SECRET_ACCESS_KEY='secret',
+    )
+    @mock.patch('pages.views.boto3')
+    def test_presign_endpoint_returns_upload_url(self, boto3_mock):
+        profile = self._create_profile()
+        s3_client = boto3_mock.client.return_value
+        s3_client.generate_presigned_url.return_value = 'https://example.test/presigned'
+
+        response = self.client.post(
+            reverse('pages:trainer_proof_upload_presign', kwargs={'profile_slug': profile.slug}),
+            data={
+                'filename': 'clip.mp4',
+                'content_type': 'video/mp4',
+                'size': '1024',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['upload_url'], 'https://example.test/presigned')
+        self.assertTrue(payload['video_key'].startswith('proof/tmp/'))
+        boto3_mock.client.assert_called_once()
 
 
 class ProofApprovalWorkflowTests(TestCase):

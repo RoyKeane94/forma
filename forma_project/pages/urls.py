@@ -86,6 +86,7 @@ urlpatterns = [
     path('<slug:profile_slug>/success/', views.trainer_proof_submit_success, name='trainer_proof_submit_success'),
     path('<slug:profile_slug>/proof/success/', RedirectView.as_view(pattern_name='pages:trainer_proof_submit_success', permanent=True)),
     path('<slug:profile_slug>/proof/', views.trainer_public_proof_page, name='trainer_profile_proof'),
+    path('<slug:profile_slug>/submit/presign/', views.trainer_proof_upload_presign, name='trainer_proof_upload_presign'),
     path('<slug:profile_slug>/submit/', views.trainer_proof_submit, name='trainer_proof_submit'),
     path('<slug:profile_slug>/profile/', RedirectView.as_view(pattern_name='pages:trainer_profile', permanent=True)),
     path('<slug:profile_slug>/', views.trainer_public_profile, name='trainer_profile'),

@@ -19,7 +19,7 @@ from django.db import close_old_connections
 from django.db import transaction
 from django.db.models import Avg, Count, Prefetch
 from django.core.exceptions import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseBadRequest
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -102,6 +102,38 @@ from .posters import poster_bytes_from_video_file, resolve_ffmpeg_binary
 STEP_COUNT = 7
 
 logger = logging.getLogger(__name__)
+
+try:
+    import boto3
+except Exception:  # pragma: no cover - only used for direct-to-S3 uploads.
+    boto3 = None
+
+_PROOF_UPLOAD_ALLOWED_EXTENSIONS = {'.mp4', '.webm', '.mov', '.m4v'}
+_PROOF_DIRECT_UPLOAD_MAX_BYTES = int(os.getenv('PROOF_DIRECT_UPLOAD_MAX_MB', '200')) * 1024 * 1024
+
+
+def _proof_direct_upload_enabled() -> bool:
+    return bool((getattr(settings, 'AWS_STORAGE_BUCKET_NAME', '') or '').strip())
+
+
+def _safe_upload_filename(filename: str) -> str:
+    raw_name = os.path.basename((filename or '').strip()) or 'upload-video'
+    sanitized = re.sub(r'[^A-Za-z0-9._-]+', '-', raw_name).strip('-')
+    return sanitized or 'upload-video'
+
+
+def _proof_upload_extension_ok(filename: str) -> bool:
+    ext = os.path.splitext((filename or '').strip())[1].lower()
+    return ext in _PROOF_UPLOAD_ALLOWED_EXTENSIONS
+
+
+def _proof_temp_video_key(filename: str) -> str:
+    safe_name = _safe_upload_filename(filename)
+    return f'proof/tmp/{secrets.token_hex(8)}_{safe_name}'
+
+
+def _proof_upload_size_ok(size_bytes: int) -> bool:
+    return 1 <= size_bytes <= _PROOF_DIRECT_UPLOAD_MAX_BYTES
 
 
 def _proof_draft_session_key(profile_id: int) -> str:
@@ -304,6 +336,31 @@ def _review_carousel_pages(reviews: list, page_size: int = 2) -> list:
     if not reviews:
         return []
     return [reviews[i : i + page_size] for i in range(0, len(reviews), page_size)]
+
+
+def _approved_proof_testimonials_for_profile(profile: TrainerProfile) -> list[ProofTestimonial]:
+    """Fetch only fields needed to render Proof wall cards."""
+    return list(
+        ProofTestimonial.objects.filter(
+            profile=profile,
+            status=ProofTestimonial.STATUS_APPROVED,
+        )
+        .only(
+            'video',
+            'poster',
+            'pull_quote',
+            'suggested_quotes',
+            'client_first_name',
+            'client_last_initial',
+            'client_job_title',
+            'star_rating',
+            'outcome_tags',
+            'reviewed_at',
+            'submitted_at',
+            'profile_id',
+        )
+        .order_by('-reviewed_at', '-submitted_at')
+    )
 
 _QUICK_QUAL_NOTE_MAX_LEN = 600
 
@@ -1042,6 +1099,36 @@ def trainer_proof_submit(request, profile_slug: str):
                 request.session.modified = True
                 return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=details")
             step = 'upload'
+        elif action == 'upload_video_direct':
+            video_key = (request.POST.get('video_key') or '').strip()
+            original_name = (request.POST.get('video_name') or '').strip()
+            if not video_key.startswith('proof/tmp/'):
+                messages.error(request, 'We could not verify your upload. Please try again.')
+                step = 'upload'
+            elif not _proof_upload_extension_ok(original_name or video_key):
+                messages.error(request, 'Upload MP4, WebM, MOV, or M4V.')
+                step = 'upload'
+            elif not default_storage.exists(video_key):
+                messages.error(request, 'Upload did not finish. Please try again.')
+                step = 'upload'
+            else:
+                try:
+                    uploaded_size = int(default_storage.size(video_key))
+                except Exception:
+                    uploaded_size = 0
+                if not _proof_upload_size_ok(uploaded_size):
+                    default_storage.delete(video_key)
+                    max_mb = _PROOF_DIRECT_UPLOAD_MAX_BYTES // (1024 * 1024)
+                    messages.error(request, f'Video must be between 1 byte and {max_mb}MB.')
+                    step = 'upload'
+                else:
+                    old_path = (draft.get('video_path') or '').strip()
+                    if old_path and old_path != video_key and default_storage.exists(old_path):
+                        default_storage.delete(old_path)
+                    draft['video_path'] = video_key
+                    request.session[session_key] = draft
+                    request.session.modified = True
+                    return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=details")
         elif action == 'save_details':
             details_form = ProofDetailsForm(request.POST)
             if details_form.is_valid():
@@ -1118,7 +1205,72 @@ def trainer_proof_submit(request, profile_slug: str):
             'preview': preview,
             'preview_outcomes': preview_outcomes,
             'preview_stars': range(int(preview.get('star_rating') or 0)),
+            'direct_upload_enabled': _proof_direct_upload_enabled(),
+            'direct_upload_max_bytes': _PROOF_DIRECT_UPLOAD_MAX_BYTES,
         },
+    )
+
+
+@require_POST
+def trainer_proof_upload_presign(request, profile_slug: str):
+    profile = get_object_or_404(
+        TrainerProfile.objects.select_related('primary_area__district'),
+        slug__iexact=profile_slug,
+        forma_made=False,
+    )
+    if not profile.is_published:
+        raise Http404
+
+    if not _proof_direct_upload_enabled():
+        return JsonResponse({'error': 'Direct upload unavailable.'}, status=400)
+    if boto3 is None:
+        return JsonResponse({'error': 'Upload service unavailable.'}, status=503)
+
+    filename = (request.POST.get('filename') or '').strip()
+    content_type = (request.POST.get('content_type') or '').strip() or 'application/octet-stream'
+    try:
+        size_bytes = int(request.POST.get('size') or '0')
+    except (TypeError, ValueError):
+        size_bytes = 0
+
+    if not _proof_upload_extension_ok(filename):
+        return JsonResponse({'error': 'Upload MP4, WebM, MOV, or M4V.'}, status=400)
+    if not _proof_upload_size_ok(size_bytes):
+        max_mb = _PROOF_DIRECT_UPLOAD_MAX_BYTES // (1024 * 1024)
+        return JsonResponse({'error': f'Video must be between 1 byte and {max_mb}MB.'}, status=400)
+
+    key = _proof_temp_video_key(filename)
+    bucket = (getattr(settings, 'AWS_STORAGE_BUCKET_NAME', '') or '').strip()
+    region_name = (getattr(settings, 'AWS_S3_REGION_NAME', '') or '').strip() or None
+    client_kwargs = {
+        'region_name': region_name,
+    }
+    access_key = (getattr(settings, 'AWS_ACCESS_KEY_ID', '') or '').strip()
+    secret_key = (getattr(settings, 'AWS_SECRET_ACCESS_KEY', '') or '').strip()
+    if access_key and secret_key:
+        client_kwargs['aws_access_key_id'] = access_key
+        client_kwargs['aws_secret_access_key'] = secret_key
+    try:
+        s3_client = boto3.client('s3', **client_kwargs)
+        upload_url = s3_client.generate_presigned_url(
+            ClientMethod='put_object',
+            Params={
+                'Bucket': bucket,
+                'Key': key,
+                'ContentType': content_type,
+            },
+            ExpiresIn=15 * 60,
+        )
+    except Exception:
+        logger.exception('Failed to create pre-signed upload URL for proof submit')
+        return JsonResponse({'error': 'Could not start upload.'}, status=500)
+
+    return JsonResponse(
+        {
+            'upload_url': upload_url,
+            'video_key': key,
+            'max_bytes': _PROOF_DIRECT_UPLOAD_MAX_BYTES,
+        }
     )
 
 
@@ -1215,12 +1367,7 @@ def proof_notifications(request):
 @login_required
 def proof_testimonials_page(request):
     profile = _get_profile(request.user)
-    approved_testimonials = list(
-        ProofTestimonial.objects.filter(
-            profile=profile,
-            status=ProofTestimonial.STATUS_APPROVED,
-        ).order_by('-reviewed_at', '-submitted_at')
-    )
+    approved_testimonials = _approved_proof_testimonials_for_profile(profile)
     approved_count = len(approved_testimonials)
     average_rating = 0.0
     average_rating_rounded = 0
@@ -1241,6 +1388,7 @@ def proof_testimonials_page(request):
             'approved_count': approved_count,
             'average_rating': average_rating,
             'average_rating_rounded': average_rating_rounded,
+            'media_preconnect_origin': media_storage_preconnect_origin(),
         },
     )
 
@@ -1613,12 +1761,7 @@ def trainer_public_proof_page(request, profile_slug: str, url_key: str | None = 
             forma_made=False,
         )
 
-    approved_testimonials = list(
-        ProofTestimonial.objects.filter(
-            profile=profile,
-            status=ProofTestimonial.STATUS_APPROVED,
-        ).order_by('-reviewed_at', '-submitted_at')
-    )
+    approved_testimonials = _approved_proof_testimonials_for_profile(profile)
     approved_count = len(approved_testimonials)
     average_rating = 0.0
     average_rating_rounded = 0

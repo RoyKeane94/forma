@@ -35,7 +35,7 @@
     <p class="mb-3 text-center font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">
       Video
     </p>
-    <form method="post" enctype="multipart/form-data" novalidate class="mx-auto max-w-xl border border-rule bg-paper p-5 sm:max-w-2xl sm:p-7">
+    <form id="proof-upload-form" method="post" enctype="multipart/form-data" novalidate class="mx-auto max-w-xl border border-rule bg-paper p-5 sm:max-w-2xl sm:p-7">
       {% csrf_token %}
       <input type="hidden" name="proof_action" value="upload_video">
 
@@ -64,6 +64,12 @@
         <input id="proof-video-upload-input" type="file" name="video" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v">
       </div>
       <p class="mt-2 hidden font-body text-[0.72rem] font-medium text-ink" id="video-file-name"></p>
+      <div id="proof-upload-progress-wrap" class="mt-3 hidden">
+        <p id="proof-upload-progress-label" class="mb-2 font-body text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-blue">Uploading video...</p>
+        <div class="h-2 w-full overflow-hidden rounded bg-blue-light">
+          <div id="proof-upload-progress-bar" class="h-2 w-0 bg-blue transition-[width] duration-150"></div>
+        </div>
+      </div>
 
       <div class="mt-5 sm:mt-6">
         <button id="video-continue-btn" type="submit" disabled class="inline-flex border border-rule bg-paper px-5 py-[0.68rem] font-body text-[0.66rem] font-medium uppercase tracking-[0.14em] text-muted transition-all duration-150 disabled:cursor-not-allowed sm:px-6 sm:py-[0.76rem] sm:text-[0.7rem]">
@@ -117,16 +123,6 @@
 
       <hr class="my-6 border-t border-rule sm:my-10">
 
-      {{ details_form.star_rating }}
-      <div class="mb-6 sm:mb-8">
-        <p class="mb-3 font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">Star rating</p>
-        <div class="flex items-center gap-2" id="star-picker">
-          {% for i in "12345" %}
-          <button type="button" class="star-btn h-11 w-11 border border-rule bg-paper text-[1.5rem] leading-none text-[#C7B98D] transition-colors hover:text-[#F3B71B]" data-star-value="{{ forloop.counter }}">★</button>
-          {% endfor %}
-        </div>
-      </div>
-
       <div>
         <p class="mb-3 font-body text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink">Outcome tags <span class="ml-2 font-normal normal-case tracking-normal text-muted">(choose one or two)</span></p>
         <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -154,10 +150,29 @@
     <div class="mx-auto max-w-lg text-center sm:max-w-3xl">
       <h2 class="mb-4 font-display text-[clamp(2rem,3.8vw,3rem)] leading-heading tracking-[0.02em] text-ink">Preview your testimonial card</h2>
 
-      <div id="proof-preview-card" class="group relative mx-auto w-full max-w-[22rem] overflow-hidden rounded-[0.95rem] border border-[#e8e8ea] bg-white shadow-[0_1px_0_rgba(15,15,15,0.04)] sm:max-w-[22rem]">
-        {% if video_url %}
+      <div id="proof-preview-card" class="proof-approved-card group relative mx-auto w-full max-w-[22rem] overflow-hidden rounded-[0.95rem] border border-[#e8e8ea] bg-white shadow-[0_1px_0_rgba(15,15,15,0.04)] sm:max-w-[22rem]">
         <div class="relative bg-[#f4f5f7]">
-          <video id="proof-preview-video" playsinline class="proof-approved-video w-full object-cover" src="{{ video_url }}#t=0.001"></video>
+          {% if video_url %}
+          <video id="proof-preview-video" playsinline class="proof-approved-video proof-approved-video--tall w-full object-cover" src="{{ video_url }}#t=0.001"></video>
+          {% else %}
+          <div id="proof-preview-video" class="proof-approved-video proof-approved-video--tall w-full bg-[#e8e8ec]" aria-hidden="true"></div>
+          {% endif %}
+          <div id="proof-preview-meta" class="proof-approved-meta absolute inset-x-0 bottom-0 z-10 px-3 pb-3 pt-7 text-white transition-opacity duration-200 sm:px-4 sm:pb-4 sm:pt-10">
+            <p class="mt-1.5 m-0 min-w-0 font-body text-[0.72rem] font-semibold leading-tight text-white sm:mt-2 sm:text-[1rem] lg:text-[1.05rem]">
+              {{ preview.client_first_name }} {{ preview.client_last_initial }}.
+              {% if preview.client_job_title %}
+              <span class="mx-1 text-white/45 sm:mx-1.5">&middot;</span><span class="font-normal text-white/72">{{ preview.client_job_title }}</span>
+              {% endif %}
+            </p>
+            {% if preview_outcomes %}
+            <div class="proof-approved-tags mt-1.5 flex flex-wrap items-center justify-start gap-1 sm:mt-3 sm:gap-2">
+              {% for label in preview_outcomes %}
+              <span class="proof-approved-tag inline-block max-w-full rounded-[0.58rem] border border-white/25 bg-black/15 px-[0.38rem] py-[0.14rem] text-left font-body text-[0.44rem] font-medium uppercase leading-snug tracking-[0.08em] text-white/85 sm:max-w-none sm:rounded-full sm:px-[0.62rem] sm:py-[0.22rem] sm:text-[0.6rem] sm:leading-normal sm:tracking-[0.1em]">{{ label }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          {% if video_url %}
           <button
             type="button"
             id="proof-preview-play"
@@ -172,32 +187,6 @@
               <rect x="13.5" y="4" width="4.5" height="16"></rect>
             </svg>
           </button>
-        </div>
-        {% else %}
-        <div class="relative bg-[#f4f5f7]">
-          <div class="proof-approved-video w-full bg-[#e8e8ec]" aria-hidden="true"></div>
-        </div>
-        {% endif %}
-        <div class="border-t border-[#ececef] bg-white px-4 pb-4 pt-3.5 text-left">
-          <div class="flex items-start justify-between gap-3">
-            <p class="m-0 min-w-0 flex-1 font-body text-[0.95rem] font-semibold leading-tight text-ink sm:text-[1rem]">{{ preview.client_first_name }} {{ preview.client_last_initial }}.</p>
-            <div class="flex shrink-0 items-center gap-px pt-0.5">
-              <span class="sr-only">{{ preview.star_rating }} out of 5 stars</span>
-              {% for _ in "12345" %}
-              <span class="text-[0.72rem] leading-none sm:text-[0.82rem] {% if forloop.counter <= preview.star_rating|add:0 %}text-[#c9a227]{% else %}text-[#d9d9de]{% endif %}" aria-hidden="true">★</span>
-              {% endfor %}
-            </div>
-          </div>
-          {% if preview.client_job_title %}
-          <p class="mt-1 m-0 font-body text-[0.78rem] font-normal leading-snug text-muted sm:text-[0.82rem]">{{ preview.client_job_title }}</p>
-          {% endif %}
-          <p class="mt-2.5 m-0 line-clamp-2 font-body text-[0.88rem] font-normal leading-snug text-slate sm:text-[0.92rem]">"Your trainer will choose a pull quote when they approve this testimonial."</p>
-          {% if preview_outcomes %}
-          <div class="proof-approved-tags mt-3 flex flex-wrap items-center justify-start gap-2">
-            {% for label in preview_outcomes %}
-            <span class="proof-approved-tag inline-block rounded-full border border-[#e6e6ea] bg-[#f5f5f6] px-[0.62rem] py-[0.22rem] font-body text-[0.6rem] font-medium uppercase tracking-[0.1em] text-[#5f6368]">{{ label }}</span>
-            {% endfor %}
-          </div>
           {% endif %}
         </div>
       </div>
@@ -219,12 +208,22 @@
 (function () {
   var step = '{{ step }}';
   if (step === 'upload') {
+    var uploadForm = document.getElementById('proof-upload-form');
     var recordInput = document.getElementById('proof-video-record-input');
     var uploadInput = document.getElementById('proof-video-upload-input');
     var recordBtn = document.getElementById('proof-record-btn');
     var uploadBtn = document.getElementById('proof-upload-btn');
     var fileName = document.getElementById('video-file-name');
     var cta = document.getElementById('video-continue-btn');
+    var progressWrap = document.getElementById('proof-upload-progress-wrap');
+    var progressLabel = document.getElementById('proof-upload-progress-label');
+    var progressBar = document.getElementById('proof-upload-progress-bar');
+    var presignUrl = "{% url 'pages:trainer_proof_upload_presign' profile_slug=profile.slug %}";
+    var directUploadEnabled = {% if direct_upload_enabled %}true{% else %}false{% endif %};
+    var maxUploadBytes = parseInt('{{ direct_upload_max_bytes|default:0 }}', 10) || 0;
+    var selectedFile = null;
+    var isUploading = false;
+    var bypassDirectUploadOnce = false;
     if (!recordInput || !uploadInput) return;
 
     function setContinueReady(isReady) {
@@ -255,11 +254,12 @@
     }
 
     function markSelected(file) {
+      selectedFile = file;
       if (file) {
         setContinueReady(true);
         if (fileName) {
           fileName.classList.remove('hidden');
-          fileName.textContent = 'Upload successful';
+          fileName.textContent = 'Video selected';
         }
       } else {
         setContinueReady(false);
@@ -268,6 +268,144 @@
           fileName.textContent = '';
         }
       }
+    }
+
+    function setProgress(percentage, label) {
+      if (!progressWrap || !progressBar || !progressLabel) return;
+      progressWrap.classList.remove('hidden');
+      progressBar.style.width = Math.max(0, Math.min(100, percentage)) + '%';
+      progressLabel.textContent = label || 'Uploading video...';
+    }
+
+    function hideProgress() {
+      if (!progressWrap || !progressBar || !progressLabel) return;
+      progressWrap.classList.add('hidden');
+      progressBar.style.width = '0%';
+      progressLabel.textContent = 'Uploading video...';
+    }
+
+    function setUploadingState(uploading) {
+      isUploading = uploading;
+      if (!cta) return;
+      if (uploading) {
+        cta.disabled = true;
+        cta.textContent = 'Uploading...';
+      } else {
+        setContinueReady(!!selectedFile);
+        cta.textContent = 'Continue';
+      }
+    }
+
+    function appendOrUpdateHidden(name, value) {
+      if (!uploadForm) return;
+      var input = uploadForm.querySelector('input[name="' + name + '"]');
+      if (!input) {
+        input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        uploadForm.appendChild(input);
+      }
+      input.value = value;
+    }
+
+    function submitDirectUploadReference(videoKey, filename) {
+      appendOrUpdateHidden('proof_action', 'upload_video_direct');
+      appendOrUpdateHidden('video_key', videoKey);
+      appendOrUpdateHidden('video_name', filename || '');
+      // Prevent uploading the same file twice (browser -> S3 then browser -> Django).
+      recordInput.value = '';
+      uploadInput.value = '';
+      uploadForm.submit();
+    }
+
+    function fallbackToServerUpload(message) {
+      hideProgress();
+      setUploadingState(false);
+      bypassDirectUploadOnce = true;
+      if (fileName && message) {
+        fileName.classList.remove('hidden');
+        fileName.textContent = message;
+      }
+      // Keep selected file inputs intact and submit through existing Django upload path.
+      uploadForm.submit();
+    }
+
+    function startDirectUpload(file) {
+      if (!uploadForm || !file) return;
+      if (maxUploadBytes > 0 && file.size > maxUploadBytes) {
+        var maxMb = Math.round(maxUploadBytes / (1024 * 1024));
+        if (fileName) {
+          fileName.classList.remove('hidden');
+          fileName.textContent = 'Video too large. Max ' + maxMb + 'MB.';
+        }
+        return;
+      }
+      setUploadingState(true);
+      setProgress(2, 'Preparing upload...');
+      var csrf = '';
+      var csrfInput = uploadForm.querySelector('input[name="csrfmiddlewaretoken"]');
+      if (csrfInput) csrf = csrfInput.value;
+      var body = new URLSearchParams();
+      body.append('filename', file.name || 'upload.mp4');
+      body.append('content_type', file.type || 'application/octet-stream');
+      body.append('size', String(file.size || 0));
+
+      fetch(presignUrl, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrf,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
+        credentials: 'same-origin',
+      })
+        .then(function (res) {
+          if (!res.ok) {
+            return res.json().catch(function () { return {}; }).then(function (payload) {
+              throw new Error(payload.error || 'Could not start direct upload.');
+            });
+          }
+          return res.json();
+        })
+        .then(function (payload) {
+          var uploadUrl = payload && payload.upload_url;
+          var videoKey = payload && payload.video_key;
+          if (!uploadUrl || !videoKey) {
+            throw new Error('Could not start direct upload.');
+          }
+          return new Promise(function (resolve, reject) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('PUT', uploadUrl, true);
+            xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+            xhr.upload.onprogress = function (event) {
+              if (!event.lengthComputable) return;
+              var pct = Math.floor((event.loaded / event.total) * 100);
+              setProgress(pct, 'Uploading video... ' + pct + '%');
+            };
+            xhr.onerror = function () {
+              reject(new Error('Upload failed. Please try again.'));
+            };
+            xhr.onload = function () {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                setProgress(100, 'Upload complete. Moving to next step...');
+                resolve({ videoKey: videoKey });
+                return;
+              }
+              reject(new Error('Upload failed. Please try again.'));
+            };
+            xhr.send(file);
+          });
+        })
+        .then(function (data) {
+          submitDirectUploadReference(data.videoKey, file.name || '');
+        })
+        .catch(function (err) {
+          var fallbackMessage = 'Direct upload unavailable here. Using standard upload...';
+          if (err && err.message && err.message.indexOf('Video too large') === 0) {
+            fallbackMessage = err.message;
+          }
+          fallbackToServerUpload(fallbackMessage);
+        });
     }
 
     if (recordBtn) {
@@ -292,6 +430,22 @@
       if (file) recordInput.value = '';
       markSelected(file);
     });
+    if (uploadForm) {
+      uploadForm.addEventListener('submit', function (e) {
+        if (bypassDirectUploadOnce) {
+          bypassDirectUploadOnce = false;
+          return;
+        }
+        if (isUploading) {
+          e.preventDefault();
+          return;
+        }
+        if (!selectedFile) return;
+        if (!directUploadEnabled) return;
+        e.preventDefault();
+        startDirectUpload(selectedFile);
+      });
+    }
   }
 
   if (step === 'details') {
@@ -300,9 +454,7 @@
     var detailsLastInitial = document.getElementById('{{ details_form.client_last_initial.id_for_label }}');
     var detailsJobTitle = document.getElementById('{{ details_form.client_job_title.id_for_label }}');
     var outcomeCheckboxes = document.querySelectorAll('input[name="outcome_tags"]');
-    var hidden = document.getElementById('{{ details_form.star_rating.id_for_label|default:"id_star_rating" }}');
-    var stars = document.querySelectorAll('.star-btn[data-star-value]');
-    if (!hidden || !stars.length || !detailsContinueBtn) return;
+    if (!detailsContinueBtn) return;
 
     function setDetailsContinueReady(isReady) {
       detailsContinueBtn.disabled = !isReady;
@@ -334,43 +486,24 @@
       var firstNameOk = detailsFirstName && detailsFirstName.value.trim().length > 0;
       var lastInitialOk = detailsLastInitial && detailsLastInitial.value.trim().length > 0;
       var jobTitleOk = detailsJobTitle && detailsJobTitle.value.trim().length > 0;
-      var starOk = parseInt(hidden.value || '0', 10) > 0;
       var checkedCount = 0;
       outcomeCheckboxes.forEach(function (checkbox) {
         if (checkbox.checked) checkedCount += 1;
       });
       var tagsOk = checkedCount >= 1 && checkedCount <= 2;
-      return firstNameOk && lastInitialOk && jobTitleOk && starOk && tagsOk;
+      return firstNameOk && lastInitialOk && jobTitleOk && tagsOk;
     }
 
     function refreshDetailsContinueState() {
       setDetailsContinueReady(detailsFormIsComplete());
     }
 
-    function paint(val) {
-      var n = parseInt(val || '0', 10);
-      stars.forEach(function (s) {
-        var on = parseInt(s.getAttribute('data-star-value'), 10) <= n;
-        s.classList.toggle('text-[#F3B71B]', on);
-        s.classList.toggle('border-blue/30', on);
-        s.classList.toggle('bg-blue-light', on);
-      });
-    }
-
-    stars.forEach(function (s) {
-      s.addEventListener('click', function () {
-        hidden.value = s.getAttribute('data-star-value');
-        paint(hidden.value);
-        refreshDetailsContinueState();
-      });
-    });
     if (detailsFirstName) detailsFirstName.addEventListener('input', refreshDetailsContinueState);
     if (detailsLastInitial) detailsLastInitial.addEventListener('input', refreshDetailsContinueState);
     if (detailsJobTitle) detailsJobTitle.addEventListener('input', refreshDetailsContinueState);
     outcomeCheckboxes.forEach(function (checkbox) {
       checkbox.addEventListener('change', refreshDetailsContinueState);
     });
-    paint(hidden.value);
     refreshDetailsContinueState();
   }
 
@@ -380,6 +513,7 @@
     var previewButton = document.getElementById('proof-preview-play');
     var playIcon = document.getElementById('proof-preview-icon-play');
     var pauseIcon = document.getElementById('proof-preview-icon-pause');
+    var previewMeta = document.getElementById('proof-preview-meta');
     if (!previewCard || !previewVideo || !previewButton || !playIcon || !pauseIcon) return;
 
     var isTouchUi =
@@ -391,6 +525,11 @@
     function renderPreviewState() {
       if (isTouchUi && !isPlaying) {
         isHovering = false;
+      }
+      if (previewMeta) {
+        var hideMeta = isPlaying || (!isTouchUi && isHovering);
+        previewMeta.classList.toggle('opacity-0', hideMeta);
+        previewCard.classList.toggle('proof-approved-card--meta-hidden', hideMeta);
       }
       var showButton = isTouchUi ? !isPlaying : (!isPlaying || isHovering);
       previewButton.classList.toggle('hidden', !showButton);

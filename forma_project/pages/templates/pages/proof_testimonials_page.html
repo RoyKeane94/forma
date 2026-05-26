@@ -2,6 +2,9 @@
 
 {% block title %}The Proof · Forma{% endblock %}
 {% block extra_head %}
+  {% if media_preconnect_origin %}
+  <link rel="preconnect" href="{{ media_preconnect_origin }}" crossorigin>
+  {% endif %}
   <style>
     body {
       background-color: #ffffff !important;
