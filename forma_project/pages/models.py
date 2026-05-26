@@ -498,6 +498,18 @@ class ProofTestimonial(models.Model):
         (STATUS_APPROVED, 'Approved'),
         (STATUS_REJECTED, 'Rejected'),
     ]
+    QUOTE_STATUS_PENDING = 'pending'
+    QUOTE_STATUS_PROCESSING = 'processing'
+    QUOTE_STATUS_COMPLETE = 'complete'
+    QUOTE_STATUS_SKIPPED = 'skipped'
+    QUOTE_STATUS_FAILED = 'failed'
+    QUOTE_STATUS_CHOICES = [
+        (QUOTE_STATUS_PENDING, 'Pending'),
+        (QUOTE_STATUS_PROCESSING, 'Processing'),
+        (QUOTE_STATUS_COMPLETE, 'Complete'),
+        (QUOTE_STATUS_SKIPPED, 'Skipped'),
+        (QUOTE_STATUS_FAILED, 'Failed'),
+    ]
 
     profile = models.ForeignKey(
         TrainerProfile,
@@ -521,6 +533,17 @@ class ProofTestimonial(models.Model):
         default=_empty_list,
         blank=True,
         help_text='AI-suggested short pull-quote candidates.',
+    )
+    quote_generation_status = models.CharField(
+        max_length=16,
+        choices=QUOTE_STATUS_CHOICES,
+        default=QUOTE_STATUS_PENDING,
+        help_text='Background quote generation state for this submission.',
+    )
+    quote_generation_updated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Last time quote generation status changed.',
     )
     pull_quote = models.CharField(
         max_length=120,

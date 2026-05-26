@@ -327,10 +327,19 @@ class ProofTestimonialAdmin(admin.ModelAdmin):
         'client_last_initial',
         'star_rating',
         'pull_quote',
+        'quote_generation_status',
+        'quote_generation_updated_at',
         'status',
         'share_to_instagram',
     )
-    list_filter = ('status', 'star_rating', 'share_to_instagram', 'submitted_at')
+    list_filter = (
+        'status',
+        'quote_generation_status',
+        'star_rating',
+        'share_to_instagram',
+        'submitted_at',
+        'quote_generation_updated_at',
+    )
     search_fields = (
         'profile__first_name',
         'profile__last_name',
@@ -339,7 +348,7 @@ class ProofTestimonialAdmin(admin.ModelAdmin):
         'client_location',
         'client_specialism',
     )
-    readonly_fields = ('submitted_at',)
+    readonly_fields = ('submitted_at', 'quote_generation_updated_at')
     autocomplete_fields = ('profile', 'reviewed_by')
     ordering = ('-submitted_at',)
 

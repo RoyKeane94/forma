@@ -15,7 +15,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from django.db import close_old_connections
+from django.db import OperationalError, close_old_connections
 from django.db import transaction
 from django.db.models import Avg, Count, Prefetch
 from django.core.exceptions import ValidationError
@@ -184,10 +184,10 @@ def _normalize_quote_candidates(raw_candidates) -> list[str]:
     return out
 
 
-def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> list[str]:
+def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> tuple[list[str], str]:
     api_key = (getattr(settings, 'OPENAI_API_KEY', '') or '').strip()
     if not api_key:
-        return []
+        return [], ProofTestimonial.QUOTE_STATUS_SKIPPED
     filename = (submission.video.name or '').strip()
     ext = os.path.splitext(filename)[1].lower()
     supported_exts = {'.flac', '.m4a', '.mp3', '.mp4', '.mpeg', '.mpga', '.oga', '.ogg', '.wav', '.webm'}
@@ -199,7 +199,7 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> lis
             source_bytes = video_file.read()
     except Exception:
         logger.exception('Could not read submission media for testimonial %s', submission.pk)
-        return []
+        return [], ProofTestimonial.QUOTE_STATUS_FAILED
     if ext in supported_exts:
         upload_bytes = source_bytes
     elif ext == '.mov':
@@ -208,7 +208,7 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> lis
         ffmpeg_bin = resolve_ffmpeg_binary()
         if not ffmpeg_bin:
             logger.warning('No ffmpeg binary available; cannot transcode .mov for testimonial %s', submission.pk)
-            return []
+            return [], ProofTestimonial.QUOTE_STATUS_FAILED
         try:
             with tempfile.NamedTemporaryFile(delete=False, suffix='.mov') as in_tmp:
                 in_tmp.write(source_bytes)
@@ -260,7 +260,7 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> lis
             upload_filename = f'{os.path.splitext(upload_filename)[0]}.m4a'
         except Exception:
             logger.warning('Failed to transcode .mov for testimonial %s', submission.pk)
-            return []
+            return [], ProofTestimonial.QUOTE_STATUS_FAILED
         finally:
             if input_path and os.path.exists(input_path):
                 os.remove(input_path)
@@ -268,14 +268,14 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> lis
                 os.remove(output_path)
     else:
         logger.info('Skipping AI quote generation for unsupported extension: %s', ext or '(none)')
-        return []
+        return [], ProofTestimonial.QUOTE_STATUS_SKIPPED
     if not upload_bytes:
-        return []
+        return [], ProofTestimonial.QUOTE_STATUS_FAILED
     try:
         from openai import OpenAI
     except Exception:
         logger.exception('OpenAI SDK import failed; skipping quote generation')
-        return []
+        return [], ProofTestimonial.QUOTE_STATUS_FAILED
     try:
         client = OpenAI(api_key=api_key)
         transcript_res = client.audio.transcriptions.create(
@@ -284,7 +284,7 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> lis
         )
         transcript = (getattr(transcript_res, 'text', '') or '').strip()
         if not transcript:
-            return []
+            return [], ProofTestimonial.QUOTE_STATUS_FAILED
         quote_prompt = (
             "Return the three most compelling sentences from this transcript "
             "that would make a stranger want to watch the video. "
@@ -299,29 +299,76 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> lis
         content = ''
         if quote_res.choices:
             content = (quote_res.choices[0].message.content or '').strip()
-        return _normalize_quote_candidates(_extract_json_array_from_text(content))
+        quotes = _normalize_quote_candidates(_extract_json_array_from_text(content))
+        if quotes:
+            return quotes, ProofTestimonial.QUOTE_STATUS_COMPLETE
+        return [], ProofTestimonial.QUOTE_STATUS_FAILED
     except Exception:
         logger.exception('AI quote generation failed for testimonial %s', submission.pk)
-        return []
+        return [], ProofTestimonial.QUOTE_STATUS_FAILED
 
 
 def _generate_and_store_suggested_quotes(submission_id: int) -> None:
     close_old_connections()
+    print(f'[proof-quotes] worker started for submission={submission_id}', flush=True)
     try:
-        submission = ProofTestimonial.objects.get(pk=submission_id)
-    except ProofTestimonial.DoesNotExist:
-        return
-    if submission.status != ProofTestimonial.STATUS_PENDING:
-        return
-    if submission.suggested_quotes:
-        return
-    suggested_quotes = _suggested_quotes_from_submission_video(submission)
-    if suggested_quotes:
-        submission.suggested_quotes = suggested_quotes
-        submission.save(update_fields=['suggested_quotes'])
+        try:
+            submission = ProofTestimonial.objects.get(pk=submission_id)
+        except ProofTestimonial.DoesNotExist:
+            print(f'[proof-quotes] submission missing id={submission_id}', flush=True)
+            return
+        if submission.status != ProofTestimonial.STATUS_PENDING:
+            print(
+                f'[proof-quotes] submission={submission_id} skipped; status={submission.status}',
+                flush=True,
+            )
+            return
+        if submission.suggested_quotes:
+            if submission.quote_generation_status != ProofTestimonial.QUOTE_STATUS_COMPLETE:
+                submission.quote_generation_status = ProofTestimonial.QUOTE_STATUS_COMPLETE
+                submission.quote_generation_updated_at = timezone.now()
+                submission.save(update_fields=['quote_generation_status', 'quote_generation_updated_at'])
+            print(
+                f'[proof-quotes] submission={submission_id} already has suggested quotes',
+                flush=True,
+            )
+            return
+        submission.quote_generation_status = ProofTestimonial.QUOTE_STATUS_PROCESSING
+        submission.quote_generation_updated_at = timezone.now()
+        submission.save(update_fields=['quote_generation_status', 'quote_generation_updated_at'])
+        print(f'[proof-quotes] submission={submission_id} status=processing', flush=True)
+        suggested_quotes, quote_status = _suggested_quotes_from_submission_video(submission)
+        if suggested_quotes:
+            submission.suggested_quotes = suggested_quotes
+            submission.quote_generation_status = ProofTestimonial.QUOTE_STATUS_COMPLETE
+            submission.quote_generation_updated_at = timezone.now()
+            submission.save(update_fields=['suggested_quotes', 'quote_generation_status', 'quote_generation_updated_at'])
+            print(
+                f'[proof-quotes] submission={submission_id} status=complete quotes={len(suggested_quotes)}',
+                flush=True,
+            )
+        else:
+            submission.quote_generation_status = quote_status
+            submission.quote_generation_updated_at = timezone.now()
+            submission.save(update_fields=['quote_generation_status', 'quote_generation_updated_at'])
+            print(
+                f'[proof-quotes] submission={submission_id} no quotes status={quote_status}',
+                flush=True,
+            )
+    except OperationalError:
+        logger.warning('Quote generation worker could not update testimonial %s due to DB lock', submission_id)
+        print(f'[proof-quotes] submission={submission_id} db lock', flush=True)
+    except Exception:
+        logger.exception('Quote generation worker crashed for testimonial %s', submission_id)
+        print(f'[proof-quotes] submission={submission_id} crashed', flush=True)
 
 
 def _enqueue_suggested_quotes_generation(submission_id: int) -> None:
+    ProofTestimonial.objects.filter(pk=submission_id).update(
+        quote_generation_status=ProofTestimonial.QUOTE_STATUS_PENDING,
+        quote_generation_updated_at=timezone.now(),
+    )
+    print(f'[proof-quotes] queued submission={submission_id} status=pending', flush=True)
     worker = threading.Thread(
         target=_generate_and_store_suggested_quotes,
         args=(submission_id,),
@@ -525,6 +572,22 @@ def _get_profile(user) -> TrainerProfile:
         },
     )
     ensure_onboarding_children(profile)
+    return profile
+
+
+def _get_profile_fast(user) -> TrainerProfile:
+    """
+    Lightweight profile lookup for account actions that do not require onboarding child bootstrapping.
+    """
+    profile, _ = TrainerProfile.objects.get_or_create(
+        user=user,
+        defaults={
+            'first_name': (user.first_name or '').strip(),
+            'last_name': (user.last_name or '').strip(),
+            'tagline': '',
+            'bio': '',
+        },
+    )
     return profile
 
 
@@ -1082,7 +1145,7 @@ def trainer_proof_submit(request, profile_slug: str):
         return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=details")
 
     upload_form = ProofVideoUploadForm()
-    details_form = ProofDetailsForm(initial=draft.get('details') or {})
+    details_form = ProofDetailsForm()
 
     if request.method == 'POST':
         action = (request.POST.get('proof_action') or '').strip()
@@ -1171,11 +1234,19 @@ def trainer_proof_submit(request, profile_slug: str):
                 fh.seek(0)
                 submission.video.save(os.path.basename(video_path), File(fh), save=False)
             submission.save()
+            print(
+                f'[proof-submit] created submission={submission.pk} profile={profile.pk} ext={source_ext}',
+                flush=True,
+            )
             poster_bytes = poster_bytes_from_video_file(source_bytes=source_bytes, source_ext=source_ext)
             if poster_bytes:
                 poster_name = f'{os.path.splitext(os.path.basename(video_path))[0]}.jpg'
                 submission.poster.save(poster_name, ContentFile(poster_bytes), save=False)
                 submission.save(update_fields=['poster'])
+                print(
+                    f'[proof-submit] submission={submission.pk} poster generated',
+                    flush=True,
+                )
             _enqueue_suggested_quotes_generation(submission.pk)
             default_storage.delete(video_path)
             request.session.pop(session_key, None)
@@ -1294,7 +1365,7 @@ def trainer_proof_submit_success(request, profile_slug: str):
 
 @login_required
 def proof_notifications(request):
-    profile = _get_profile(request.user)
+    profile = _get_profile_fast(request.user)
 
     if request.method == 'POST':
         action = (request.POST.get('action') or '').strip().lower()
@@ -1316,21 +1387,33 @@ def proof_notifications(request):
             if selected_pull_quote and allowed_quotes and selected_pull_quote not in allowed_quotes:
                 messages.error(request, 'Choose one of the suggested pull quotes.')
                 return redirect('pages:proof_notifications')
+            now = timezone.now()
             submission.status = ProofTestimonial.STATUS_APPROVED
             submission.pull_quote = selected_pull_quote[:120]
             submission.reviewed_by = request.user
-            submission.reviewed_at = timezone.now()
-            submission.save(update_fields=['status', 'pull_quote', 'reviewed_by', 'reviewed_at'])
+            submission.reviewed_at = now
+            ProofTestimonial.objects.filter(pk=submission.pk).update(
+                status=ProofTestimonial.STATUS_APPROVED,
+                pull_quote=selected_pull_quote[:120],
+                reviewed_by=request.user,
+                reviewed_at=now,
+            )
             messages.success(request, 'Testimonial approved.')
             return redirect('pages:proof_notifications')
         if action == 'reject':
             video_name = (submission.video.name or '').strip()
             poster_name = (submission.poster.name or '').strip()
             submission.delete()
-            if video_name and default_storage.exists(video_name):
-                default_storage.delete(video_name)
-            if poster_name and default_storage.exists(poster_name):
-                default_storage.delete(poster_name)
+            if video_name:
+                try:
+                    default_storage.delete(video_name)
+                except Exception:
+                    logger.warning('Could not delete testimonial video %s after rejection', video_name)
+            if poster_name:
+                try:
+                    default_storage.delete(poster_name)
+                except Exception:
+                    logger.warning('Could not delete testimonial poster %s after rejection', poster_name)
             messages.success(request, 'Testimonial rejected and deleted.')
             return redirect('pages:proof_notifications')
         messages.error(request, 'Choose approve or reject.')

@@ -224,7 +224,7 @@ class TrainerProofSubmissionTests(TestCase):
             reverse('pages:trainer_proof_submit_success', kwargs={'profile_slug': profile.slug})
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Your testimonial is submitted.')
+        self.assertContains(response, "You're a good client.")
 
     @mock.patch('pages.views._enqueue_suggested_quotes_generation')
     def test_multistep_submission_enqueues_ai_quote_generation(self, enqueue_mock):

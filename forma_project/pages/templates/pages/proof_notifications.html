@@ -40,19 +40,11 @@
                 data-review-video
               ></video>
               <div class="proof-approved-meta absolute inset-x-0 bottom-0 z-10 px-3 pb-3 pt-7 text-white transition-opacity duration-200 sm:px-4 sm:pb-4 sm:pt-10" data-review-meta>
-                <div class="flex items-start justify-between gap-3">
-                  <p class="m-0 min-w-0 flex-1 font-body text-[0.86rem] font-semibold leading-tight text-white sm:text-[1rem] lg:text-[1.05rem]">
-                    {{ submission.client_first_name }} {{ submission.client_last_initial }}.
-                    <span class="mx-1.5 text-white/45">&middot;</span>
-                    <span class="font-normal text-white/72">{{ submission.client_job_title|default:"Client" }}</span>
-                  </p>
-                  <div class="flex shrink-0 items-center gap-px pt-0.5">
-                    <span class="sr-only">{{ submission.star_rating }} out of 5 stars</span>
-                    {% for _ in "12345" %}
-                    <span class="text-[0.68rem] leading-none sm:text-[0.82rem] {% if forloop.counter <= submission.star_rating %}text-[#e2c15f]{% else %}text-white/35{% endif %}" aria-hidden="true">★</span>
-                    {% endfor %}
-                  </div>
-                </div>
+                <p class="m-0 min-w-0 font-body text-[0.86rem] font-semibold leading-tight text-white sm:text-[1rem] lg:text-[1.05rem]">
+                  {{ submission.client_first_name }} {{ submission.client_last_initial }}.
+                  <span class="mx-1.5 text-white/45">&middot;</span>
+                  <span class="font-normal text-white/72">{{ submission.client_job_title|default:"Client" }}</span>
+                </p>
                 <p
                   class="proof-approved-quote proof-approved-quote--mobile-hide mt-1.5 m-0 line-clamp-2 font-body text-[0.78rem] font-normal leading-snug text-white/95 sm:mt-2.5 sm:line-clamp-3 sm:text-[0.92rem]"
                   data-review-quote-text
@@ -85,6 +77,17 @@
             </div>
           </div>
           <div>
+            {% if submission.quote_generation_status != 'complete' %}
+            <div class="rounded-card border border-rule bg-surface px-3 py-2">
+              <p class="m-0 font-body text-[0.62rem] font-bold uppercase tracking-wide-4 text-muted">Quote generation</p>
+              <p class="mt-1 mb-0 font-body text-[0.72rem] font-light text-slate">
+                {{ submission.get_quote_generation_status_display }}
+                {% if submission.quote_generation_updated_at %}
+                · {{ submission.quote_generation_updated_at|date:"j M Y, H:i" }}
+                {% endif %}
+              </p>
+            </div>
+            {% endif %}
             {% if submission.suggested_quotes %}
             <div class="mt-4">
               <p class="m-0 font-body text-[0.62rem] font-bold uppercase tracking-wide-4 text-blue">Pick a pull quote before approving</p>
@@ -101,9 +104,6 @@
               </div>
             </div>
             {% else %}
-            <div class="mt-4 rounded-card border border-rule bg-surface px-3 py-2">
-              <p class="m-0 font-body text-[0.7rem] font-light text-slate">Currently transcribing and pulling quotes. Don't worry, they'll appear soon.</p>
-            </div>
             {% endif %}
             <div class="mt-4 flex flex-wrap gap-2">
               <form method="post" class="m-0" data-approve-form>
