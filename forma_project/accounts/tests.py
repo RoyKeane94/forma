@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from unittest import mock
 
-from accounts.models import Profile
+from accounts.models import Profile, WaitlistSignup
 from accounts.views import _send_founder_welcome_email
 from pages.models import (
     PostcodeDistrict,
@@ -15,6 +15,8 @@ from pages.models import (
 
 
 class RegistrationFlowTests(TestCase):
+    register_settings = override_settings(REGISTER_CODE='FF2026')
+
     def setUp(self):
         district, _ = PostcodeDistrict.objects.get_or_create(code='SW12')
         self.primary_area, _ = PrimaryArea.objects.get_or_create(
@@ -22,6 +24,7 @@ class RegistrationFlowTests(TestCase):
             defaults={'district': district},
         )
 
+    @register_settings
     @mock.patch('accounts.views.create_register_checkout_session')
     @mock.patch('accounts.views.stripe_register_configured', return_value=True)
     def test_register_redirects_to_stripe_checkout_without_creating_account(
@@ -39,6 +42,7 @@ class RegistrationFlowTests(TestCase):
                 'password1': 'StrongPass123!',
                 'password2': 'StrongPass123!',
                 'accept_terms': 'on',
+                'register_code': 'FF2026',
             },
         )
         self.assertEqual(response.status_code, 302)
@@ -89,6 +93,27 @@ class RegistrationFlowTests(TestCase):
         self.assertIn('Welcome to Forma', send_mail_mock.call_args.kwargs['subject'])
         self.assertIn(expected_link, send_mail_mock.call_args.kwargs['message'])
 
+    @register_settings
+    def test_register_requires_valid_code(self):
+        response = self.client.post(
+            reverse('accounts:register'),
+            data={
+                'first_name': 'Agi',
+                'last_name': 'Alexander',
+                'email': 'coded@example.com',
+                'password1': 'StrongPass123!',
+                'password2': 'StrongPass123!',
+                'accept_terms': 'on',
+                'register_code': 'wrong-code',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Enter a valid registration code.')
+        User = get_user_model()
+        self.assertFalse(User.objects.filter(email='coded@example.com').exists())
+
+    @register_settings
     def test_register_requires_first_and_last_name(self):
         response = self.client.post(
             reverse('accounts:register'),
@@ -97,6 +122,7 @@ class RegistrationFlowTests(TestCase):
                 'password1': 'StrongPass123!',
                 'password2': 'StrongPass123!',
                 'accept_terms': 'on',
+                'register_code': 'FF2026',
             },
         )
 
@@ -105,6 +131,25 @@ class RegistrationFlowTests(TestCase):
         self.assertContains(response, 'Enter your last name.')
         User = get_user_model()
         self.assertFalse(User.objects.filter(email='missing-names@example.com').exists())
+
+    @register_settings
+    def test_waitlist_saves_email(self):
+        response = self.client.post(
+            reverse('accounts:waitlist'),
+            data={'email': 'waitlist@example.com'},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(WaitlistSignup.objects.filter(email='waitlist@example.com').exists())
+
+    @register_settings
+    def test_waitlist_duplicate_shows_message(self):
+        WaitlistSignup.objects.create(email='again@example.com')
+        response = self.client.post(
+            reverse('accounts:waitlist'),
+            data={'email': 'again@example.com'},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(WaitlistSignup.objects.filter(email='again@example.com').count(), 1)
 
     def test_name_step_saves_names_and_shows_proof_link(self):
         User = get_user_model()

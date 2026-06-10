@@ -10,6 +10,7 @@ urlpatterns = [
     path('logout/', views.FormaLogoutView.as_view(), name='logout'),
     path('logged-out/', TemplateView.as_view(template_name='accounts/logged_out.html'), name='logged_out'),
     path('register/', views.register, name='register'),
+    path('waitlist/', views.waitlist, name='waitlist'),
     path(
         'register/checkout-success/',
         views.register_checkout_success,

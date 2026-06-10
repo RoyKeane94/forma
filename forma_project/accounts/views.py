@@ -27,8 +27,9 @@ from .forms import (
     LoginForm,
     RegisterForm,
     RegisterNameForm,
+    WaitlistForm,
 )
-from .models import Profile
+from .models import Profile, WaitlistSignup
 from .media_cleanup import delete_user_and_associated_media
 from .stripe_register import (
     checkout_session_metadata_dict,
@@ -164,6 +165,27 @@ def register(request):
     else:
         form = RegisterForm()
     return render(request, 'accounts/register.html', {'form': form})
+
+
+def waitlist(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    if request.method == 'POST':
+        form = WaitlistForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            _, created = WaitlistSignup.objects.get_or_create(email=email)
+            if created:
+                messages.success(
+                    request,
+                    'You are on the waitlist. We will be in touch when a place opens.',
+                )
+            else:
+                messages.info(request, 'You are already on the waitlist.')
+            return redirect('accounts:waitlist')
+    else:
+        form = WaitlistForm()
+    return render(request, 'accounts/waitlist.html', {'form': form})
 
 
 def register_checkout_success(request):

@@ -18,6 +18,7 @@ class AccountsSiteSmokeTests(TestCase):
         urls = [
             reverse("accounts:login"),
             reverse("accounts:register"),
+            reverse("accounts:waitlist"),
             reverse("accounts:logged_out"),
             reverse("accounts:account_deleted"),
         ]

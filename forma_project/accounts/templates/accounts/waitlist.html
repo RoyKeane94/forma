@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Sign in — Forma{% endblock %}
+{% block title %}Join the waitlist — Forma{% endblock %}
 {% block content_shell_class %}min-h-screen{% endblock %}
 {% block extra_head %}
   {% include "accounts/partials/auth_home_styles.html" %}
@@ -11,25 +11,22 @@
 <div class="auth-page">
   <div class="wrap">
     <div class="auth-anim-1">
-      <p class="label blue">Account</p>
-      <h1>Sign in</h1>
-      <p class="lede">Access your Forma profile and settings.</p>
+      <p class="label blue">Waitlist</p>
+      <h1>Join the waitlist</h1>
+      <p class="lede">Forma is currently open to a select group of personal trainers. Leave your email and we will let you know when a place opens.</p>
     </div>
 
-    <form method="post" action="" class="auth-anim-2" id="login-form" novalidate>
+    <form method="post" action="" class="auth-anim-2" novalidate>
       {% csrf_token %}
 
       {% if form.errors %}
       <div role="alert" class="alert">
-        <p class="alert-title">We couldn't sign you in</p>
+        <p class="alert-title">Please check the form</p>
         <ul>
           {% for field in form %}
             {% for error in field.errors %}
             <li>{{ error }}</li>
             {% endfor %}
-          {% endfor %}
-          {% for error in form.non_field_errors %}
-          <li>{{ error }}</li>
           {% endfor %}
         </ul>
       </div>
@@ -45,22 +42,12 @@
         {% endif %}
       </div>
 
-      <div class="field">
-        <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
-        {{ form.password }}
-        {% if form.password.errors %}
-        <ul class="errorlist">
-          {% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}
-        </ul>
-        {% endif %}
-      </div>
-
-      <button type="submit" class="btn">Sign in</button>
+      <button type="submit" class="btn">Join the waitlist</button>
     </form>
 
     <p class="switch auth-anim-3">
-      No account yet?
-      <a href="{% url 'accounts:register' %}" class="textlink">Create one</a>
+      Have a registration code?
+      <a href="{% url 'accounts:register' %}" class="textlink">Create your account</a>
     </p>
   </div>
 </div>

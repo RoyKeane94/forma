@@ -295,6 +295,7 @@ STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID', '').strip()
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '').strip()
 STRIPE_TRIAL_DAYS = int(os.getenv('STRIPE_TRIAL_DAYS', '30') or 30)
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '').strip()
+REGISTER_CODE = os.getenv('REGISTER_CODE', '').strip()
 
 # Railway / Heroku / other HTTPS reverse proxies: set DJANGO_SECURE_PROXY_SSL=1
 if os.getenv('DJANGO_SECURE_PROXY_SSL', '').lower() in ('1', 'true', 'yes'):

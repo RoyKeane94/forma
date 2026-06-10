@@ -1,0 +1,13 @@
+<nav class="home-nav" aria-label="Main">
+  <a class="logo" href="{% url 'home' %}">Forma</a>
+  <div class="links">
+    <a href="{% url 'home' %}">Home</a>
+    {% if request.resolver_match.url_name == 'register' %}
+    <a class="cta" href="{% url 'accounts:login' %}">Sign in</a>
+    {% elif request.resolver_match.url_name == 'waitlist' %}
+    <a class="cta" href="{% url 'accounts:register' %}">Register</a>
+    {% else %}
+    <a class="cta" href="{% url 'accounts:register' %}">Get started</a>
+    {% endif %}
+  </div>
+</nav>

@@ -1,5 +1,13 @@
-"""Accounts app: no models registered in admin.
+"""Accounts admin."""
 
-Trainer-related data is edited under **Pages → Trainer profiles** only, so the
-sidebar does not list a separate *Accounts → Profiles* entry.
-"""
+from django.contrib import admin
+
+from .models import WaitlistSignup
+
+
+@admin.register(WaitlistSignup)
+class WaitlistSignupAdmin(admin.ModelAdmin):
+    list_display = ('email', 'created_at')
+    search_fields = ('email',)
+    readonly_fields = ('created_at',)
+    ordering = ('-created_at',)

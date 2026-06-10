@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.forms import (
     AuthenticationForm,
@@ -55,6 +56,11 @@ class RegisterForm(UserCreationForm):
             },
         ),
     )
+    register_code = forms.CharField(
+        required=False,
+        label='Registration code',
+        widget=forms.TextInput(attrs={'autocomplete': 'off'}),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -92,6 +98,22 @@ class RegisterForm(UserCreationForm):
         _apply_input_classes(self)
         self.fields['password1'].help_text = ''
         self.fields['password2'].help_text = ''
+        if settings.REGISTER_CODE:
+            self.fields['register_code'].required = True
+            self.fields['register_code'].error_messages = {
+                'required': _('Enter your registration code.'),
+            }
+        else:
+            del self.fields['register_code']
+
+    def clean_register_code(self):
+        expected = settings.REGISTER_CODE
+        if not expected:
+            return ''
+        code = (self.cleaned_data.get('register_code') or '').strip()
+        if code != expected:
+            raise forms.ValidationError(_('Enter a valid registration code.'))
+        return code
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip().lower()
@@ -113,6 +135,30 @@ class RegisterForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class WaitlistForm(forms.Form):
+    email = forms.EmailField(
+        required=True,
+        label='Email',
+        error_messages={
+            'invalid': _('Enter a valid email address (for example, name@example.com).'),
+            'required': _('Enter your email address.'),
+        },
+        widget=forms.EmailInput(attrs={'autocomplete': 'email'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _apply_input_classes(self)
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(
+                _('An account already exists for this email. Sign in instead.')
+            )
+        return email
 
 
 class RegisterNameForm(forms.Form):

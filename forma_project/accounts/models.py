@@ -33,3 +33,17 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'Profile({self.user.get_username()})'
+
+
+class WaitlistSignup(models.Model):
+    email = models.EmailField(max_length=254, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'accounts_waitlist_signup'
+        ordering = ['-created_at']
+        verbose_name = 'waitlist signup'
+        verbose_name_plural = 'waitlist signups'
+
+    def __str__(self):
+        return self.email
