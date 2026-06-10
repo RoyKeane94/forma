@@ -35,6 +35,7 @@ from .stripe_register import (
     checkout_session_metadata_dict,
     complete_pending_registration_from_stripe_session,
     create_register_checkout_session,
+    create_user_from_registration_data,
     delete_pending_registration,
     register_checkout_metadata_ok,
     retrieve_checkout_session,
@@ -49,6 +50,7 @@ class FormaLoginView(LoginView):
     form_class = LoginForm
     template_name = 'accounts/login.html'
     redirect_authenticated_user = True
+    success_url = reverse_lazy('pages:my_account')
 
 
 class FormaLogoutView(LogoutView):
@@ -120,6 +122,14 @@ def delete_account(request):
     return render(request, 'accounts/delete_account.html', {'form': form})
 
 
+def _registration_used_valid_code(form) -> bool:
+    expected = (settings.REGISTER_CODE or '').strip()
+    if not expected:
+        return False
+    code = (form.cleaned_data.get('register_code') or '').strip()
+    return code == expected
+
+
 def register(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -128,7 +138,18 @@ def register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            if not stripe_register_configured():
+            if _registration_used_valid_code(form):
+                user, err_msg = create_user_from_registration_data(
+                    first_name=form.cleaned_data['first_name'],
+                    last_name=form.cleaned_data['last_name'],
+                    email=form.cleaned_data['email'],
+                    password=form.cleaned_data['password1'],
+                )
+                if err_msg:
+                    form.add_error(None, err_msg)
+                else:
+                    return _finish_new_registration(request, user)
+            elif not stripe_register_configured():
                 form.add_error(
                     None,
                     'Payments are not configured on this server. Add STRIPE_SK and STRIPE_PRICE_ID.',
@@ -155,6 +176,7 @@ def register(request):
                         pending_token=pending_token,
                     )
                 except Exception:
+                    logger.exception('Stripe register checkout failed')
                     delete_pending_registration(pending_token)
                     form.add_error(
                         None,
@@ -245,6 +267,15 @@ def _ensure_trainer_profile_for_user(user):
         profile.last_name = ''
         profile.save(update_fields=['first_name', 'last_name'])
     return profile
+
+
+def _finish_new_registration(request, user):
+    Profile.objects.get_or_create(user=user)
+    _ensure_trainer_profile_for_user(user)
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    _send_founder_welcome_email(request, user)
+    messages.success(request, 'Welcome to Forma.')
+    return redirect('pages:my_account')
 
 
 def _send_founder_welcome_email(request, user) -> None:

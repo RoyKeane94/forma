@@ -7,6 +7,11 @@ import logging
 from django.conf import settings
 from django.core.cache import cache
 
+from forma_project.stripe_pricing import (
+    stripe_subscription_checkout_configured,
+    subscription_price_id,
+)
+
 logger = logging.getLogger(__name__)
 
 PENDING_CACHE_PREFIX = 'keep_profile_checkout:'
@@ -14,10 +19,7 @@ PENDING_TTL = 60 * 60  # 1 hour
 
 
 def stripe_configured() -> bool:
-    return bool(
-        getattr(settings, 'STRIPE_SECRET_KEY', '').strip()
-        and getattr(settings, 'STRIPE_PRODUCT_ID', '').strip()
-    )
+    return stripe_subscription_checkout_configured()
 
 
 def store_pending_registration(*, pending_token: str, profile_id: int, email: str, password: str) -> None:
@@ -36,30 +38,6 @@ def delete_pending_registration(pending_token: str) -> None:
     cache.delete(f'{PENDING_CACHE_PREFIX}{pending_token}')
 
 
-def _subscription_price_id() -> str:
-    price_override = getattr(settings, 'STRIPE_PRICE_ID', '') or ''
-    price_override = price_override.strip()
-    if price_override:
-        return price_override
-
-    import stripe
-
-    stripe.api_key = settings.STRIPE_SECRET_KEY
-    prod = stripe.Product.retrieve(
-        settings.STRIPE_PRODUCT_ID,
-        expand=['default_price'],
-    )
-    dp = prod.default_price
-    if dp is None:
-        raise ValueError(
-            'Stripe product has no default price. Add one in the Stripe Dashboard '
-            'or set STRIPE_PRICE_ID in the environment.'
-        )
-    if isinstance(dp, str):
-        return dp
-    return dp.id
-
-
 def create_subscription_checkout_session(
     *,
     success_url: str,
@@ -75,7 +53,7 @@ def create_subscription_checkout_session(
     import stripe
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
-    price_id = _subscription_price_id()
+    price_id = subscription_price_id()
 
     session = stripe.checkout.Session.create(
         mode='subscription',

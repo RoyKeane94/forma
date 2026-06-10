@@ -98,12 +98,7 @@ class RegisterForm(UserCreationForm):
         _apply_input_classes(self)
         self.fields['password1'].help_text = ''
         self.fields['password2'].help_text = ''
-        if settings.REGISTER_CODE:
-            self.fields['register_code'].required = True
-            self.fields['register_code'].error_messages = {
-                'required': _('Enter your registration code.'),
-            }
-        else:
+        if not settings.REGISTER_CODE:
             del self.fields['register_code']
 
     def clean_register_code(self):
@@ -111,6 +106,8 @@ class RegisterForm(UserCreationForm):
         if not expected:
             return ''
         code = (self.cleaned_data.get('register_code') or '').strip()
+        if not code:
+            return ''
         if code != expected:
             raise forms.ValidationError(_('Enter a valid registration code.'))
         return code

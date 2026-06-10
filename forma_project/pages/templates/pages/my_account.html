@@ -1,159 +1,143 @@
 {% extends "base.html" %}
 {% block title %}My account — Forma{% endblock %}
-{% block content_shell_class %}min-h-screen flex flex-col{% endblock %}
+{% block content_shell_class %}min-h-screen{% endblock %}
+
+{% block extra_head %}
+  {% include "accounts/partials/auth_home_styles.html" %}
+{% endblock %}
+
+{% block site_nav %}
+  {% include "partials/home_nav.html" %}
+{% endblock %}
 
 {% block body %}
-<div class="px-3 py-section sm:px-page">
-  <div class="mx-auto grid max-w-5xl grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_14rem] lg:items-start lg:gap-14">
-    <div class="flex w-full min-w-0 max-w-none flex-col items-start text-left sm:max-w-xl">
-      <p class="mb-3 font-body text-[0.7rem] font-medium uppercase tracking-wide-3 text-blue">Account</p>
-      <h1 class="mb-4 font-display text-[clamp(2.25rem,6vw,3rem)] leading-none tracking-[0.02em] text-ink">My account</h1>
-      <section class="mb-8 w-full max-w-none border border-rule bg-paper px-5 py-5 sm:max-w-xl sm:px-6 sm:py-6">
-        <p class="mb-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue">Next step</p>
-        <h2 class="mb-3 font-display text-[clamp(1.8rem,3vw,2.3rem)] leading-heading tracking-[0.02em] text-ink">Your next client is one link away</h2>
+<div class="account-page">
+  <div class="wrap grid">
+    <div>
+      <p class="label blue auth-anim-1">Account</p>
+      <h1 class="auth-anim-2">My account</h1>
+
+      <section class="card auth-anim-3">
+        <p class="card-label">Next step</p>
+        <h2>Your next client is one link away</h2>
+
         {% if testimonial_to_review_count > 0 %}
-        <p class="mb-4">
-          <a href="{% url 'pages:proof_notifications' %}" class="font-body text-[0.66rem] font-semibold uppercase tracking-wide-3 text-blue no-underline border-b border-blue/40 pb-0.5 hover:border-blue">
-            Review testimonials ({{ testimonial_to_review_count }})
-          </a>
+        <p class="actions">
+          <a href="{% url 'pages:proof_notifications' %}" class="textlink">Review testimonials ({{ testimonial_to_review_count }})</a>
         </p>
         {% endif %}
-        <div class="mb-3 grid grid-cols-2 gap-2.5 rounded-card border border-rule bg-surface px-3 py-3">
-          <div>
-            <p class="m-0 font-display text-[1.8rem] leading-none tracking-[0.04em] text-ink">{{ testimonial_total_count }}</p>
-            <p class="mt-1 m-0 font-body text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-muted">Total</p>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <p class="stat-value">{{ testimonial_total_count }}</p>
+            <p class="stat-label">Total</p>
           </div>
-          <div>
-            <p class="m-0 font-display text-[1.8rem] leading-none tracking-[0.04em] text-ink">{{ testimonial_to_review_count }}</p>
-            <p class="mt-1 m-0 font-body text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-muted">To review</p>
+          <div class="stat">
+            <p class="stat-value">{{ testimonial_to_review_count }}</p>
+            <p class="stat-label">To review</p>
           </div>
         </div>
-        <p class="mb-4 flex flex-wrap items-center gap-3">
-          <a href="{% url 'pages:proof_testimonials_page' %}" class="font-body text-[0.64rem] font-semibold uppercase tracking-wide-3 text-blue no-underline border-b border-blue/40 pb-0.5 hover:border-blue">See my Testimonials</a>
-          <a href="{% url 'pages:proof_testimonials_edit' %}" class="font-body text-[0.64rem] font-semibold uppercase tracking-wide-3 text-blue no-underline border-b border-blue/40 pb-0.5 hover:border-blue">Edit testimonials</a>
-        </p>
-        <p class="mb-1.5 font-body text-[0.6rem] font-semibold uppercase tracking-wide-3 text-muted">Client testimonial link</p>
-        <p class="mb-1.5 font-body text-[0.66rem] font-medium leading-[1.45] text-muted">
-          Share this with clients so they can submit a review.
-        </p>
-        <div class="mb-2.5 flex items-stretch gap-1.5">
-          <a href="{{ proof_testimonial_url }}" class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap border border-rule bg-white px-3 py-2 font-body text-[0.72rem] font-light text-blue no-underline transition-colors hover:bg-blue-light">
-            {{ proof_testimonial_url }}
-          </a>
+
+        <div class="actions">
+          <a href="{% url 'pages:proof_testimonials_page' %}" class="textlink">See my testimonials</a>
+          <a href="{% url 'pages:proof_testimonials_edit' %}" class="textlink">Edit testimonials</a>
+        </div>
+
+        <p class="field-label">Client testimonial link</p>
+        <p class="field-help">Share this with clients so they can submit a review.</p>
+        <div class="link-row">
+          <a href="{{ proof_testimonial_url }}" class="link-box">{{ proof_testimonial_url }}</a>
           <button
             id="proof-link-copy-btn"
             type="button"
-            class="inline-flex h-8 shrink-0 items-center justify-center border border-rule bg-paper px-2.5 font-body text-[0.52rem] font-semibold uppercase tracking-wide-3 text-ink transition-colors hover:border-ink hover:bg-surface"
+            class="copy-btn"
             data-copy-value="{{ proof_testimonial_url|escape }}"
             data-copy-button="1"
             aria-label="Copy testimonial link"
-          >
-            Copy
-          </button>
+          >Copy</button>
         </div>
-        <p class="mt-4 mb-1.5 font-body text-[0.6rem] font-semibold uppercase tracking-wide-3 text-muted">Public proof page</p>
-        <p class="mb-1.5 font-body text-[0.66rem] font-medium leading-[1.45] text-muted">
-          Share this with prospects so they can view your proof page.
-        </p>
-        <div class="mb-2.5 flex items-stretch gap-1.5">
-          <a href="{{ proof_public_url }}" class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap border border-rule bg-white px-3 py-2 font-body text-[0.72rem] font-light text-blue no-underline transition-colors hover:bg-blue-light">
-            {{ proof_public_url }}
-          </a>
+
+        <p class="field-label">Public proof page</p>
+        <p class="field-help">Share this with prospects so they can view your proof page.</p>
+        <div class="link-row">
+          <a href="{{ proof_public_url }}" class="link-box">{{ proof_public_url }}</a>
           <button
             id="proof-public-link-copy-btn"
             type="button"
-            class="inline-flex h-8 shrink-0 items-center justify-center border border-rule bg-paper px-2.5 font-body text-[0.52rem] font-semibold uppercase tracking-wide-3 text-ink transition-colors hover:border-ink hover:bg-surface"
+            class="copy-btn"
             data-copy-value="{{ proof_public_url|escape }}"
             data-copy-button="1"
             aria-label="Copy public proof page link"
-          >
-            Copy
-          </button>
+          >Copy</button>
         </div>
-        <p class="mt-2 mb-5 font-body text-[0.8rem] font-medium leading-[1.55] text-ink">
-          You approve every testimonial before it goes live.
-        </p>
+
+        <p class="note">You approve every testimonial before it goes live.</p>
       </section>
 
       {% if show_legacy_profile_admin and profile.completed_at %}
       {% if profile.is_published %}
-      <p class="mb-6 max-w-[42ch] font-serif text-[1.05rem] font-light italic leading-[1.7] text-slate">
-        Your trainer page is published — anyone with your link can view it.
-      </p>
+      <p class="lede">Your trainer page is published — anyone with your link can view it.</p>
       {% else %}
-      <p class="mb-6 max-w-[42ch] font-serif text-[1.05rem] font-light italic leading-[1.7] text-slate">
-        Your trainer page is unpublished. It stays editable, but your public link does not work for visitors until you publish again.
-      </p>
+      <p class="lede">Your trainer page is unpublished. It stays editable, but your public link does not work for visitors until you publish again.</p>
       {% endif %}
 
-      <form method="post" class="mb-8 w-full max-w-md border border-rule bg-surface px-5 py-5">
+      <form method="post" class="card">
         {% csrf_token %}
         <input type="hidden" name="update_visibility" value="1">
-        <p class="mb-3 font-body text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-blue">Visibility</p>
-        <label class="flex cursor-pointer items-start gap-3 font-body text-[0.8rem] leading-snug text-ink">
-          <input type="checkbox" name="is_published" value="on" class="mt-0.5 h-4 w-4 shrink-0 rounded border-rule accent-blue" {% if profile.is_published %}checked{% endif %}>
-          <span>Publish my page <span class="block font-body text-[0.72rem] font-normal text-muted">When unchecked, your profile URL is hidden from the public (you can still preview while signed in).</span></span>
+        <p class="card-label">Visibility</p>
+        <label class="checkbox-row">
+          <input type="checkbox" name="is_published" value="on" {% if profile.is_published %}checked{% endif %}>
+          <span>Publish my page<span class="checkbox-help">When unchecked, your profile URL is hidden from the public (you can still preview while signed in).</span></span>
         </label>
-        <button type="submit" class="mt-4 inline-flex items-center justify-center border border-rule bg-paper px-5 py-2.5 font-body text-[0.72rem] font-medium uppercase tracking-wide-3 text-ink transition-colors hover:border-ink hover:bg-surface">
-          Save visibility
-        </button>
+        <div class="actions">
+          <button type="submit" class="btn">Save visibility</button>
+        </div>
       </form>
 
-      <div class="mb-8 w-full max-w-md rounded border border-rule bg-surface px-5 py-5">
-        <p class="mb-3 font-body text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-blue">Profile sections</p>
-        <ul class="m-0 flex list-none flex-col gap-2.5 p-0">
+      <div class="card">
+        <p class="card-label">Profile sections</p>
+        <ul class="progress-list">
           {% for label in tab_labels %}
-          {% with n=forloop.counter %}
-          <li class="flex items-center gap-2.5 font-body text-[0.72rem] text-ink">
-            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-ink" aria-hidden="true"></span>
+          <li class="done">
+            <span class="progress-dot" aria-hidden="true"></span>
             <span>{{ label }}</span>
-            <span class="ml-auto font-body text-[0.62rem] font-medium uppercase tracking-wide-3 text-muted">Done</span>
+            <span class="progress-meta">Done</span>
           </li>
-          {% endwith %}
           {% endfor %}
         </ul>
       </div>
 
-      <a href="{% url 'pages:onboarding_edit' %}" class="mb-6 inline-flex items-center justify-center bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-colors hover:bg-blue-mid hover:-translate-y-px">
-        Edit my page
-      </a>
+      <div class="actions">
+        <a href="{% url 'pages:onboarding_edit' %}" class="btn">Edit my page</a>
+      </div>
 
       {% if profile.is_published and public_profile_url %}
-      <div class="mb-2 max-w-full">
-        <p class="mb-1 font-body text-[0.65rem] font-semibold uppercase tracking-wide-3 text-muted">Public profile link</p>
-        <p class="break-all font-body text-[0.78rem] leading-relaxed text-ink">{{ public_profile_url }}</p>
-      </div>
-      <p class="mb-6 font-body text-[0.72rem] text-muted">
-        <a href="{{ public_profile_url }}" class="border-b border-rule pb-0.5 text-slate no-underline transition-colors hover:border-ink hover:text-ink">View public profile</a>
-      </p>
+      <p class="field-label">Public profile link</p>
+      <p class="field-help"><a href="{{ public_profile_url }}" class="textlink">{{ public_profile_url }}</a></p>
       {% endif %}
 
       {% elif show_legacy_profile_admin %}
       {% if profile.onboarding_step > 0 %}
-      <p class="mb-6 max-w-[42ch] font-serif text-[1.05rem] font-light italic leading-[1.7] text-slate">
-        Pick up where you left off. Sections you have finished are marked below.
-      </p>
+      <p class="lede">Pick up where you left off. Sections you have finished are marked below.</p>
       {% else %}
-      <p class="mb-6 max-w-[42ch] font-serif text-[1.05rem] font-light italic leading-[1.7] text-slate">
-        Set up your public trainer page so clients can find you on Forma.
-      </p>
+      <p class="lede">Set up your public trainer page so clients can find you on Forma.</p>
       {% endif %}
 
-      <div class="mb-8 w-full max-w-md rounded border border-rule bg-surface px-5 py-5">
-        <p class="mb-3 font-body text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-blue">Your progress</p>
+      <div class="card">
+        <p class="card-label">Your progress</p>
         {% with current_step=profile.onboarding_step|add:1 %}
-        <ul class="m-0 flex list-none flex-col gap-2.5 p-0">
+        <ul class="progress-list">
           {% for label in tab_labels %}
           {% with n=forloop.counter %}
-          <li class="flex items-center gap-2.5 font-body text-[0.72rem] {% if n == current_step %}text-ink font-medium{% elif n <= profile.onboarding_step %}text-ink{% else %}text-muted{% endif %}">
-            <span class="h-1.5 w-1.5 shrink-0 rounded-full {% if n == current_step %}bg-blue{% elif n <= profile.onboarding_step %}bg-ink{% else %}bg-rule{% endif %}" aria-hidden="true"></span>
-            <span class="flex-1">{{ label }}</span>
+          <li class="{% if n == current_step %}active{% elif n <= profile.onboarding_step %}done{% endif %}">
+            <span class="progress-dot" aria-hidden="true"></span>
+            <span>{{ label }}</span>
             {% if n < current_step %}
-            <span class="shrink-0 font-body text-[0.62rem] font-medium uppercase tracking-wide-3 text-muted">Done</span>
+            <span class="progress-meta">Done</span>
             {% elif n == current_step %}
-            <span class="shrink-0 font-body text-[0.62rem] font-medium uppercase tracking-wide-3 text-blue">Next</span>
+            <span class="progress-meta">Next</span>
             {% else %}
-            <span class="shrink-0 font-body text-[0.62rem] font-medium uppercase tracking-wide-3 text-muted">To do</span>
+            <span class="progress-meta">To do</span>
             {% endif %}
           </li>
           {% endwith %}
@@ -162,34 +146,29 @@
         {% endwith %}
       </div>
 
-      <a href="{% url 'pages:onboarding' %}" class="mb-6 inline-flex items-center justify-center bg-blue px-8 py-[0.9rem] font-body text-[0.78rem] font-medium uppercase tracking-wide-2 text-white no-underline transition-colors hover:bg-blue-mid hover:-translate-y-px">
-        {% if profile.onboarding_step > 0 %}Continue building my page{% else %}Build my page{% endif %}
-      </a>
+      <div class="actions">
+        <a href="{% url 'pages:onboarding' %}" class="btn">{% if profile.onboarding_step > 0 %}Continue building my page{% else %}Build my page{% endif %}</a>
+      </div>
       {% endif %}
-
     </div>
 
-    <aside class="border-t border-rule pt-8 lg:border-t-0 lg:border-l lg:border-rule lg:pl-10 lg:pt-0" aria-label="Account settings">
+    <aside class="sidebar" aria-label="Account settings">
       {% if accounts_profile.stripe_subscription_id %}
-      <p class="mb-4 font-body text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-blue">Billing</p>
-      <nav class="mb-8 flex flex-col items-start gap-4">
-        <a href="{% url 'accounts:cancel_subscription' %}" class="border-b border-transparent pb-0.5 font-body text-[0.78rem] text-muted no-underline transition-colors hover:border-[#CC2A1A]/40 hover:text-[#CC2A1A]">
-          Cancel subscription
-        </a>
+      <p class="label blue">Billing</p>
+      <nav class="sidebar-nav">
+        <a href="{% url 'accounts:cancel_subscription' %}" class="danger">Cancel subscription</a>
       </nav>
       {% endif %}
-      <p class="mb-4 font-body text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-blue">Security</p>
-      <nav class="flex flex-col items-start gap-4">
-        <a href="{% url 'accounts:password_change' %}" class="border-b border-rule pb-0.5 font-body text-[0.78rem] text-ink no-underline transition-colors hover:border-ink">
-          Change password
-        </a>
-        <a href="{% url 'accounts:delete_account' %}" class="border-b border-transparent pb-0.5 font-body text-[0.78rem] text-muted no-underline transition-colors hover:border-[#CC2A1A]/40 hover:text-[#CC2A1A]">
-          Delete account
-        </a>
+
+      <p class="label blue">Security</p>
+      <nav class="sidebar-nav">
+        <a href="{% url 'accounts:password_change' %}">Change password</a>
+        <a href="{% url 'accounts:delete_account' %}" class="danger">Delete account</a>
       </nav>
     </aside>
   </div>
 </div>
+
 <script>
 (function () {
   function setCopiedState(btn, ok) {
@@ -219,4 +198,8 @@
   });
 })();
 </script>
+{% endblock %}
+
+{% block site_footer %}
+  {% include "accounts/partials/auth_home_footer.html" %}
 {% endblock %}

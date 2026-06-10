@@ -1,0 +1,17 @@
+<nav class="home-nav" aria-label="Main">
+  <a class="logo" href="{% url 'home' %}">Forma</a>
+  <div class="links">
+    <a href="{% url 'home' %}#why">Why video</a>
+    <a href="{% url 'home' %}#how">How it works</a>
+    <a href="{% url 'home' %}#pricing">Pricing</a>
+    {% if user.is_authenticated %}
+    <a class="cta" href="{% url 'pages:my_account' %}">Account</a>
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="logout-btn">Log out</button>
+    </form>
+    {% else %}
+    <a class="cta" href="{% url 'accounts:register' %}">Get started</a>
+    {% endif %}
+  </div>
+</nav>

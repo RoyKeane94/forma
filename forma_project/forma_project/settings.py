@@ -260,7 +260,7 @@ else:
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'accounts:login'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/account/'
 LOGOUT_REDIRECT_URL = '/accounts/logged-out/'
 
 # SMTP (founder welcome and account emails)

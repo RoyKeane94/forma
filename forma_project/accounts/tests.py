@@ -25,14 +25,11 @@ class RegistrationFlowTests(TestCase):
         )
 
     @register_settings
-    @mock.patch('accounts.views.create_register_checkout_session')
-    @mock.patch('accounts.views.stripe_register_configured', return_value=True)
-    def test_register_redirects_to_stripe_checkout_without_creating_account(
+    @mock.patch('accounts.views.send_mail')
+    def test_register_with_code_creates_account_without_stripe(
         self,
-        _stripe_configured_mock,
-        create_checkout_mock,
+        send_mail_mock,
     ):
-        create_checkout_mock.return_value = 'https://checkout.stripe.com/test-session'
         response = self.client.post(
             reverse('accounts:register'),
             data={
@@ -46,10 +43,62 @@ class RegistrationFlowTests(TestCase):
             },
         )
         self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('pages:my_account'))
+        User = get_user_model()
+        user = User.objects.get(email='new@example.com')
+        self.assertTrue('_auth_user_id' in self.client.session)
+        self.assertTrue(TrainerProfile.objects.filter(user=user).exists())
+        send_mail_mock.assert_called_once()
+
+    @register_settings
+    @mock.patch('accounts.views.create_register_checkout_session')
+    @mock.patch('accounts.views.stripe_register_configured', return_value=True)
+    def test_register_without_code_uses_stripe_checkout(
+        self,
+        _stripe_configured_mock,
+        create_checkout_mock,
+    ):
+        create_checkout_mock.return_value = 'https://checkout.stripe.com/test-session'
+        response = self.client.post(
+            reverse('accounts:register'),
+            data={
+                'first_name': 'Agi',
+                'last_name': 'Alexander',
+                'email': 'stripe@example.com',
+                'password1': 'StrongPass123!',
+                'password2': 'StrongPass123!',
+                'accept_terms': 'on',
+                'register_code': '',
+            },
+        )
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, 'https://checkout.stripe.com/test-session')
         create_checkout_mock.assert_called_once()
         User = get_user_model()
-        self.assertFalse(User.objects.filter(email='new@example.com').exists())
+        self.assertFalse(User.objects.filter(email='stripe@example.com').exists())
+
+    @override_settings(REGISTER_CODE='')
+    @mock.patch('accounts.views.create_register_checkout_session')
+    @mock.patch('accounts.views.stripe_register_configured', return_value=True)
+    def test_register_without_register_code_setting_uses_stripe_checkout(
+        self,
+        _stripe_configured_mock,
+        create_checkout_mock,
+    ):
+        create_checkout_mock.return_value = 'https://checkout.stripe.com/test-session'
+        response = self.client.post(
+            reverse('accounts:register'),
+            data={
+                'first_name': 'Agi',
+                'last_name': 'Alexander',
+                'email': 'open@example.com',
+                'password1': 'StrongPass123!',
+                'password2': 'StrongPass123!',
+                'accept_terms': 'on',
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, 'https://checkout.stripe.com/test-session')
 
     @mock.patch('accounts.views.stripe_register_configured', return_value=True)
     @mock.patch('accounts.views.retrieve_checkout_session')

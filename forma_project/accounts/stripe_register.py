@@ -7,15 +7,17 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db import IntegrityError, transaction
 
+from forma_project.stripe_pricing import (
+    stripe_subscription_checkout_configured,
+    subscription_price_id,
+)
+
 PENDING_CACHE_PREFIX = 'register_checkout:'
 PENDING_TTL = 60 * 60  # 1 hour
 
 
 def stripe_register_configured() -> bool:
-    return bool(
-        getattr(settings, 'STRIPE_SECRET_KEY', '').strip()
-        and getattr(settings, 'STRIPE_PRICE_ID', '').strip()
-    )
+    return stripe_subscription_checkout_configured()
 
 
 def store_pending_registration(
@@ -46,6 +48,41 @@ def delete_pending_registration(pending_token: str) -> None:
     cache.delete(f'{PENDING_CACHE_PREFIX}{pending_token}')
 
 
+def create_user_from_registration_data(
+    *,
+    first_name: str,
+    last_name: str,
+    email: str,
+    password: str,
+) -> tuple:
+    """Create a user from registration fields. Returns (user, error_message)."""
+    User = get_user_model()
+    normalized_email = (email or '').strip().lower()
+    if not normalized_email:
+        return None, 'Enter your email address.'
+
+    existing = User.objects.filter(email__iexact=normalized_email).first()
+    if existing:
+        return None, 'An account already exists for this email. Sign in instead.'
+
+    try:
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=normalized_email,
+                email=normalized_email,
+                password=password,
+                first_name=(first_name or '').strip(),
+                last_name=(last_name or '').strip(),
+            )
+    except IntegrityError:
+        existing = User.objects.filter(email__iexact=normalized_email).first()
+        if existing:
+            return None, 'An account already exists for this email. Sign in instead.'
+        return None, 'That email is already registered. Sign in instead.'
+
+    return user, None
+
+
 def create_register_checkout_session(
     *,
     success_url: str,
@@ -56,9 +93,7 @@ def create_register_checkout_session(
     import stripe
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
-    price_id = (getattr(settings, 'STRIPE_PRICE_ID', '') or '').strip()
-    if not price_id:
-        raise ValueError('Missing STRIPE_PRICE_ID')
+    price_id = subscription_price_id()
 
     session = stripe.checkout.Session.create(
         mode='subscription',
@@ -194,22 +229,15 @@ def complete_pending_registration_from_stripe_session(stripe_session) -> tuple:
         delete_pending_registration(pending_token)
         return existing, None
 
-    User = get_user_model()
-    try:
-        with transaction.atomic():
-            user = User.objects.create_user(
-                username=pending_email,
-                email=pending_email,
-                password=data['password'],
-                first_name=(data.get('first_name') or '').strip(),
-                last_name=(data.get('last_name') or '').strip(),
-            )
-    except IntegrityError:
+    user, err_msg = create_user_from_registration_data(
+        first_name=data.get('first_name') or '',
+        last_name=data.get('last_name') or '',
+        email=data.get('email') or '',
+        password=data['password'],
+    )
+    if err_msg:
         delete_pending_registration(pending_token)
-        existing = User.objects.filter(email__iexact=pending_email).first()
-        if existing:
-            return existing, None
-        return None, 'That email is already registered. Sign in instead.'
+        return None, err_msg
 
     delete_pending_registration(pending_token)
     return user, None
