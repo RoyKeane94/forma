@@ -1,32 +1,37 @@
 {% extends "base.html" %}
+{% block title %}Reviews — Forma{% endblock %}
+{% block content_shell_class %}min-h-screen{% endblock %}
 
-{% block title %}Notifications · Forma{% endblock %}
+{% block extra_head %}
+  {% include "accounts/partials/auth_home_styles.html" %}
+{% endblock %}
 
 {% block body %}
-<section class="mx-auto w-full max-w-6xl px-3 py-10 sm:px-page sm:py-14">
-  <header class="mb-8 flex flex-col gap-2 sm:mb-10">
-    <p class="m-0 font-body text-[0.68rem] uppercase tracking-wide-4 text-muted">Proof</p>
-    <h1 class="m-0 font-display text-[1.8rem] font-normal tracking-[0.06em] text-ink sm:text-[2.1rem]">Notifications</h1>
-    <p class="m-0 max-w-2xl font-body text-[0.9rem] font-light leading-relaxed text-slate">Review client submissions for {{ profile.first_name }} {{ profile.last_name }}. Approve to publish on your Proof wall, or reject to keep it private.</p>
-    <div class="pt-2">
-      <a href="{% url 'pages:proof_testimonials_page' %}" class="inline-flex h-9 items-center rounded-full border border-blue/30 bg-blue-light px-4 font-body text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-blue no-underline hover:border-blue/50">View my testimonials page</a>
-    </div>
-  </header>
+<div class="account-page">
+  <div class="wrap grid">
+    <div>
+      <p class="label blue">Reviews</p>
+      <h1>Reviews</h1>
+      <p class="lede">Review client submissions for {{ profile.first_name }} {{ profile.last_name }}. Approve to publish on your Proof wall, or reject to keep it private.</p>
+      <p class="actions">
+        <a href="{% url 'pages:proof_testimonials_page' %}" class="textlink">View my Proof page</a>
+      </p>
 
-  <div class="mb-8 rounded-card border border-rule bg-surface p-4 sm:p-5">
-    <p class="m-0 font-body text-[0.78rem] uppercase tracking-wide-4 text-muted">Pending approvals</p>
-    <p class="mt-2 mb-0 font-display text-[1.9rem] leading-none text-ink">{{ pending_submissions|length }}</p>
-  </div>
+      <section class="card">
+        <p class="card-label">Pending approvals</p>
+        <div class="stat-grid stat-grid--single">
+          <div class="stat">
+            <p class="stat-value">{{ pending_submissions|length }}</p>
+            <p class="stat-label">Waiting</p>
+          </div>
+        </div>
+      </section>
 
-  <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-    <section class="space-y-4">
       {% if pending_submissions %}
       {% for submission in pending_submissions %}
-      <article class="rounded-card border border-rule bg-paper p-4 sm:p-5">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-          <p class="m-0 font-body text-[0.72rem] uppercase tracking-wide-4 text-muted">Submitted {{ submission.submitted_at|date:"j M Y" }}</p>
-        </div>
-        <div class="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_300px]">
+      <article class="card submission-card">
+        <p class="submission-meta">Submitted {{ submission.submitted_at|date:"j M Y" }}</p>
+        <div class="submission-layout">
           <div
             class="proof-review-card proof-approved-card group relative mx-auto w-full max-w-[22rem] overflow-hidden rounded-[0.95rem] border border-[#e8e8ea] bg-white shadow-[0_1px_0_rgba(15,15,15,0.04)]"
             data-review-card
@@ -78,32 +83,29 @@
           </div>
           <div>
             {% if submission.quote_generation_status != 'complete' %}
-            <div class="rounded-card border border-rule bg-surface px-3 py-2">
-              <p class="m-0 font-body text-[0.62rem] font-bold uppercase tracking-wide-4 text-muted">Quote generation</p>
-              <p class="mt-1 mb-0 font-body text-[0.72rem] font-light text-slate">
-                {{ submission.get_quote_generation_status_display }}
-              </p>
+            <div class="card card--compact">
+              <p class="card-label">Quote generation</p>
+              <p class="field-help field-help--tight">{{ submission.get_quote_generation_status_display }}</p>
             </div>
             {% endif %}
             {% if submission.suggested_quotes %}
-            <div class="mt-4">
-              <p class="m-0 font-body text-[0.62rem] font-bold uppercase tracking-wide-4 text-blue">Pick a pull quote before approving</p>
-              <p class="mt-1 mb-0 font-body text-[0.72rem] font-light text-slate">Choose one of these AI suggestions to highlight this testimonial.</p>
-              <div class="mt-2 flex flex-col items-start gap-2" data-quote-picker>
+            <div>
+              <p class="field-label field-label--flush">Pick a pull quote before approving</p>
+              <p class="field-help">Choose one of these suggestions to highlight this testimonial.</p>
+              <div class="quote-picker" data-quote-picker>
                 {% for quote in submission.suggested_quotes %}
                 <button
                   type="button"
-                  class="quote-option w-full rounded border border-rule bg-paper px-3 py-2 text-left font-body text-[0.68rem] font-medium text-slate transition hover:border-blue/40 hover:bg-blue-light hover:text-blue"
+                  class="quote-option"
                   data-quote-option
                   data-quote-value="{{ quote }}"
                 >{{ quote }}</button>
                 {% endfor %}
               </div>
             </div>
-            {% else %}
             {% endif %}
-            <div class="mt-4 flex flex-wrap gap-2">
-              <form method="post" class="m-0" data-approve-form>
+            <div class="form-actions">
+              <form method="post" data-approve-form>
                 {% csrf_token %}
                 <input type="hidden" name="submission_id" value="{{ submission.id }}">
                 <input type="hidden" name="action" value="approve">
@@ -113,13 +115,13 @@
                   value="{% if submission.pull_quote %}{{ submission.pull_quote }}{% elif submission.suggested_quotes %}{{ submission.suggested_quotes.0 }}{% endif %}"
                   data-pull-quote-input
                 >
-                <button type="submit" class="h-9 rounded-full border border-blue bg-blue px-4 font-body text-[0.7rem] font-semibold uppercase tracking-wide-4 text-paper transition hover:bg-blue/90">Approve</button>
+                <button type="submit" class="btn">Approve</button>
               </form>
-              <form method="post" class="m-0">
+              <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="submission_id" value="{{ submission.id }}">
                 <input type="hidden" name="action" value="reject">
-                <button type="submit" class="h-9 rounded-full border border-rule bg-paper px-4 font-body text-[0.7rem] font-semibold uppercase tracking-wide-4 text-muted transition hover:border-ink hover:text-ink">Reject</button>
+                <button type="submit" class="btn-outline">Reject</button>
               </form>
             </div>
           </div>
@@ -127,31 +129,29 @@
       </article>
       {% endfor %}
       {% else %}
-      <div class="rounded-card border border-rule bg-paper p-6 sm:p-7">
-        <p class="m-0 font-body text-[0.82rem] leading-relaxed text-slate">No submissions are waiting for approval.</p>
-      </div>
+      <section class="card">
+        <p class="note" style="margin:0;">No submissions are waiting for approval.</p>
+      </section>
       {% endif %}
-    </section>
+    </div>
 
-    <aside class="rounded-card border border-rule bg-paper p-4 sm:p-5">
-      <h2 class="m-0 font-body text-[0.76rem] uppercase tracking-wide-4 text-muted">Recently reviewed</h2>
-      <div class="mt-4 space-y-3">
-        {% if recently_reviewed %}
+    <aside class="sidebar" aria-label="Recently reviewed">
+      <p class="label blue">Recently reviewed</p>
+      {% if recently_reviewed %}
+      <ul class="review-list">
         {% for submission in recently_reviewed %}
-        <div class="rounded-card border border-rule bg-surface px-3 py-2.5">
-          <p class="m-0 font-body text-[0.77rem] font-medium text-ink">{{ submission.client_first_name }} {{ submission.client_last_initial }}.</p>
-          <p class="mt-1 mb-0 font-body text-[0.65rem] uppercase tracking-wide-4 {% if submission.status == 'approved' %}text-blue{% else %}text-muted{% endif %}">
-            {{ submission.get_status_display }}
-          </p>
-        </div>
+        <li>
+          <p class="name">{{ submission.client_first_name }} {{ submission.client_last_initial }}.</p>
+          <p class="status{% if submission.status != 'approved' %} is-rejected{% endif %}">{{ submission.get_status_display }}</p>
+        </li>
         {% endfor %}
-        {% else %}
-        <p class="m-0 font-body text-[0.74rem] text-slate">No reviewed testimonials yet.</p>
-        {% endif %}
-      </div>
+      </ul>
+      {% else %}
+      <p class="field-help">No reviewed testimonials yet.</p>
+      {% endif %}
     </aside>
   </div>
-</section>
+</div>
 <script>
 (function () {
   var cards = document.querySelectorAll('[data-review-card]');
@@ -204,52 +204,26 @@
         });
       }
     });
-    card.addEventListener('mouseenter', function () {
-      setHoverState(true);
-    });
-    card.addEventListener('mouseleave', function () {
-      setHoverState(false);
-    });
-    card.addEventListener('pointerenter', function () {
-      setHoverState(true);
-    });
-    card.addEventListener('pointerleave', function () {
-      setHoverState(false);
-    });
-    card.addEventListener('mouseover', function () {
-      setHoverState(true);
-    });
-    card.addEventListener('mouseout', function () {
-      setHoverState(false);
-    });
+    card.addEventListener('mouseenter', function () { setHoverState(true); });
+    card.addEventListener('mouseleave', function () { setHoverState(false); });
+    card.addEventListener('pointerenter', function () { setHoverState(true); });
+    card.addEventListener('pointerleave', function () { setHoverState(false); });
+    card.addEventListener('mouseover', function () { setHoverState(true); });
+    card.addEventListener('mouseout', function () { setHoverState(false); });
     video.addEventListener('click', function () {
-      if (!video.paused) {
-        video.pause();
-      }
+      if (!video.paused) video.pause();
     });
-    video.addEventListener('play', function () {
-      isPlaying = true;
-      render();
-    });
-    video.addEventListener('pause', function () {
-      isPlaying = false;
-      render();
-    });
-    video.addEventListener('ended', function () {
-      isPlaying = false;
-      render();
-    });
+    video.addEventListener('play', function () { isPlaying = true; render(); });
+    video.addEventListener('pause', function () { isPlaying = false; render(); });
+    video.addEventListener('ended', function () { isPlaying = false; render(); });
     render();
   });
 
   var quotePickers = document.querySelectorAll('[data-quote-picker]');
   quotePickers.forEach(function (picker) {
-    var card = picker.closest('article');
-    var scope = card;
     var article = picker.closest('article');
     var quoteText = article ? article.querySelector('[data-review-quote-text]') : null;
-    if (!scope) return;
-    var form = scope.querySelector('[data-approve-form]');
+    var form = article ? article.querySelector('[data-approve-form]') : null;
     var input = form ? form.querySelector('[data-pull-quote-input]') : null;
     if (!form || !input) return;
     var options = picker.querySelectorAll('[data-quote-option]');
@@ -263,12 +237,7 @@
       var selected = (input.value || '').trim();
       options.forEach(function (btn) {
         var value = (btn.getAttribute('data-quote-value') || '').trim();
-        var active = selected && value === selected;
-        btn.classList.toggle('border-blue/50', active);
-        btn.classList.toggle('bg-blue', active);
-        btn.classList.toggle('text-white', active);
-        btn.classList.toggle('bg-paper', !active);
-        btn.classList.toggle('text-slate', !active);
+        btn.classList.toggle('is-active', selected && value === selected);
       });
       if (quoteText) {
         var text = selected || defaultQuote || 'Pull quote appears here';
@@ -278,26 +247,27 @@
 
     options.forEach(function (btn) {
       btn.addEventListener('click', function () {
-        var value = (btn.getAttribute('data-quote-value') || '').trim();
-        input.value = value;
+        input.value = (btn.getAttribute('data-quote-value') || '').trim();
         paint();
       });
     });
     paint();
   });
 
-  var approveForms = document.querySelectorAll('[data-approve-form]');
-  approveForms.forEach(function (form) {
+  document.querySelectorAll('[data-approve-form]').forEach(function (form) {
     form.addEventListener('submit', function (e) {
       var input = form.querySelector('[data-pull-quote-input]');
       var quote = input ? (input.value || '').trim() : '';
       if (quote) return;
-      var ok = window.confirm('Are you sure you want to approve without a quote?');
-      if (!ok) {
+      if (!window.confirm('Are you sure you want to approve without a quote?')) {
         e.preventDefault();
       }
     });
   });
 })();
 </script>
+{% endblock %}
+
+{% block site_footer %}
+  {% include "accounts/partials/auth_home_footer.html" %}
 {% endblock %}

@@ -14,6 +14,7 @@ from pages.models import (
 )
 
 
+@override_settings(SYNC_POST_REGISTRATION_TASKS=True)
 class RegistrationFlowTests(TestCase):
     register_settings = override_settings(REGISTER_CODE='FF2026')
 
@@ -251,10 +252,11 @@ class WelcomeEmailIdempotencyTests(TestCase):
         )
         rf = RequestFactory()
         request = rf.get('/')
+        testimonial_link = request.build_absolute_uri('/test-trainer/submit/')
 
         with mock.patch('accounts.views.send_mail') as send_mail_mock:
-            _send_founder_welcome_email(request, user)
-            _send_founder_welcome_email(request, user)
+            _send_founder_welcome_email(user, testimonial_link)
+            _send_founder_welcome_email(user, testimonial_link)
 
         self.assertEqual(send_mail_mock.call_count, 1)
         profile = Profile.objects.get(user=user)

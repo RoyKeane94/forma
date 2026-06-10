@@ -522,7 +522,7 @@ class ProofApprovalWorkflowTests(TestCase):
         response = self.client.get(reverse('pages:my_account'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Notifications')
+        self.assertContains(response, 'Reviews')
         self.assertEqual(response.context['proof_pending_approvals_count'], 1)
 
     def test_my_account_counts_only_approved_and_shows_review_link(self):
@@ -629,7 +629,7 @@ class ProofApprovalWorkflowTests(TestCase):
 
 class StripeWebhookRegistrationTests(TestCase):
     @override_settings(STRIPE_WEBHOOK_SECRET='whsec_test')
-    @mock.patch('accounts.views._send_founder_welcome_email')
+    @mock.patch('accounts.views._enqueue_post_registration_tasks')
     @mock.patch('pages.views.save_checkout_billing_ids')
     @mock.patch('pages.views.complete_pending_registration_from_stripe_session')
     @mock.patch('pages.views.retrieve_checkout_session')
@@ -640,7 +640,7 @@ class StripeWebhookRegistrationTests(TestCase):
         retrieve_session_mock,
         complete_pending_mock,
         _save_billing_ids_mock,
-        welcome_email_mock,
+        post_registration_mock,
     ):
         User = get_user_model()
         user = User.objects.create_user(
@@ -674,5 +674,5 @@ class StripeWebhookRegistrationTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        welcome_email_mock.assert_called_once()
-        self.assertEqual(welcome_email_mock.call_args.args[1], user)
+        post_registration_mock.assert_called_once()
+        self.assertEqual(post_registration_mock.call_args.args[0], user.pk)

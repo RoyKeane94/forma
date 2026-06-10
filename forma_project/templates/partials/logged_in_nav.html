@@ -1,0 +1,124 @@
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  .app-nav{
+    position:fixed;top:0;left:0;right:0;z-index:200;
+    height:62px;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;
+    padding:0 7.5%;background:#fff;border-bottom:1px solid #ebebe9;
+    font-family:'Instrument Sans',sans-serif;color:#0e0f12;
+  }
+  .app-nav a{color:inherit;text-decoration:none;}
+  .app-nav-left,.app-nav-right{display:flex;align-items:center;gap:2rem;min-width:0;}
+  .app-nav-right{gap:1rem;margin-left:auto;}
+  .app-nav .logo{
+    font-family:'Instrument Serif',serif;font-size:1.35rem;letter-spacing:0;
+    flex-shrink:0;
+  }
+  .app-nav-links{display:flex;align-items:center;gap:2rem;}
+  .app-nav-link{
+    position:relative;display:inline-flex;align-items:center;gap:0.45rem;
+    font-size:0.92rem;font-weight:500;color:#5c5f66;padding:0.35rem 0;
+    transition:color 0.15s;
+  }
+  .app-nav-link:hover{color:#0e0f12;}
+  .app-nav-link.is-active{color:#0e0f12;}
+  .app-nav-link.is-active::after{
+    content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#1f49d6;border-radius:1px;
+  }
+  .app-nav-badge{
+    display:inline-flex;align-items:center;justify-content:center;min-width:1.15rem;height:1.15rem;
+    padding:0 0.3rem;border-radius:999px;background:#1f49d6;color:#fff;
+    font-size:0.62rem;font-weight:600;line-height:1;
+  }
+  .app-nav-share{
+    display:inline-flex;align-items:center;gap:0.5rem;flex-shrink:0;
+    background:#1f49d6;color:#fff;border:none;border-radius:999px;
+    padding:0.65rem 1.15rem;font-family:inherit;font-size:0.82rem;font-weight:500;
+    cursor:pointer;transition:background 0.15s;white-space:nowrap;
+  }
+  .app-nav-share:hover{background:#16339b;}
+  .app-nav-share svg{flex-shrink:0;}
+  .app-nav-avatar{
+    display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+    width:2.25rem;height:2.25rem;border-radius:50%;background:#eef3ff;color:#1f49d6;
+    font-size:0.78rem;font-weight:600;text-decoration:none;transition:background 0.15s;
+  }
+  .app-nav-avatar:hover{background:#dce6ff;}
+  @media(max-width:900px){
+    .app-nav-links{gap:1.25rem;}
+    .app-nav-share span{display:none;}
+    .app-nav-share{padding:0.65rem 0.85rem;}
+  }
+  @media(max-width:640px){
+    .app-nav-links{display:none;}
+  }
+</style>
+<nav class="app-nav" aria-label="Main">
+  <div class="app-nav-left">
+    <a class="logo" href="{% url 'home' %}">Forma</a>
+    {% if nav_trainer_profile %}
+    <div class="app-nav-links">
+      <a
+        href="{% url 'pages:proof_testimonials_page' %}"
+        class="app-nav-link{% if request.resolver_match.url_name == 'proof_testimonials_page' or request.resolver_match.url_name == 'proof_testimonials_edit' %} is-active{% endif %}"
+      >My Proof page</a>
+      <a
+        href="{% url 'pages:proof_notifications' %}"
+        class="app-nav-link{% if request.resolver_match.url_name == 'proof_notifications' %} is-active{% endif %}"
+      >
+        Reviews
+        {% if proof_pending_approvals_count > 0 %}
+        <span class="app-nav-badge">{{ proof_pending_approvals_count }}</span>
+        {% endif %}
+      </a>
+    </div>
+    {% endif %}
+  </div>
+  <div class="app-nav-right">
+    {% if nav_trainer_profile %}
+    <button
+      type="button"
+      class="app-nav-share"
+      id="nav-share-review-link"
+      data-copy-value="{{ nav_proof_submit_url|escape }}"
+      aria-label="Copy review link"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+        <polyline points="16 6 12 2 8 6"/>
+        <line x1="12" y1="2" x2="12" y2="15"/>
+      </svg>
+      <span>Share your review link</span>
+    </button>
+    {% endif %}
+    <a
+      href="{% url 'pages:my_account' %}"
+      class="app-nav-avatar{% if request.resolver_match.url_name == 'my_account' %} is-active{% endif %}"
+      aria-label="My account"
+      title="My account"
+    >{{ nav_user_initials }}</a>
+  </div>
+</nav>
+{% if nav_trainer_profile %}
+<script>
+(function () {
+  var btn = document.getElementById('nav-share-review-link');
+  if (!btn) return;
+  var value = btn.getAttribute('data-copy-value') || '';
+  var label = btn.querySelector('span');
+  var original = label ? label.textContent : '';
+  btn.addEventListener('click', function () {
+    if (!value) return;
+    function done(ok) {
+      if (!label) return;
+      label.textContent = ok ? 'Link copied' : 'Copy failed';
+      setTimeout(function () { label.textContent = original; }, ok ? 1600 : 2200);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(value).then(function () { done(true); }).catch(function () { done(false); });
+      return;
+    }
+    done(false);
+  });
+})();
+</script>
+{% endif %}

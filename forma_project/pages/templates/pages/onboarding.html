@@ -668,7 +668,7 @@
         </div>
         <div
           id="onboarding-review-delete-backdrop"
-          class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4 sm:p-6"
+          class="fixed inset-0 z-[200] hidden items-center justify-center p-4 sm:p-6"
           role="presentation"
         >
           <div
@@ -1696,6 +1696,7 @@
     pendingDeleteIndex = i;
     focusBeforeDeleteDialog = document.activeElement;
     deleteBackdrop.classList.remove('hidden');
+    deleteBackdrop.classList.add('flex');
     document.body.classList.add('overflow-hidden');
     if (deleteConfirmBtn) {
       window.setTimeout(function () {
@@ -1706,6 +1707,7 @@
   function closeDeleteModal() {
     if (!deleteBackdrop) return;
     deleteBackdrop.classList.add('hidden');
+    deleteBackdrop.classList.remove('flex');
     document.body.classList.remove('overflow-hidden');
     pendingDeleteIndex = null;
     if (focusBeforeDeleteDialog && typeof focusBeforeDeleteDialog.focus === 'function') {

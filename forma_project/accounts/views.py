@@ -1,5 +1,6 @@
 import logging
 import secrets
+import threading
 
 from django.conf import settings
 from django.contrib import messages
@@ -8,13 +9,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.core.mail import send_mail
-from django.db import transaction
+from django.db import close_old_connections, transaction
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import TemplateView
 
-from pages.models import TrainerProfile, ensure_onboarding_children
+from pages.models import TrainerProfile
 from pages.stripe_keep_profile import (
     cancel_stripe_subscription_immediately,
     save_checkout_billing_ids,
@@ -238,7 +239,7 @@ def register_checkout_success(request):
     Profile.objects.get_or_create(user=user)
     save_checkout_billing_ids(user, stripe_session)
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-    _send_founder_welcome_email(request, user)
+    _enqueue_post_registration_tasks(user.pk, request.build_absolute_uri('/').rstrip('/'))
     messages.success(request, 'Welcome to Forma.')
     return redirect('pages:my_account')
 
@@ -253,7 +254,6 @@ def _ensure_trainer_profile_for_user(user):
             'bio': '',
         },
     )
-    ensure_onboarding_children(profile)
     user_first = (user.first_name or '').strip()
     user_last = (user.last_name or '').strip()
     profile_first = (profile.first_name or '').strip()
@@ -269,16 +269,57 @@ def _ensure_trainer_profile_for_user(user):
     return profile
 
 
+def _testimonial_link_for_profile(profile, site_base_url: str) -> str:
+    path = reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})
+    return f'{site_base_url}{path}'
+
+
+def _post_registration_background(user_id: int, site_base_url: str, *, fresh_connection=True) -> None:
+    if fresh_connection:
+        close_old_connections()
+    User = get_user_model()
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        logger.warning('Post-registration worker: user_id=%s not found', user_id)
+        return
+    try:
+        profile = TrainerProfile.objects.filter(user=user).first()
+        if profile is None:
+            profile = _ensure_trainer_profile_for_user(user)
+        testimonial_link = _testimonial_link_for_profile(profile, site_base_url)
+        _send_founder_welcome_email(user, testimonial_link)
+    except Exception:
+        logger.exception('Post-registration worker failed for user_id=%s', user_id)
+
+
+def _enqueue_post_registration_tasks(user_id: int, site_base_url: str) -> None:
+    if getattr(settings, 'SYNC_POST_REGISTRATION_TASKS', False):
+        _post_registration_background(user_id, site_base_url, fresh_connection=False)
+        return
+
+    def start_worker() -> None:
+        worker = threading.Thread(
+            target=_post_registration_background,
+            args=(user_id, site_base_url),
+            daemon=True,
+            name=f'post-registration-{user_id}',
+        )
+        worker.start()
+
+    transaction.on_commit(start_worker)
+
+
 def _finish_new_registration(request, user):
     Profile.objects.get_or_create(user=user)
     _ensure_trainer_profile_for_user(user)
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-    _send_founder_welcome_email(request, user)
+    _enqueue_post_registration_tasks(user.pk, request.build_absolute_uri('/').rstrip('/'))
     messages.success(request, 'Welcome to Forma.')
     return redirect('pages:my_account')
 
 
-def _send_founder_welcome_email(request, user) -> None:
+def _send_founder_welcome_email(user, testimonial_link: str) -> None:
     email = (user.email or '').strip()
     if not email:
         return
@@ -288,10 +329,6 @@ def _send_founder_welcome_email(request, user) -> None:
         if locked_profile.welcome_email_sent_at is not None:
             return
 
-        profile = _ensure_trainer_profile_for_user(user)
-        testimonial_link = request.build_absolute_uri(
-            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})
-        )
         first_name = (user.first_name or '').strip() or 'there'
         message = f"""Hi {first_name},
 

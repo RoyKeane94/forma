@@ -11,8 +11,14 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-paper font-body text-ink antialiased">
-  {% block site_nav %}{% include "accounts/partials/auth_nav.html" %}{% endblock %}
-  <div class="{% block content_shell_class %}pt-[60px] min-h-screen flex flex-col{% endblock %}">
+  {% block site_nav %}
+    {% if user.is_authenticated %}
+      {% include "partials/logged_in_nav.html" %}
+    {% else %}
+      {% include "accounts/partials/auth_nav.html" %}
+    {% endif %}
+  {% endblock %}
+  <div class="{% block content_shell_class %}{% if user.is_authenticated %}pt-[62px] {% endif %}min-h-screen flex flex-col{% endblock %}">
     {% if messages %}
     <div class="shrink-0 border-b border-rule bg-surface px-page py-4">
       <ul class="m-0 list-none p-0 font-body text-[0.8rem] font-light text-slate">
