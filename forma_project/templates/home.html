@@ -1,356 +1,314 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Forma{% endblock %}
-{% block content_shell_class %}pt-[60px] min-h-screen flex flex-col{% endblock %}
+{% block title %}Forma — Authenticated video testimonials for personal trainers{% endblock %}
+{% block content_shell_class %}min-h-screen{% endblock %}
 
 {% block extra_head %}
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <link rel="preload" href="{% static 'video/IMG_2403-poster-hq.jpg' %}" as="image">
-  <link rel="preload" href="{% static 'video/IMG_2403.MOV' %}" as="video" type="video/quicktime">
   <style>
+    :root{
+      --blue:#1f49d6;
+      --blue-deep:#16339b;
+      --blue-light:#eef3ff;
+      --ink:#0e0f12;
+      --slate:#5c5f66;
+      --rule:#ebebe9;
+    }
     @keyframes homeFadeUp {
       from { opacity: 0; transform: translateY(18px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .home-anim-1 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.05s; }
-    .home-anim-2 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.18s; }
-    .home-anim-3 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.3s; }
-    .home-anim-4 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.42s; }
-    .home-anim-5 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.54s; }
+    .hero-anim-1 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.05s; }
+    .hero-anim-2 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.18s; }
+    .hero-anim-3 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.30s; }
+    .hero-anim-4 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.42s; }
+    .hero-anim-5 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.54s; }
+    .hero-anim-6 { animation: homeFadeUp 0.65s ease both; animation-delay: 0.24s; }
+    .home-page *{box-sizing:border-box;}
+    .home-page{background:#fff;color:var(--ink);font-family:'Instrument Sans',sans-serif;font-weight:400;-webkit-font-smoothing:antialiased;}
+    .home-page a{color:inherit;}
+    .home-page img,.home-page video{display:block;max-width:100%;}
+    .home-page h1,.home-page h2{font-weight:500;letter-spacing:-0.025em;line-height:1.06;}
+    .home-page h1 em,.home-page h2 em{font-family:'Instrument Serif',serif;font-style:normal;font-weight:400;letter-spacing:-0.01em;font-size:1.04em;}
+    .home-page .label{font-size:0.7rem;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--slate);}
+    .home-page .label.blue{color:var(--blue);}
+    .home-page .wrap{width:85%;max-width:none;margin:0 auto;padding:0;}
+
+    .home-nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 7.5%;background:rgba(255,255,255,0.85);backdrop-filter:blur(10px);}
+    .home-nav .logo{font-family:'Instrument Serif',serif;font-size:1.35rem;letter-spacing:0;text-decoration:none;}
+    .home-nav .links{display:flex;align-items:center;gap:1.8rem;font-size:0.88rem;font-weight:500;}
+    .home-nav .links a{text-decoration:none;color:var(--slate);}
+    .home-nav .links a:hover{color:var(--ink);}
+    .home-nav .links a.cta{color:#fff;background:var(--ink);border-radius:999px;padding:0.6rem 1.3rem;}
+    .home-nav .links a.cta:hover{background:var(--blue);color:#fff;}
+    @media(max-width:640px){.home-nav .links a:not(.cta){display:none;}}
+
+    .home-page .hero{padding:9.5rem 0 5rem;}
+    .home-page .hero-inner{display:grid;gap:4rem;align-items:center;}
+    @media(min-width:960px){.home-page .hero-inner{grid-template-columns:1.1fr 0.9fr;}}
+    .home-page .hero h1{font-size:clamp(2.7rem,5.8vw,4.6rem);margin:1.3rem 0 1.5rem;}
+    .home-page .hero h1 em{color:var(--blue);}
+    .home-page .hero .lede-list{list-style:none;margin:0;padding:0;display:grid;gap:0.7rem;max-width:34rem;}
+    .home-page .hero .lede-list li{font-size:1.08rem;line-height:1.65;color:var(--slate);display:flex;gap:0.75rem;align-items:baseline;}
+    .home-page .hero .lede-list li::before{content:"";flex-shrink:0;width:0.4rem;height:0.4rem;border-radius:50%;background:var(--blue);transform:translateY(-0.05em);}
+    .home-page .ctas{display:flex;flex-wrap:wrap;align-items:center;gap:1.4rem;margin-top:2.3rem;}
+    .home-page .btn{display:inline-flex;align-items:center;background:var(--blue);color:#fff;text-decoration:none;border-radius:999px;padding:0.9rem 1.8rem;font-size:0.92rem;font-weight:500;transition:background 0.15s;}
+    .home-page .btn:hover{background:var(--blue-deep);}
+    .home-page .textlink{font-size:0.92rem;font-weight:500;text-decoration:none;border-bottom:1px solid var(--rule);padding-bottom:2px;}
+    .home-page .textlink:hover{border-color:var(--ink);}
+    .home-page .smallprint{margin-top:1.4rem;font-size:0.8rem;color:var(--slate);}
+
+    .home-page .demo-card{position:relative;max-width:19rem;margin:0 auto;border-radius:1.4rem;overflow:hidden;background:#f2f2f0;}
+    .home-page .demo-card video{width:100%;aspect-ratio:3/4;object-fit:cover;}
+    .home-page .demo-card .meta{position:absolute;left:0;right:0;bottom:0;padding:2.4rem 1.2rem 1.2rem;color:#fff;background:linear-gradient(to top,rgba(0,0,0,0.72),transparent);}
+    .home-page .demo-card .quote{font-family:'Instrument Serif',serif;font-style:normal;font-size:1.18rem;line-height:1.3;}
+    .home-page .demo-card .who{margin-top:0.45rem;font-size:0.78rem;opacity:0.82;}
+    .home-page .demo-card .play{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);width:3.7rem;height:3.7rem;border-radius:50%;background:rgba(255,255,255,0.95);border:none;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.15s;}
+    .home-page .demo-card .play:hover{transform:translate(-50%,-50%) scale(1.06);}
+    .home-page .demo-card .verified{position:absolute;top:0.9rem;left:0.9rem;font-size:0.58rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;background:rgba(255,255,255,0.95);color:var(--ink);border-radius:999px;padding:0.35rem 0.75rem;}
+
+    .home-page .facts{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:1.5rem 0;}
+    .home-page .facts .row{display:flex;flex-wrap:wrap;gap:0.8rem 2.8rem;justify-content:center;}
+    .home-page .facts .label{font-weight:700;letter-spacing:0.12em;color:var(--ink);}
+
+    .home-page section{padding:6rem 0;}
+    .home-page .why-section{background:var(--blue-light);}
+    .home-page .section-head{max-width:none;margin-bottom:3.5rem;}
+    .home-page .section-head h2{font-size:clamp(2rem,4vw,3.1rem);margin-top:1rem;}
+    .home-page .section-head p{margin-top:1.1rem;color:var(--slate);line-height:1.7;font-size:1.02rem;}
+
+    .home-page .trust .trow{display:grid;grid-template-columns:1fr;gap:0.5rem;padding:1.8rem 0;border-top:1px solid var(--rule);align-items:baseline;}
+    @media(min-width:760px){.home-page .trust .trow{grid-template-columns:13rem 1fr auto;gap:2.5rem;}}
+    .home-page .trust .trow:last-child{border-bottom:1px solid var(--rule);}
+    .home-page .trust .name{font-family:'Instrument Serif',serif;font-size:1.35rem;letter-spacing:-0.01em;}
+    .home-page .trust .desc{color:var(--slate);line-height:1.65;font-size:0.96rem;}
+    .home-page .trust .tag{font-size:0.62rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--slate);}
+    .home-page .trust .trow.win .name,.home-page .trust .trow.win .tag{color:var(--blue);}
+    .home-page .trust .trow.win .desc{color:var(--ink);}
+
+    .home-page .steps .srow{display:grid;grid-template-columns:3rem 1fr;gap:1.5rem;padding:1.8rem 0;border-top:1px solid var(--rule);counter-increment:s;}
+    .home-page .steps{counter-reset:s;}
+    .home-page .steps .srow:last-child{border-bottom:1px solid var(--rule);}
+    .home-page .steps .srow::before{content:counter(s);font-family:'Instrument Serif',serif;font-style:normal;font-size:1.5rem;color:var(--blue);line-height:1;padding-top:0.15rem;}
+    .home-page .steps h3{font-size:1.05rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:0.4rem;}
+    .home-page .steps p{font-size:0.96rem;line-height:1.65;color:var(--slate);}
+
+    .home-page .pricing-box{border:1px solid var(--rule);border-radius:1.6rem;padding:2.8rem;display:grid;gap:2.5rem;}
+    @media(min-width:880px){.home-page .pricing-box{grid-template-columns:auto 1fr auto;align-items:center;}}
+    .home-page .pricing-box .price{font-size:3.6rem;font-weight:500;letter-spacing:-0.03em;line-height:1;}
+    .home-page .pricing-box .price small{display:block;font-size:0.8rem;font-weight:400;letter-spacing:0;color:var(--slate);margin-top:0.55rem;}
+    .home-page .pricing-box ul{list-style:none;display:grid;gap:0.55rem;margin:0;padding:0;}
+    @media(min-width:680px){.home-page .pricing-box ul{grid-template-columns:1fr 1fr;}}
+    .home-page .pricing-box li{font-size:0.92rem;color:var(--slate);line-height:1.5;display:flex;gap:0.55rem;}
+    .home-page .pricing-box li::before{content:"—";color:var(--blue);}
+    .home-page .faq details{border-top:1px solid var(--rule);}
+    .home-page .faq details:last-child{border-bottom:1px solid var(--rule);}
+    .home-page .faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1.35rem 0;font-size:1.02rem;font-weight:500;letter-spacing:-0.01em;}
+    .home-page .faq summary::-webkit-details-marker{display:none;}
+    .home-page .faq summary::after{content:"+";color:var(--blue);font-size:1.25rem;font-weight:400;}
+    .home-page .faq details[open] summary::after{content:"–";}
+    .home-page .faq .answer{padding:0 0 1.5rem;font-size:0.94rem;line-height:1.7;color:var(--slate);}
+
+    .home-page .final{text-align:center;padding:7rem 0;}
+    .home-page .final h2{font-size:clamp(2.3rem,5.2vw,3.8rem);max-width:16ch;margin:0 auto;}
+    .home-page .final h2 em{color:var(--blue);}
+    .home-page .final p{margin:1.4rem auto 2.3rem;color:var(--slate);max-width:26rem;line-height:1.7;}
+
+    .home-footer{border-top:1px solid var(--rule);padding:1.7rem 7.5%;background:#fff;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1rem;}
+    .home-footer .logo{font-family:'Instrument Serif',serif;font-size:1.15rem;}
+    .home-footer .legal{display:flex;gap:1.5rem;font-size:0.78rem;color:var(--slate);}
+    .home-footer .legal a{text-decoration:none;color:var(--slate);}
+    .home-footer .legal a:hover{color:var(--ink);}
+    .home-page :focus-visible{outline:2px solid var(--blue);outline-offset:3px;}
   </style>
 {% endblock %}
 
+{% block site_nav %}
+<nav class="home-nav" aria-label="Main">
+  <a class="logo" href="{% url 'home' %}">Forma</a>
+  <div class="links">
+    <a href="#why">Why video</a>
+    <a href="#how">How it works</a>
+    <a href="#pricing">Pricing</a>
+    <a class="cta" href="{% url 'accounts:register' %}">Get started</a>
+  </div>
+</nav>
+{% endblock %}
+
 {% block body %}
-<div class="flex min-h-0 w-full min-w-0 flex-1 flex-col">
-  <section
-    class="relative flex min-h-[calc(92vh-60px)] w-full flex-col items-center justify-center overflow-hidden bg-blue px-6 py-16 text-center sm:px-10 md:px-16"
-    aria-label="Forma hero"
-  >
-    <div
-      class="pointer-events-none absolute inset-0"
-      aria-hidden="true"
-      style="background-image: linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 80px 80px;"
-    ></div>
-    <div
-      class="pointer-events-none absolute left-1/2 top-1/2 z-0 w-max max-w-full -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap font-display text-[clamp(8rem,40vw,36rem)] leading-none tracking-[0.08em] text-white/[0.04]"
-      aria-hidden="true"
-    >
-      FORMA
-    </div>
-    <div class="relative z-[1] mx-auto w-full max-w-4xl">
-      <p class="home-anim-1 mx-auto mb-9 max-w-[48ch] font-serif text-[clamp(1rem,2vw,1.3rem)] font-light italic leading-[1.65] text-white/75">
-        "When someone finds you online and wants to know if you're any good, where do they go?"
-      </p>
-      <h1 class="home-anim-2 mb-9 font-display text-[clamp(3.2rem,8vw,8rem)] leading-[0.88] tracking-[0.02em] text-white">
-        Your clients are your<br>best marketing.
-        <span class="block text-white/60">Now there's proof.</span>
-      </h1>
-      <p class="home-anim-3 mx-auto mb-10 max-w-[44ch] font-serif text-[clamp(0.95rem,1.6vw,1.1rem)] font-light italic leading-[1.65] text-white/65">
-        Authenticated video testimonials from your clients in 15 seconds. Built exclusively for personal trainers.
-      </p>
-      <div class="home-anim-4 mb-4 flex flex-wrap items-center justify-center gap-4">
-        <a
-          href="{% url 'accounts:register' %}"
-          class="inline-flex items-center bg-white px-8 py-[0.82rem] font-body text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-blue no-underline transition hover:bg-white/90"
-        >
-          Start your Proof page →
-        </a>
-        <a href="#demo" class="font-body text-[0.68rem] uppercase tracking-[0.1em] text-white/55 no-underline border-b border-white/25 pb-0.5 hover:text-white/80 hover:border-white/50">
-          See what it looks like
-        </a>
+<div class="home-page">
+  <header class="hero">
+    <div class="wrap hero-inner">
+      <div>
+        <p class="label blue hero-anim-1">Built for personal trainers</p>
+        <h1 class="hero-anim-2">Your clients are your best marketing.<br><em>Now there's proof.</em></h1>
+        <ul class="lede-list hero-anim-3">
+          <li>Authenticated video testimonials.</li>
+          <li>Your client films 15 seconds on their phone, you approve it, and it lives on your Proof page permanently.</li>
+          <li>A real face and a real name, impossible to fake.</li>
+        </ul>
+        <div class="ctas hero-anim-4">
+          <a class="btn" href="{% url 'accounts:register' %}">Start your Proof page</a>
+          <a class="textlink" href="#demo">See a live page</a>
+        </div>
+        <p class="smallprint hero-anim-5">£29/month · First month free · No commitment</p>
       </div>
-      <p class="home-anim-5 font-body text-[0.62rem] font-light tracking-[0.06em] text-white/35">
-        £29/month · First month free · No commitment
-      </p>
+      <article class="demo-card hero-anim-6" id="demo">
+        <span class="verified">✓ Verified client</span>
+        <video src="{% static 'video/IMG_2403.MOV' %}#t=0.001" poster="{% static 'video/IMG_2403-poster-hq.jpg' %}" preload="none" playsinline></video>
+        <button class="play" type="button" aria-label="Play video">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="7,4 20,12 7,20"/></svg>
+        </button>
+        <div class="meta">
+          <p class="quote">"James rebuilt me from scratch."</p>
+          <p class="who">Tom R. · Lawyer, London</p>
+        </div>
+      </article>
+    </div>
+  </header>
+
+  <div class="facts" aria-hidden="true">
+    <div class="wrap row">
+      <span class="label">Real clients on camera</span>
+      <span class="label">You approve everything</span>
+      <span class="label">Filmed in 15 seconds</span>
+      <span class="label">Yours forever</span>
+    </div>
+  </div>
+
+  <section id="why" class="why-section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="label blue">Why video</p>
+        <h2>What a stranger <em>actually</em> trusts</h2>
+        <p>Everyone knows reviews can be gamed. A potential client deciding whether to book you is weighing the evidence.</p>
+      </div>
+      <div class="trust">
+        <div class="trow">
+          <div class="name">Google review</div>
+          <div class="desc">A star rating from a profile nobody can verify. It tells you nothing about who, or why.</div>
+          <div class="tag">Low trust</div>
+        </div>
+        <div class="trow">
+          <div class="name">Written testimonial</div>
+          <div class="desc">Anyone could have written it. Nobody can prove otherwise.</div>
+          <div class="tag">Moderate trust</div>
+        </div>
+        <div class="trow win">
+          <div class="name">Forma testimonial</div>
+          <div class="desc">A face, a name, a job. Unrehearsed words on camera, sent by a unique link only a real client could receive. The one signal that cannot be gamed.</div>
+          <div class="tag">Undeniable</div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section id="demo" class="border-t border-rule bg-white py-section sm:py-[5.5rem] lg:py-[6rem]">
-    <div class="mx-auto w-full max-w-[100rem] px-6 sm:px-10 md:px-page">
-      <p class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
-        Your Proof page
-      </p>
-
-      <div class="border border-rule bg-white">
-        <div class="grid grid-cols-1 lg:grid-cols-2 lg:items-center">
-          <div class="flex justify-center items-center border-b border-rule px-6 py-10 sm:px-10 sm:py-12 lg:border-b-0 lg:border-r lg:border-rule lg:p-[4rem_2.5rem] xl:p-[5rem_4rem]">
-            <article class="w-full max-w-[22rem] shrink-0">
-              <header class="mb-6 flex w-full flex-col items-center gap-2 text-center lg:items-center sm:mb-8">
-                <h2 class="proof-page-title m-0 font-display text-[clamp(2.05rem,7vw,3.2rem)] font-normal leading-[0.95] tracking-[0.06em] text-blue">The Proof</h2>
-                <p class="m-0 font-body text-[0.88rem] font-medium uppercase tracking-wide-4 text-ink">James Smith</p>
-              </header>
-              <div class="proof-approved-card group relative w-full overflow-hidden rounded-[0.95rem] border border-[#e8e8ea] bg-white shadow-[0_1px_0_rgba(15,15,15,0.04)]" data-home-demo-card>
-                <div class="relative bg-[#f4f5f7]">
-                  <video
-                    class="proof-approved-video proof-approved-video--tall w-full object-cover"
-                    src="{% static 'video/IMG_2403.MOV' %}#t=0.001"
-                    poster="{% static 'video/IMG_2403-poster-hq.jpg' %}"
-                    preload="none"
-                    playsinline
-                    data-home-demo-video
-                  ></video>
-                  <div class="proof-approved-meta absolute inset-x-0 bottom-0 z-10 px-3 pb-3 pt-7 text-white transition-opacity duration-200 sm:px-4 sm:pb-4 sm:pt-10" data-home-demo-meta>
-                    <p class="proof-approved-quote proof-approved-quote--mobile-hide m-0 line-clamp-2 font-body text-[0.88rem] font-normal leading-snug text-white/95 sm:text-[0.95rem] lg:text-[1.03rem]">
-                      "James rebuilt me from scratch."
-                    </p>
-                    <p class="mt-2 m-0 min-w-0 font-body text-[0.86rem] font-semibold leading-tight text-white sm:text-[1rem] lg:text-[1.05rem]">Tom R.<span class="mx-1.5 text-white/45">&middot;</span><span class="font-normal text-white/72">Lawyer, London</span></p>
-                    <div class="proof-approved-tags mt-2 flex flex-wrap items-center justify-start gap-1.5 sm:mt-3 sm:gap-2">
-                      <span class="proof-approved-tag inline-block max-w-full rounded-[0.65rem] border border-white/25 bg-black/15 px-[0.45rem] py-[0.18rem] text-left font-body text-[0.5rem] font-medium uppercase leading-snug tracking-[0.08em] text-white/85 sm:max-w-none sm:rounded-full sm:px-[0.62rem] sm:py-[0.22rem] sm:text-[0.6rem] sm:leading-normal sm:tracking-[0.1em]">Recovered from injury</span>
-                      <span class="proof-approved-tag inline-block max-w-full rounded-[0.65rem] border border-white/25 bg-black/15 px-[0.45rem] py-[0.18rem] text-left font-body text-[0.5rem] font-medium uppercase leading-snug tracking-[0.08em] text-white/85 sm:max-w-none sm:rounded-full sm:px-[0.62rem] sm:py-[0.22rem] sm:text-[0.6rem] sm:leading-normal sm:tracking-[0.1em]">Built strength</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    class="proof-approved-play absolute left-1/2 top-1/2 z-20 flex h-[4.25rem] w-[4.25rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/35 text-[#f0f0f0] shadow-[0_0_0_1px_rgba(100,200,255,0.12)] backdrop-blur-[2px] transition-[transform,background-color,border-color] duration-200 hover:scale-[1.04] hover:border-[#6eb8ff]/45 hover:bg-black/45"
-                    aria-label="Play video"
-                    data-home-demo-play
-                  >
-                    <svg class="proof-approved-icon-play ml-0.5 h-9 w-9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                      <polygon points="6,3 20,12 6,21"></polygon>
-                    </svg>
-                    <svg class="proof-approved-icon-pause hidden h-9 w-9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                      <rect x="6" y="4" width="4.5" height="16"></rect>
-                      <rect x="13.5" y="4" width="4.5" height="16"></rect>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </article>
-          </div>
-
-          <div class="flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 lg:p-[4rem_2.5rem] xl:p-[5rem_4rem]">
-            <div class="border-b border-rule pb-8">
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <span class="font-body text-[0.85rem] font-semibold uppercase tracking-[0.06em] text-ink">Star rating</span>
-                <div class="flex flex-wrap items-center justify-end gap-3">
-                  <span class="font-body text-[1rem] leading-none tracking-tight text-[#F3B71B]" aria-hidden="true">★★★★★</span>
-                  <span class="border border-rule bg-white px-[0.65rem] py-1 font-body text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-slate shrink-0">Low trust</span>
-                </div>
-              </div>
-              <p class="mt-5 m-0 font-serif text-[1.02rem] font-light italic leading-body text-slate">
-                A number with no name behind it. It tells you nothing about who, or why.
-              </p>
-              <div class="mt-6 h-[3px] w-full bg-rule">
-                <div class="h-full bg-very-muted" style="width: 20%"></div>
-              </div>
-            </div>
-
-            <div class="border-b border-rule py-8">
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <span class="font-body text-[0.85rem] font-semibold uppercase tracking-[0.06em] text-ink">Written testimonial</span>
-                <span class="border border-blue/20 bg-blue-light px-[0.65rem] py-1 font-body text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-blue shrink-0">Moderate trust</span>
-              </div>
-              <p class="mt-5 m-0 font-serif text-[1.02rem] font-light italic leading-body text-slate">
-                Anyone could have written it. Nobody can prove otherwise.
-              </p>
-              <div class="mt-6 h-[3px] w-full bg-rule">
-                <div class="h-full bg-blue/45" style="width: 50%"></div>
-              </div>
-            </div>
-
-            <div class="border-b border-rule pt-8 lg:border-b-0 lg:pb-0">
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <span class="font-body text-[0.85rem] font-semibold uppercase tracking-[0.06em] text-blue">Forma testimonial</span>
-                <span class="border border-blue/20 bg-blue-light px-[0.65rem] py-1 font-body text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-blue shrink-0">Undeniable</span>
-              </div>
-              <p class="mt-5 m-0 font-serif text-[1.02rem] font-light italic leading-body text-blue">
-                A face. A name. A job. Unrehearsed words on camera, sent by a unique link only a real client could receive. The one signal that cannot be gamed.
-              </p>
-              <div class="mt-6 h-[4px] w-full bg-rule">
-                <div class="h-full w-full bg-blue"></div>
-              </div>
-            </div>
-          </div>
+  <section id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="label blue">How it works</p>
+        <h2>Live within <em>a week</em></h2>
+        <p>No filming kit, no editing, no website build. Your clients do the talking and your page builds itself.</p>
+      </div>
+      <div class="steps">
+        <div class="srow">
+          <div><h3>Send five links</h3><p>Create your page and send your unique link to the five clients who love training with you. Ten minutes, start to finish.</p></div>
         </div>
-
-        <div class="border-t border-rule bg-white px-6 py-section sm:px-page lg:min-h-[min(42vh,32rem)] lg:flex lg:flex-col lg:justify-center">
-          <div class="mx-auto grid w-full max-w-[92rem] gap-10 lg:grid-cols-12 lg:items-start lg:gap-x-14 lg:gap-y-10 xl:gap-x-28">
-            <h2 class="m-0 text-balance font-display text-[clamp(2rem,4.8vw,3.85rem)] leading-[0.95] tracking-[0.02em] text-ink lg:col-span-5 xl:col-span-4">
-              Your reputation, captured before it fades.
-            </h2>
-            <div class="lg:col-span-7 xl:col-span-8 lg:pt-1">
-              <p class="m-0 max-w-none font-serif text-[clamp(1.05rem,1.85vw,1.25rem)] font-light italic leading-[1.75] text-slate">
-                Your best clients are already saying it. Forma gives you a personal page at thisisforma.co.uk/[your-name] where all your testimonials live permanently.
-              </p>
-              <div class="mt-10 flex flex-wrap gap-3 md:gap-3.5">
-                <span class="font-body text-[0.76rem] font-medium tracking-wide-5 text-blue border border-blue/20 bg-blue-light px-[1.05rem] py-[0.52rem]">Permanent</span>
-                <span class="font-body text-[0.76rem] font-medium tracking-wide-5 text-blue border border-blue/20 bg-blue-light px-[1.05rem] py-[0.52rem]">Shareable anywhere</span>
-                <span class="font-body text-[0.76rem] font-medium tracking-wide-5 text-blue border border-blue/20 bg-blue-light px-[1.05rem] py-[0.52rem]">Builds over time</span>
-                <span class="font-body text-[0.76rem] font-medium tracking-wide-5 text-blue border border-blue/20 bg-blue-light px-[1.05rem] py-[0.52rem]">Nothing goes live without you</span>
-              </div>
-            </div>
-          </div>
+        <div class="srow">
+          <div><h3>They film 15 seconds</h3><p>Three prompts guide them: where they started, what changed, what they'd tell someone considering you. No account, no app.</p></div>
+        </div>
+        <div class="srow">
+          <div><h3>You approve</h3><p>Forma transcribes each video and suggests pull quotes. You pick one and approve. Nothing goes live without you.</p></div>
+        </div>
+        <div class="srow">
+          <div><h3>Share everywhere</h3><p>Instagram bio, WhatsApp, embedded on your website. Every testimonial is yours, permanently, wherever you train.</p></div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section id="pricing" style="padding-top:0;">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="label blue">Pricing</p>
+        <h2>One plan. <em>Everything included.</em></h2>
+      </div>
+      <div class="pricing-box">
+        <div class="price">£29<small>per month · first month free</small></div>
+        <ul>
+          <li>Your page at thisisforma.co.uk/your-name</li>
+          <li>Unlimited video testimonials</li>
+          <li>Transcripts and suggested pull quotes</li>
+          <li>Outcome tags clients can filter</li>
+          <li>Milestone prompts</li>
+          <li>Approve before anything goes live</li>
+        </ul>
+        <a class="btn" href="{% url 'accounts:register' %}">Start now</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq" style="padding-top:0;">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="label blue">Questions</p>
+        <h2>Want to know more?</h2>
+      </div>
+      <details>
+        <summary>Will my clients actually film themselves?</summary>
+        <p class="answer">The ones who love training with you will. The link opens straight to camera with three prompts on screen, so there's nothing to figure out and nothing to download. The best moment to ask is right after a milestone: a goal hit, a race finished, a six month anniversary. Forma prompts you at exactly those moments.</p>
+      </details>
+      <details>
+        <summary>What if I don't like a video?</summary>
+        <p class="answer">Nothing goes live without your approval. Every submission lands in your dashboard first, where you watch it, pick a pull quote, and decide. You're in control of everything on your page.</p>
+      </details>
+      <details>
+        <summary>How is this different from Google reviews?</summary>
+        <p class="answer">A Google review is a star rating from a profile nobody can verify. A Forma testimonial is a real client, on camera, with their name and job, talking about a specific outcome. It can't be faked at scale, and it answers the question a star rating never does: someone like me, with my problem, got a result.</p>
+      </details>
+      <details>
+        <summary>Do I need a website?</summary>
+        <p class="answer">No. Your Proof page is a complete, professional page on its own: your photo, where you train, your specialisms, and your testimonials. If you do have a website, you can embed your Proof wall on it with one line of code.</p>
+      </details>
+      <details>
+        <summary>I'm fully booked. Why would I need this?</summary>
+        <p class="answer">That's exactly when to capture it. Right now you have no permanent record of what you've built. When a client moves away, your rates go up, or a corporate asks for references, you'd be starting from zero. Forma records your reputation while you're at your best, not when you need it.</p>
+      </details>
+      <details>
+        <summary>How much does it cost?</summary>
+        <p class="answer">£29 a month, with the first month free and no commitment. There's no commission and no cut of your sessions. One client converted by your Proof page covers the subscription for the year.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="final" style="padding-top:1rem;">
+    <div class="wrap">
+      <h2>Let your clients <em>do the talking.</em></h2>
+      <p>Your best clients are already saying it. Give them somewhere to say it on camera.</p>
+      <a class="btn" href="{% url 'accounts:register' %}">Start your Proof page</a>
     </div>
   </section>
 
   <script>
-  (function () {
-    var card = document.querySelector('[data-home-demo-card]');
-    if (!card) return;
-    var video = card.querySelector('[data-home-demo-video]');
-    var button = card.querySelector('[data-home-demo-play]');
-    var playIcon = card.querySelector('.proof-approved-icon-play');
-    var pauseIcon = card.querySelector('.proof-approved-icon-pause');
-    var meta = card.querySelector('[data-home-demo-meta]');
-    if (!video || !button || !playIcon || !pauseIcon) return;
-
-    var isTouchUi =
-      window.matchMedia('(max-width: 768px)').matches ||
-      window.matchMedia('(hover: none), (pointer: coarse)').matches;
-    var isPlaying = !video.paused && !video.ended;
-    var isHovering = false;
-
-    function render() {
-      if (meta) {
-        var hideMeta = isPlaying || (!isTouchUi && isHovering);
-        meta.classList.toggle('opacity-0', hideMeta);
-        card.classList.toggle('proof-approved-card--meta-hidden', hideMeta);
-      }
-      var showButton = isTouchUi ? !isPlaying : (!isPlaying || isHovering);
-      var showPause = !isTouchUi && isPlaying && isHovering;
-      button.classList.toggle('hidden', !showButton);
-      playIcon.classList.toggle('hidden', showPause);
-      pauseIcon.classList.toggle('hidden', !showPause);
-      button.setAttribute('aria-label', showPause ? 'Pause video' : 'Play video');
-    }
-
-    function setHoverState(hovering) {
-      if (isTouchUi) return;
-      isHovering = hovering;
-      render();
-    }
-
-    button.addEventListener('click', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!video.paused) {
-        video.pause();
-        return;
-      }
-      video.muted = false;
-      var playPromise = video.play();
-      if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(function () {
-          isPlaying = false;
-          render();
-        });
-      }
+    document.querySelectorAll('.demo-card').forEach(function(card){
+      var v=card.querySelector('video'),b=card.querySelector('.play');
+      if(!v||!b)return;
+      b.addEventListener('click',function(){if(v.paused){v.muted=false;v.play();b.style.display='none';}});
+      v.addEventListener('pause',function(){b.style.display='flex';});
+      v.addEventListener('ended',function(){b.style.display='flex';});
+      v.addEventListener('click',function(){if(!v.paused)v.pause();});
     });
-    card.addEventListener('mouseenter', function () {
-      setHoverState(true);
-    });
-    card.addEventListener('mouseleave', function () {
-      setHoverState(false);
-    });
-    card.addEventListener('pointerenter', function () {
-      setHoverState(true);
-    });
-    card.addEventListener('pointerleave', function () {
-      setHoverState(false);
-    });
-    card.addEventListener('mouseover', function () {
-      setHoverState(true);
-    });
-    card.addEventListener('mouseout', function () {
-      setHoverState(false);
-    });
-    video.addEventListener('click', function () {
-      if (!video.paused) {
-        video.pause();
-      }
-    });
-    video.addEventListener('play', function () {
-      isPlaying = true;
-      render();
-    });
-    video.addEventListener('pause', function () {
-      isPlaying = false;
-      render();
-    });
-    video.addEventListener('ended', function () {
-      isPlaying = false;
-      render();
-    });
-    render();
-  })();
   </script>
-
-  <section class="border-t border-rule bg-[#EEF3FF] px-6 py-14 sm:px-10 md:px-16">
-    <div class="mx-auto w-full max-w-5xl">
-      <p class="mb-5 flex items-center gap-2.5 font-body text-[0.58rem] font-semibold uppercase tracking-[0.2em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
-        How it works
-      </p>
-      <div class="rounded-none border border-rule bg-white p-6 sm:p-9">
-        <ol class="m-0 list-none p-0">
-          <li class="relative flex gap-4 pb-8 sm:gap-6">
-            <div class="relative z-[1] mt-0.5 flex h-14 w-14 shrink-0 items-center justify-center text-blue">
-              <svg viewBox="0 0 24 24" class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-                <path d="M10 14a5 5 0 0 1 0-7l1.5-1.5a5 5 0 1 1 7 7L17 14"></path>
-                <path d="M14 10a5 5 0 0 1 0 7L12.5 18.5a5 5 0 1 1-7-7L7 10"></path>
-              </svg>
-            </div>
-            <div class="absolute left-7 top-16 h-[calc(100%-2.4rem)] w-px bg-rule"></div>
-            <div>
-              <p class="m-0 font-body text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-blue">01</p>
-              <p class="mt-1 mb-1 font-display text-[clamp(1.15rem,3.2vw,2rem)] leading-[0.95] tracking-[0.02em] text-ink">Share your link</p>
-              <p class="m-0 font-serif text-[0.92rem] font-light italic leading-[1.6] text-slate sm:whitespace-nowrap sm:text-[clamp(0.9rem,1.1vw,1.02rem)]">
-                Every PT gets a unique link. Send it to a client who loves what you do together.
-              </p>
-            </div>
-          </li>
-
-          <li class="relative flex gap-4 pb-8 sm:gap-6">
-            <div class="relative z-[1] mt-0.5 flex h-14 w-14 shrink-0 items-center justify-center text-blue">
-              <svg viewBox="0 0 24 24" class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-                <rect x="3" y="7" width="13" height="10" rx="2"></rect>
-                <path d="M16 10l5-3v10l-5-3z"></path>
-              </svg>
-            </div>
-            <div class="absolute left-7 top-16 h-[calc(100%-2.4rem)] w-px bg-rule"></div>
-            <div>
-              <p class="m-0 font-body text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-blue">02</p>
-              <p class="mt-1 mb-1 font-display text-[clamp(1.15rem,3.2vw,2rem)] leading-[0.95] tracking-[0.02em] text-ink">They film 15 seconds</p>
-              <p class="m-0 font-serif text-[0.92rem] font-light italic leading-[1.6] text-slate sm:whitespace-nowrap sm:text-[clamp(0.9rem,1.1vw,1.02rem)]">
-                Three simple prompts guide them. No account needed. Done on their phone in under 1 minute.
-              </p>
-            </div>
-          </li>
-
-          <li class="relative flex gap-4 pb-8 sm:gap-6">
-            <div class="relative z-[1] mt-0.5 flex h-14 w-14 shrink-0 items-center justify-center text-blue">
-              <svg viewBox="0 0 24 24" class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-                <path d="M5 12l5 5L20 7"></path>
-              </svg>
-            </div>
-            <div class="absolute left-7 top-16 h-[calc(100%-2.4rem)] w-px bg-rule"></div>
-            <div>
-              <p class="m-0 font-body text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-blue">03</p>
-              <p class="mt-1 mb-1 font-display text-[clamp(1.15rem,3.2vw,2rem)] leading-[0.95] tracking-[0.02em] text-ink">Approve and go live</p>
-              <p class="m-0 font-serif text-[0.92rem] font-light italic leading-[1.6] text-slate sm:whitespace-nowrap sm:text-[clamp(0.9rem,1.1vw,1.02rem)]">
-                Forma pulls three quote suggestions. You pick one, approve, and it's live on your Proof page.
-              </p>
-            </div>
-          </li>
-
-          <li class="relative flex gap-4 sm:gap-6">
-            <div class="relative z-[1] mt-0.5 flex h-14 w-14 shrink-0 items-center justify-center text-blue">
-              <svg viewBox="0 0 24 24" class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-                <path d="M4 12h11"></path>
-                <path d="M11 5l7 7-7 7"></path>
-              </svg>
-            </div>
-            <div>
-              <p class="m-0 font-body text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-blue">04</p>
-              <p class="mt-1 mb-1 font-display text-[clamp(1.15rem,3.2vw,2rem)] leading-[0.95] tracking-[0.02em] text-ink">Share everywhere</p>
-              <p class="m-0 font-serif text-[0.92rem] font-light italic leading-[1.6] text-slate sm:whitespace-nowrap sm:text-[clamp(0.9rem,1.1vw,1.02rem)]">
-                Put your Proof page in your Instagram bio. Repost individual clips to your feed. Your clients' words travel with you everywhere.
-              </p>
-            </div>
-          </li>
-        </ol>
-      </div>
-    </div>
-  </section>
 </div>
+{% endblock %}
+
+{% block site_footer %}
+<footer class="home-footer">
+  <span class="logo">Forma</span>
+  <nav class="legal" aria-label="Legal">
+    <a href="{% url 'pages:privacy' %}">Privacy</a>
+    <a href="{% url 'pages:terms' %}">Terms</a>
+  </nav>
+</footer>
 {% endblock %}
