@@ -44,6 +44,7 @@ from .forms import (
     OnboardingStep6InstagramForm,
     OnboardingStep7ReviewsForm,
     ProofDetailsForm,
+    ProofProfileSetupForm,
     ProofVideoUploadForm,
     ProfileEnquiryForm,
     StaffTrainerCreateForm,
@@ -87,6 +88,7 @@ from .stripe_keep_profile import (
     stripe_configured,
 )
 from .onboarding_meta import ONBOARDING_STEPS, TAB_LABELS
+from .profile_completion import profile_checklist_items, profile_outstanding_items, save_proof_profile_setup
 from .profile_display import (
     media_storage_preconnect_origin,
     non_empty_client_reviews,
@@ -96,6 +98,17 @@ from .profile_display import (
     specialism_display_items,
     training_location_items,
     visible_price_tiers,
+    proof_contact_email,
+    proof_contact_phone,
+    proof_hero_media_mode,
+    proof_location_strap,
+    proof_trains_in_labels,
+    proof_area_labels,
+    proof_primary_gym_label,
+    proof_location_strapline,
+    proof_location_byline_segments,
+    proof_specialism_titles,
+    proof_intro_video_pull_quote,
 )
 from .posters import poster_bytes_from_video_file, resolve_ffmpeg_binary
 
@@ -222,21 +235,23 @@ def _normalize_quote_candidates(raw_candidates) -> list[str]:
     return out
 
 
-def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> tuple[list[str], str]:
+def _suggested_quotes_from_stored_video(video_name: str, *, log_context: str) -> tuple[list[str], str]:
     api_key = (getattr(settings, 'OPENAI_API_KEY', '') or '').strip()
     if not api_key:
         return [], ProofTestimonial.QUOTE_STATUS_SKIPPED
-    filename = (submission.video.name or '').strip()
+    filename = (video_name or '').strip()
+    if not filename:
+        return [], ProofTestimonial.QUOTE_STATUS_FAILED
     ext = os.path.splitext(filename)[1].lower()
     supported_exts = {'.flac', '.m4a', '.mp3', '.mp4', '.mpeg', '.mpga', '.oga', '.ogg', '.wav', '.webm'}
     upload_filename = os.path.basename(filename) or 'audio_upload'
     upload_bytes = b''
     source_bytes = b''
     try:
-        with default_storage.open(submission.video.name, 'rb') as video_file:
+        with default_storage.open(filename, 'rb') as video_file:
             source_bytes = video_file.read()
     except Exception:
-        logger.exception('Could not read submission media for testimonial %s', submission.pk)
+        logger.exception('Could not read media for quote generation (%s)', log_context)
         return [], ProofTestimonial.QUOTE_STATUS_FAILED
     if ext in supported_exts:
         upload_bytes = source_bytes
@@ -245,7 +260,7 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> tup
         output_path = ''
         ffmpeg_bin = resolve_ffmpeg_binary()
         if not ffmpeg_bin:
-            logger.warning('No ffmpeg binary available; cannot transcode .mov for testimonial %s', submission.pk)
+            logger.warning('No ffmpeg binary available; cannot transcode .mov for %s', log_context)
             return [], ProofTestimonial.QUOTE_STATUS_FAILED
         try:
             with tempfile.NamedTemporaryFile(delete=False, suffix='.mov') as in_tmp:
@@ -297,7 +312,7 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> tup
                 upload_bytes = out_fh.read()
             upload_filename = f'{os.path.splitext(upload_filename)[0]}.m4a'
         except Exception:
-            logger.warning('Failed to transcode .mov for testimonial %s', submission.pk)
+            logger.warning('Failed to transcode .mov for %s', log_context)
             return [], ProofTestimonial.QUOTE_STATUS_FAILED
         finally:
             if input_path and os.path.exists(input_path):
@@ -305,7 +320,7 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> tup
             if output_path and os.path.exists(output_path):
                 os.remove(output_path)
     else:
-        logger.info('Skipping AI quote generation for unsupported extension: %s', ext or '(none)')
+        logger.info('Skipping AI quote generation for unsupported extension: %s (%s)', ext or '(none)', log_context)
         return [], ProofTestimonial.QUOTE_STATUS_SKIPPED
     if not upload_bytes:
         return [], ProofTestimonial.QUOTE_STATUS_FAILED
@@ -342,8 +357,15 @@ def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> tup
             return quotes, ProofTestimonial.QUOTE_STATUS_COMPLETE
         return [], ProofTestimonial.QUOTE_STATUS_FAILED
     except Exception:
-        logger.exception('AI quote generation failed for testimonial %s', submission.pk)
+        logger.exception('AI quote generation failed for %s', log_context)
         return [], ProofTestimonial.QUOTE_STATUS_FAILED
+
+
+def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> tuple[list[str], str]:
+    return _suggested_quotes_from_stored_video(
+        submission.video.name,
+        log_context=f'testimonial {submission.pk}',
+    )
 
 
 def _generate_and_store_suggested_quotes(submission_id: int) -> None:
@@ -414,6 +436,78 @@ def _enqueue_suggested_quotes_generation(submission_id: int) -> None:
         name=f'proof-quote-generator-{submission_id}',
     )
     worker.start()
+
+
+def _generate_and_store_intro_video_quotes(profile_id: int) -> None:
+    close_old_connections()
+    print(f'[intro-quotes] worker started for profile={profile_id}', flush=True)
+    try:
+        try:
+            profile = TrainerProfile.objects.get(pk=profile_id)
+        except TrainerProfile.DoesNotExist:
+            print(f'[intro-quotes] profile missing id={profile_id}', flush=True)
+            return
+        if not profile.intro_video or not profile.intro_video.name:
+            print(f'[intro-quotes] profile={profile_id} has no welcome video', flush=True)
+            return
+        TrainerProfile.objects.filter(pk=profile_id).update(
+            intro_video_quote_generation_status=ProofTestimonial.QUOTE_STATUS_PROCESSING,
+            intro_video_quote_generation_updated_at=timezone.now(),
+        )
+        suggested_quotes, quote_status = _suggested_quotes_from_stored_video(
+            profile.intro_video.name,
+            log_context=f'profile intro video {profile_id}',
+        )
+        update_fields = ['intro_video_quote_generation_status', 'intro_video_quote_generation_updated_at']
+        profile.refresh_from_db(fields=['intro_video'])
+        if not profile.intro_video or not profile.intro_video.name:
+            return
+        if suggested_quotes:
+            profile.intro_video_suggested_quotes = suggested_quotes
+            profile.intro_video_pull_quote = suggested_quotes[0][:120]
+            profile.intro_video_quote_generation_status = quote_status
+            update_fields.extend(['intro_video_suggested_quotes', 'intro_video_pull_quote'])
+        else:
+            profile.intro_video_quote_generation_status = quote_status
+        profile.intro_video_quote_generation_updated_at = timezone.now()
+        profile.save(update_fields=update_fields)
+        print(
+            f'[intro-quotes] profile={profile_id} status={quote_status} quotes={len(suggested_quotes)}',
+            flush=True,
+        )
+    except OperationalError:
+        logger.warning('Intro quote generation worker could not update profile %s due to DB lock', profile_id)
+    except Exception:
+        logger.exception('Intro quote generation worker crashed for profile %s', profile_id)
+
+
+def _enqueue_intro_video_quotes_generation(profile_id: int) -> None:
+    TrainerProfile.objects.filter(pk=profile_id).update(
+        intro_video_suggested_quotes=[],
+        intro_video_pull_quote='',
+        intro_video_quote_generation_status=ProofTestimonial.QUOTE_STATUS_PENDING,
+        intro_video_quote_generation_updated_at=timezone.now(),
+    )
+    worker = threading.Thread(
+        target=_generate_and_store_intro_video_quotes,
+        args=(profile_id,),
+        daemon=True,
+        name=f'intro-quote-generator-{profile_id}',
+    )
+    worker.start()
+
+
+def _maybe_enqueue_intro_video_quotes(profile: TrainerProfile) -> None:
+    if not profile.intro_video or not profile.intro_video.name:
+        return
+    if profile.intro_video_suggested_quotes:
+        return
+    status = (profile.intro_video_quote_generation_status or ProofTestimonial.QUOTE_STATUS_PENDING).strip()
+    if status != ProofTestimonial.QUOTE_STATUS_PENDING:
+        return
+    if profile.intro_video_quote_generation_updated_at:
+        return
+    _enqueue_intro_video_quotes_generation(profile.pk)
 
 
 def _generate_and_store_submission_poster(submission_id: int) -> None:
@@ -735,6 +829,16 @@ def my_account(request):
         request.user.is_superuser and request.GET.get('legacy_profile_admin') == '1'
     )
 
+    profile = (
+        TrainerProfile.objects.filter(pk=profile.pk)
+        .select_related('primary_area', 'user')
+        .prefetch_related('gyms__location_area', 'specialisms__catalog')
+        .first()
+        or profile
+    )
+    profile_checklist = profile_checklist_items(profile)
+    profile_outstanding_items_list = [item for item in profile_checklist if not item['complete']]
+
     return render(
         request,
         'pages/my_account.html',
@@ -748,6 +852,41 @@ def my_account(request):
             'testimonial_total_count': testimonial_total_count,
             'testimonial_to_review_count': testimonial_to_review_count,
             'show_legacy_profile_admin': show_legacy_profile_admin,
+            'profile_checklist_items': profile_checklist,
+            'profile_outstanding_items': profile_outstanding_items_list,
+        },
+    )
+
+
+@login_required
+def proof_profile_setup(request):
+    profile = _get_profile_fast(request.user)
+    profile = (
+        TrainerProfile.objects.filter(pk=profile.pk)
+        .select_related('primary_area', 'user')
+        .prefetch_related('gyms__location_area', 'specialisms__catalog')
+        .first()
+        or profile
+    )
+
+    if request.method == 'POST':
+        form = ProofProfileSetupForm(request.POST, request.FILES, profile=profile)
+        if form.is_valid():
+            intro_video_uploaded = save_proof_profile_setup(profile, form.cleaned_data)
+            if intro_video_uploaded:
+                _enqueue_intro_video_quotes_generation(profile.pk)
+            messages.success(request, 'Your Proof profile has been updated.')
+            return redirect('pages:my_account')
+    else:
+        form = ProofProfileSetupForm(profile=profile)
+
+    return render(
+        request,
+        'pages/proof_profile_setup.html',
+        {
+            'form': form,
+            'profile': profile,
+            'profile_outstanding_items': profile_outstanding_items(profile),
         },
     )
 
@@ -1532,33 +1671,81 @@ def proof_notifications(request):
     )
 
 
-@login_required
-def proof_testimonials_page(request):
-    profile = _get_profile(request.user)
-    approved_testimonials = _approved_proof_testimonials_for_profile(profile)
-    approved_count = len(approved_testimonials)
+def _profile_queryset_for_proof_page():
+    return TrainerProfile.objects.select_related(
+        'user',
+        'primary_area__district',
+    ).prefetch_related(
+        Prefetch(
+            'specialisms',
+            queryset=TrainerSpecialism.objects.select_related('catalog'),
+        ),
+        Prefetch(
+            'gyms',
+            queryset=TrainerGym.objects.select_related('location_area__district'),
+        ),
+    )
+
+
+def _load_profile_for_proof_page(profile: TrainerProfile) -> TrainerProfile:
+    return _profile_queryset_for_proof_page().get(pk=profile.pk)
+
+
+def _proof_page_context(request, profile: TrainerProfile, *, approved_testimonials, approved_count: int) -> dict:
+    trainer_gyms = [
+        g for g in profile.gyms.all()
+        if (g.name or '').strip() or g.location_area_id
+    ]
+    is_owner = request.user.is_authenticated and request.user.pk == profile.user_id
     average_rating = 0.0
     average_rating_rounded = 0
     if approved_count:
         total = sum(int(item.star_rating or 0) for item in approved_testimonials)
         average_rating = round(total / approved_count, 1)
         average_rating_rounded = max(1, min(5, int(round(average_rating))))
+
+    return {
+        'profile': profile,
+        'approved_testimonials': approved_testimonials,
+        'approved_count': approved_count,
+        'average_rating': average_rating,
+        'average_rating_rounded': average_rating_rounded,
+        'media_preconnect_origin': media_storage_preconnect_origin(),
+        'specialism_items': specialism_display_items(profile),
+        'trainer_gyms': trainer_gyms,
+        'proof_area_labels': proof_area_labels(profile),
+        'proof_primary_gym': proof_primary_gym_label(profile),
+        'proof_location_strapline': proof_location_strapline(profile),
+        'proof_location_byline_segments': proof_location_byline_segments(profile),
+        'proof_specialism_titles': proof_specialism_titles(profile),
+        'proof_intro_video_pull_quote': proof_intro_video_pull_quote(profile),
+        'trains_in_labels': proof_trains_in_labels(profile, trainer_gyms),
+        'proof_location_strap': proof_location_strap(profile),
+        'proof_hero_media_mode': proof_hero_media_mode(profile),
+        'proof_contact_phone': proof_contact_phone(profile),
+        'proof_contact_email': proof_contact_email(profile),
+        'is_proof_owner': is_owner,
+    }
+
+
+@login_required
+def proof_testimonials_page(request):
+    profile = _load_profile_for_proof_page(_get_profile_fast(request.user))
+    _maybe_enqueue_intro_video_quotes(profile)
+
+    approved_testimonials = _approved_proof_testimonials_for_profile(profile)
+    approved_count = len(approved_testimonials)
     outcome_label_map = dict(ProofOutcomeTag.objects.filter(is_active=True).values_list('key', 'label'))
     for item in approved_testimonials:
         item.outcome_labels = [outcome_label_map.get(k, str(k).replace('_', ' ').title()) for k in (item.outcome_tags or [])]
 
-    return render(
+    context = _proof_page_context(
         request,
-        'pages/proof_testimonials_page.html',
-        {
-            'profile': profile,
-            'approved_testimonials': approved_testimonials,
-            'approved_count': approved_count,
-            'average_rating': average_rating,
-            'average_rating_rounded': average_rating_rounded,
-            'media_preconnect_origin': media_storage_preconnect_origin(),
-        },
+        profile,
+        approved_testimonials=approved_testimonials,
+        approved_count=approved_count,
     )
+    return render(request, 'pages/proof_testimonials_page.html', context)
 
 
 @login_required
@@ -1912,10 +2099,7 @@ def trainer_public_proof_page(request, profile_slug: str, url_key: str | None = 
     if url_key is not None and len(url_key) != 5:
         raise Http404
 
-    qs = TrainerProfile.objects.select_related(
-        'user',
-        'primary_area__district',
-    )
+    qs = _profile_queryset_for_proof_page()
     if url_key is not None:
         profile = get_object_or_404(
             qs,
@@ -1930,33 +2114,23 @@ def trainer_public_proof_page(request, profile_slug: str, url_key: str | None = 
             forma_made=False,
         )
 
+    _maybe_enqueue_intro_video_quotes(profile)
+
     approved_testimonials = _approved_proof_testimonials_for_profile(profile)
     approved_count = len(approved_testimonials)
-    average_rating = 0.0
-    average_rating_rounded = 0
-    if approved_count:
-        total = sum(int(item.star_rating or 0) for item in approved_testimonials)
-        average_rating = round(total / approved_count, 1)
-        average_rating_rounded = max(1, min(5, int(round(average_rating))))
-
     outcome_label_map = dict(ProofOutcomeTag.objects.filter(is_active=True).values_list('key', 'label'))
     for item in approved_testimonials:
         item.outcome_labels = [
             outcome_label_map.get(k, str(k).replace('_', ' ').title()) for k in (item.outcome_tags or [])
         ]
 
-    return render(
+    context = _proof_page_context(
         request,
-        'pages/proof_testimonials_page.html',
-        {
-            'profile': profile,
-            'approved_testimonials': approved_testimonials,
-            'approved_count': approved_count,
-            'average_rating': average_rating,
-            'average_rating_rounded': average_rating_rounded,
-            'media_preconnect_origin': media_storage_preconnect_origin(),
-        },
+        profile,
+        approved_testimonials=approved_testimonials,
+        approved_count=approved_count,
     )
+    return render(request, 'pages/proof_testimonials_page.html', context)
 
 
 def _pricing_row_has_content(cleaned: dict | None) -> bool:

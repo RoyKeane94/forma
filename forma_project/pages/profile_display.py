@@ -93,6 +93,192 @@ def specialism_display_items(profile):
     return out
 
 
+def proof_hero_media_mode(profile) -> str:
+    if profile.show_intro_video and profile.intro_video:
+        return 'video'
+    if profile.portrait:
+        return 'photo'
+    return 'empty'
+
+
+def proof_area_labels(profile) -> list[str]:
+    """Primary area plus up to two other catalogue areas for the Proof hero."""
+    labels: list[str] = []
+    seen: set[str] = set()
+    if profile.primary_area_id:
+        name = (profile.primary_area.name or '').strip()
+        if name:
+            key = name.casefold()
+            seen.add(key)
+            labels.append(name)
+    for name in profile.other_areas_display_labels():
+        if len(labels) >= 3:
+            break
+        key = name.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        labels.append(name)
+    if labels:
+        return labels
+    for gym in sorted(profile.gyms.all(), key=lambda g: (g.order, g.pk)):
+        if not gym.location_area_id:
+            continue
+        name = (gym.location_area.name or '').strip()
+        if not name:
+            continue
+        key = name.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        labels.append(name)
+        if len(labels) >= 3:
+            break
+    return labels
+
+
+def proof_primary_gym_label(profile) -> str:
+    """Primary gym name from profile setup (order 1)."""
+    gyms = sorted(profile.gyms.all(), key=lambda g: (g.order, g.pk))
+    for gym in gyms:
+        if gym.order != 1:
+            continue
+        return (gym.name or '').strip()
+    return ''
+
+
+def proof_location_strapline(profile) -> str:
+    """Gym and areas in one line, e.g. Rixo, Twickenham & Acton Green."""
+    parts: list[str] = []
+    seen: set[str] = set()
+
+    gym = proof_primary_gym_label(profile)
+    if gym:
+        parts.append(gym)
+        seen.add(gym.casefold())
+
+    for label in proof_area_labels(profile):
+        key = label.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        parts.append(label)
+
+    if not parts:
+        return ''
+    if len(parts) == 1:
+        return parts[0]
+    if len(parts) == 2:
+        return f'{parts[0]} & {parts[1]}'
+    return ', '.join(parts[:-1]) + f' & {parts[-1]}'
+
+
+def _join_areas_natural(areas: list[str]) -> str:
+    if not areas:
+        return ''
+    if len(areas) == 1:
+        return areas[0]
+    if len(areas) == 2:
+        return f'{areas[0]} and {areas[1]}'
+    return ', '.join(areas[:-1]) + f' and {areas[-1]}'
+
+
+def proof_location_byline_segments(profile) -> list[dict]:
+    """Composed location byline segments for the Proof hero (emphasis flags for template)."""
+    gym = proof_primary_gym_label(profile)
+    seen = {gym.casefold()} if gym else set()
+    areas: list[str] = []
+    for label in proof_area_labels(profile):
+        key = label.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        areas.append(label)
+
+    if gym and areas:
+        return [
+            {'text': 'Personal trainer at ', 'emph': False},
+            {'text': gym, 'emph': True},
+            {'text': ', working across ', 'emph': False},
+            {'text': _join_areas_natural(areas), 'emph': True},
+            {'text': '.', 'emph': False},
+        ]
+    if gym:
+        return [
+            {'text': 'Personal trainer at ', 'emph': False},
+            {'text': gym, 'emph': True},
+            {'text': '.', 'emph': False},
+        ]
+    if areas:
+        return [
+            {'text': 'Personal trainer working across ', 'emph': False},
+            {'text': _join_areas_natural(areas), 'emph': True},
+            {'text': '.', 'emph': False},
+        ]
+    return []
+
+
+def proof_specialism_titles(profile) -> list[str]:
+    return [item['title'] for item in specialism_display_items(profile)]
+
+
+def proof_intro_video_pull_quote(profile) -> str:
+    quote = (getattr(profile, 'intro_video_pull_quote', '') or '').strip()
+    if quote:
+        return quote
+    suggested = getattr(profile, 'intro_video_suggested_quotes', None) or []
+    for item in suggested:
+        candidate = (str(item or '')).strip()
+        if candidate:
+            return candidate
+    return ''
+
+
+def proof_trains_in_labels(profile, trainer_gyms) -> list[str]:
+    """Legacy combined labels — prefer proof_area_labels + proof_primary_gym_label."""
+    areas = proof_area_labels(profile)
+    gym = proof_primary_gym_label(profile)
+    if areas or gym:
+        labels = list(areas)
+        if gym:
+            labels.append(gym)
+        return labels
+    labels: list[str] = []
+    for gym in trainer_gyms:
+        name = (gym.name or '').strip()
+        if name:
+            labels.append(name)
+            continue
+        if gym.location_area_id:
+            labels.append(gym.location_area.name)
+    if labels:
+        return labels
+    if profile.primary_area_id:
+        labels.append(profile.primary_area.name)
+    labels.extend(profile.other_areas_display_labels())
+    return labels
+
+
+def proof_location_strap(profile) -> str:
+    if profile.primary_area_id:
+        district = profile.postcode_district
+        if district:
+            return f'{profile.primary_area.name}, {district}'
+        return profile.primary_area.name
+    labels = profile.other_areas_display_labels()
+    if labels:
+        return labels[0]
+    return ''
+
+
+def proof_contact_phone(profile) -> str:
+    return (profile.contact_phone or '').strip()
+
+
+def proof_contact_email(profile) -> str:
+    return (profile.contact_email or profile.user.email or '').strip()
+
+
 def visible_price_tiers(profile):
     out = []
     for t in profile.price_tiers.filter(order__lte=10):

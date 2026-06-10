@@ -238,6 +238,27 @@ class TrainerProfile(models.Model):
             'If there is no clip yet, visitors see a placeholder.'
         ),
     )
+    intro_video_suggested_quotes = models.JSONField(
+        default=_empty_list,
+        blank=True,
+        help_text='AI-suggested pull-quote candidates from the welcome video.',
+    )
+    intro_video_pull_quote = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text='Pull quote shown on the welcome video caption.',
+    )
+    intro_video_quote_generation_status = models.CharField(
+        max_length=16,
+        default='pending',
+        blank=True,
+        help_text='Background quote generation state for the welcome video.',
+    )
+    intro_video_quote_generation_updated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Last time welcome-video quote generation status changed.',
+    )
     client_reviews = models.JSONField(
         default=_empty_list,
         blank=True,

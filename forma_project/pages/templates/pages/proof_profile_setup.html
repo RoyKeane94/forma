@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Proof profile — Forma{% endblock %}
+{% block content_shell_class %}min-h-screen{% endblock %}
+
+{% block extra_head %}
+  {% include "accounts/partials/auth_home_styles.html" %}
+{% endblock %}
+
+{% block body %}
+<div class="account-page profile-setup-page">
+  <div class="wrap profile-setup-wrap">
+    <p class="label blue auth-anim-1"><a href="{% url 'pages:my_account' %}" class="textlink">Account</a></p>
+    <h1 class="auth-anim-2">Proof profile</h1>
+    <p class="lede auth-anim-2">Add the details that appear at the top of your public Proof page.</p>
+
+    {% if profile_outstanding_items %}
+    <div class="card card--compact auth-anim-3">
+      <p class="card-label">Still to add</p>
+      <ul class="progress-list">
+        {% for item in profile_outstanding_items %}
+        <li class="active">
+          <span class="progress-dot" aria-hidden="true"></span>
+          <span>{{ item.label }}</span>
+          <a href="{{ item.url }}" class="progress-meta textlink">Go to section</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="profile-setup-form auth-anim-3">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="alert" role="alert">
+        <p class="alert-title">Please check the form</p>
+        {{ form.non_field_errors }}
+      </div>
+      {% endif %}
+
+      <section id="name" class="setup-section card">
+        <p class="card-label">Your name</p>
+        <p class="field-help">Shown at the top of your public Proof page.</p>
+
+        <div class="field">
+          <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}<ul class="errorlist">{% for e in form.first_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="field">
+          <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}<ul class="errorlist">{% for e in form.last_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      </section>
+
+      <section id="media" class="setup-section card">
+        <p class="card-label">Photo or video</p>
+        <p class="field-help">Choose one to show beside your name on your Proof page.</p>
+
+        <div class="field">
+          <span class="field-label field-label--flush">{{ form.hero_media.label }}</span>
+          <div class="radio-row">
+            {% for radio in form.hero_media %}
+            <label class="radio-option">{{ radio.tag }} {{ radio.choice_label }}</label>
+            {% endfor %}
+          </div>
+          {% if form.hero_media.errors %}<ul class="errorlist">{% for e in form.hero_media.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="field">
+          <label for="{{ form.portrait.id_for_label }}">{{ form.portrait.label }}</label>
+          {{ form.portrait }}
+          {% if profile.portrait %}<p class="field-help field-help--tight">Current photo uploaded.</p>{% endif %}
+          {% if form.portrait.errors %}<ul class="errorlist">{% for e in form.portrait.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="field">
+          {% include "partials/welcome_video_recorder.html" %}
+        </div>
+      </section>
+
+      <section id="location" class="setup-section card">
+        <p class="card-label">Where you train</p>
+        <p class="field-help">Select up to three areas, then your primary gym.</p>
+
+        {% include "partials/forma_combobox_field.html" with field=form.primary_area %}
+        {% include "partials/forma_combobox_field.html" with field=form.area_2 %}
+        {% include "partials/forma_combobox_field.html" with field=form.area_3 %}
+
+        <div class="field">
+          <label for="{{ form.primary_gym.id_for_label }}">{{ form.primary_gym.label }}</label>
+          {{ form.primary_gym }}
+          {% if form.primary_gym.errors %}<ul class="errorlist">{% for e in form.primary_gym.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      </section>
+
+      <section id="specialisms" class="setup-section card">
+        <p class="card-label">Specialisms</p>
+        <p class="field-help">Up to three areas you specialise in.</p>
+
+        {% include "partials/forma_combobox_field.html" with field=form.specialism_1 %}
+        {% include "partials/forma_combobox_field.html" with field=form.specialism_2 %}
+        {% include "partials/forma_combobox_field.html" with field=form.specialism_3 %}
+      </section>
+
+      <section id="contact" class="setup-section card">
+        <p class="card-label">Contact</p>
+        <p class="field-help">Shown as copy buttons on your Proof page so prospects can reach you.</p>
+
+        <div class="field">
+          <label for="{{ form.contact_email.id_for_label }}">{{ form.contact_email.label }}</label>
+          {{ form.contact_email }}
+          {% if form.contact_email.errors %}<ul class="errorlist">{% for e in form.contact_email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="field">
+          <label for="{{ form.contact_phone.id_for_label }}">{{ form.contact_phone.label }}</label>
+          {{ form.contact_phone }}
+          {% if form.contact_phone.errors %}<ul class="errorlist">{% for e in form.contact_phone.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <label class="checkbox-row">
+          {{ form.free_consultation }}
+          <span>{{ form.free_consultation.label }}</span>
+        </label>
+      </section>
+
+      <div class="form-actions">
+        <button type="submit" class="btn">Save profile</button>
+        <a href="{% url 'pages:my_account' %}" class="textlink">Back to account</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% include "partials/forma_combobox_script.html" %}
+{% endblock %}
+
+{% block site_footer %}
+  {% include "accounts/partials/auth_home_footer.html" %}
+{% endblock %}

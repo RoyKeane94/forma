@@ -1382,6 +1382,212 @@ class OnboardingStep7ReviewsForm(forms.Form):
         profile.save(update_fields=['client_reviews', 'featured_review_slot'])
 
 
+class ProofHeroMediaForm(forms.ModelForm):
+    hero_media = forms.ChoiceField(
+        choices=(('photo', 'Profile photo'), ('video', 'Welcome video')),
+        required=False,
+        widget=forms.RadioSelect,
+        label='Show on your Proof page',
+    )
+
+    class Meta:
+        model = TrainerProfile
+        fields = ('portrait', 'intro_video')
+        widgets = {
+            'portrait': forms.ClearableFileInput(
+                attrs={
+                    'class': FORMA_INPUT_CLASS,
+                    'accept': 'image/*',
+                }
+            ),
+            'intro_video': forms.ClearableFileInput(
+                attrs={
+                    'class': FORMA_INPUT_CLASS,
+                    'accept': 'video/*',
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['portrait'].required = False
+        self.fields['intro_video'].required = False
+        if self.instance.pk:
+            if self.instance.show_intro_video and self.instance.intro_video:
+                self.fields['hero_media'].initial = 'video'
+            else:
+                self.fields['hero_media'].initial = 'photo'
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        mode = self.cleaned_data.get('hero_media') or 'photo'
+        if mode == 'video' and profile.intro_video:
+            profile.show_intro_video = True
+        else:
+            profile.show_intro_video = False
+        if commit:
+            profile.save()
+        return profile
+
+
+def _specialism_catalog_queryset():
+    return SpecialismCatalog.objects.filter(is_active=True).order_by('title')
+
+
+def _area_model_choice_field(*, label: str, empty_label: str = 'Select area') -> forms.ModelChoiceField:
+    return forms.ModelChoiceField(
+        queryset=_primary_area_queryset(),
+        required=False,
+        empty_label=empty_label,
+        label=label,
+        widget=forms.Select(attrs={'class': FORMA_INPUT_CLASS}),
+    )
+
+
+def _specialism_model_choice_field(*, label: str, empty_label: str = 'Select specialism') -> forms.ModelChoiceField:
+    return forms.ModelChoiceField(
+        queryset=_specialism_catalog_queryset(),
+        required=False,
+        empty_label=empty_label,
+        label=label,
+        widget=forms.Select(attrs={'class': FORMA_INPUT_CLASS}),
+    )
+
+
+class ProofProfileSetupForm(forms.Form):
+    """Focused Proof profile setup — name, photo/video, location, specialisms, contact."""
+
+    first_name = forms.CharField(
+        max_length=150,
+        label='First name',
+        widget=forms.TextInput(attrs=_forma_attrs({'autocomplete': 'given-name'})),
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        label='Last name',
+        widget=forms.TextInput(attrs=_forma_attrs({'autocomplete': 'family-name'})),
+    )
+    hero_media = forms.ChoiceField(
+        choices=(('photo', 'Profile photo'), ('video', 'Welcome video')),
+        required=False,
+        widget=forms.RadioSelect,
+        label='Show on your Proof page',
+    )
+    portrait = forms.FileField(
+        required=False,
+        label='Profile photo',
+        widget=forms.ClearableFileInput(
+            attrs={'class': FORMA_INPUT_CLASS, 'accept': 'image/*'},
+        ),
+    )
+    intro_video = forms.FileField(
+        required=False,
+        label='Welcome video',
+        widget=forms.FileInput(
+            attrs={'class': FORMA_INPUT_CLASS, 'accept': 'video/*', 'id': 'id_intro_video'},
+        ),
+    )
+    primary_area = _area_model_choice_field(label='First area', empty_label='Select area')
+    area_2 = _area_model_choice_field(label='Second area', empty_label='Select area (optional)')
+    area_3 = _area_model_choice_field(label='Third area', empty_label='Select area (optional)')
+    primary_gym = forms.CharField(
+        max_length=200,
+        required=False,
+        label='Primary gym',
+        widget=forms.TextInput(attrs=_forma_attrs({'placeholder': 'e.g. Virgin Active, Battersea'})),
+    )
+    specialism_1 = _specialism_model_choice_field(label='Specialism')
+    specialism_2 = _specialism_model_choice_field(label='Second specialism', empty_label='Select specialism (optional)')
+    specialism_3 = _specialism_model_choice_field(label='Third specialism', empty_label='Select specialism (optional)')
+    contact_email = forms.EmailField(
+        required=False,
+        label='Email for enquiries',
+        widget=forms.EmailInput(attrs=_forma_attrs({'autocomplete': 'email'})),
+    )
+    contact_phone = forms.CharField(
+        max_length=40,
+        required=False,
+        label='Phone for enquiries',
+        widget=forms.TextInput(attrs=_forma_attrs({'autocomplete': 'tel'})),
+    )
+    free_consultation = forms.BooleanField(
+        required=False,
+        label='Offer a free consultation',
+    )
+
+    def __init__(self, *args, profile=None, **kwargs):
+        self.profile = profile
+        super().__init__(*args, **kwargs)
+        if profile is not None:
+            self._load_initial(profile)
+
+    def _load_initial(self, profile):
+        user = getattr(profile, 'user', None)
+        first = (profile.first_name or '').strip()
+        last = (profile.last_name or '').strip()
+        if not first and user is not None:
+            first = (user.first_name or '').strip()
+        if not last and user is not None:
+            last = (user.last_name or '').strip()
+        self.fields['first_name'].initial = first
+        self.fields['last_name'].initial = last
+        if profile.show_intro_video and profile.intro_video:
+            self.fields['hero_media'].initial = 'video'
+        else:
+            self.fields['hero_media'].initial = 'photo'
+
+        area_ids: list[int] = []
+        if profile.primary_area_id:
+            area_ids.append(profile.primary_area_id)
+        for label in profile.other_areas_display_labels():
+            if len(area_ids) >= 3:
+                break
+            match = PrimaryArea.objects.filter(name__iexact=label).first()
+            if match and match.pk not in area_ids:
+                area_ids.append(match.pk)
+        area_fields = ('primary_area', 'area_2', 'area_3')
+        for field_name, area_id in zip(area_fields, area_ids, strict=False):
+            self.fields[field_name].initial = area_id
+
+        gym = profile.gyms.filter(order=1).first()
+        if gym and (gym.name or '').strip():
+            self.fields['primary_gym'].initial = gym.name.strip()
+
+        specs = list(
+            profile.specialisms.filter(order__lte=3)
+            .select_related('catalog')
+            .order_by('order')
+        )
+        for index, spec in enumerate(specs, start=1):
+            if spec.catalog_id:
+                self.fields[f'specialism_{index}'].initial = spec.catalog_id
+        self.fields['contact_email'].initial = (profile.contact_email or '').strip()
+        self.fields['contact_phone'].initial = (profile.contact_phone or '').strip()
+        self.fields['free_consultation'].initial = profile.free_consultation
+
+    def clean(self):
+        data = super().clean()
+        seen_areas: set[int] = set()
+        for field_name in ('primary_area', 'area_2', 'area_3'):
+            area = data.get(field_name)
+            if area is None:
+                continue
+            if area.pk in seen_areas:
+                self.add_error(field_name, 'You already selected this area.')
+            else:
+                seen_areas.add(area.pk)
+        seen_specs: set[int] = set()
+        for index in range(1, 4):
+            cat = data.get(f'specialism_{index}')
+            if cat is None:
+                continue
+            if cat.pk in seen_specs:
+                self.add_error(f'specialism_{index}', 'You already selected this specialism.')
+            else:
+                seen_specs.add(cat.pk)
+        return data
+
+
 class StaffTrainerCreateForm(forms.Form):
     first_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs=_forma_attrs({'autocomplete': 'given-name'})))
     last_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs=_forma_attrs({'autocomplete': 'family-name'})))

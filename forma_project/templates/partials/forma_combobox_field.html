@@ -1,0 +1,13 @@
+<div class="field">
+  <div
+    class="forma-combobox forma-combobox--sentence forma-combobox--fluid"
+    data-forma-combobox
+    data-combobox-placeholder="{{ placeholder|default:field.field.empty_label|default:'Select…'|escape }}"
+  >
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+  </div>
+  {% if field.errors %}
+  <ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+  {% endif %}
+</div>

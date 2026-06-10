@@ -1,15 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}The Proof · Forma{% endblock %}
+{% block title %}The Proof · {{ profile.first_name }} {{ profile.last_name }} · Forma{% endblock %}
+{% block content_shell_class %}min-h-screen{% endblock %}
+
 {% block extra_head %}
   {% if media_preconnect_origin %}
   <link rel="preconnect" href="{{ media_preconnect_origin }}" crossorigin>
   {% endif %}
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <style>
     body {
       background-color: #ffffff !important;
       background-image: none !important;
     }
+    .proof-wall-section{border-top:1px solid #ebebe9;padding:1.5rem 0 4rem;}
+    .proof-wall-section .wrap{max-width:66rem;margin:0 auto;padding:0 1.5rem;}
+    @media(min-width:768px){.proof-wall-section .wrap{padding:0 3rem;}}
+    .proof-wall-section .proof-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:2rem;}
+    .proof-wall-section .proof-head h2{font-family:'Instrument Sans',sans-serif;font-size:clamp(2rem,4vw,2.9rem);font-weight:500;letter-spacing:-0.025em;margin:0;}
+    .proof-wall-section .proof-head h2 b{font-family:'Instrument Serif',serif;font-weight:400;color:#1f49d6;}
+    .proof-wall-section .proof-head .count{font-size:0.85rem;color:#5c5f66;}
     @media (max-width: 639px) {
       .proof-page-title {
         font-size: clamp(1.65rem, 6.2vw, 2.4rem) !important;
@@ -23,30 +33,30 @@
         width: 1.15rem !important;
         height: 1.15rem !important;
       }
+      .proof-wall-section{padding:2rem 0 2.5rem;}
     }
   </style>
 {% endblock %}
 
+{% block site_footer %}
+  {% include "accounts/partials/auth_home_footer.html" %}
+{% endblock %}
+
 {% block body %}
-<section class="proof-wall relative overflow-hidden bg-white pt-4 pb-8 sm:pt-6 sm:pb-10">
-  <div class="relative z-[2] mx-auto w-full max-w-[100rem] px-2.5 sm:px-page">
-  <header class="mb-4 flex flex-col items-center gap-1 text-center sm:mb-5 sm:gap-1.5">
-    <h1 class="proof-page-title m-0 font-display text-[clamp(1.85rem,7vw,3.25rem)] font-normal leading-[0.95] tracking-[0.05em] text-blue sm:text-[clamp(2.1rem,5vw,3.5rem)]">The Proof</h1>
-    <p class="m-0 font-body text-[0.78rem] font-medium uppercase tracking-wide-4 text-ink sm:text-[0.82rem]">
-      {% if profile.first_name or profile.last_name %}
-        {{ profile.first_name }} {{ profile.last_name }}
-      {% else %}
-        Trainer profile
-      {% endif %}
-    </p>
-    {% if approved_count >= 20 %}
-    <div class="mt-0.5" aria-label="{{ approved_count }} verified testimonials">
-      <span class="font-body text-[0.65rem] font-semibold uppercase tracking-wide-3 text-muted sm:text-[0.68rem]">
-        {{ approved_count }} verified testimonial{% if approved_count != 1 %}s{% endif %}
+{% include "pages/includes/proof_profile_hero.html" %}
+
+<section class="proof-wall proof-wall-section relative overflow-hidden bg-white" id="proof-wall">
+  <div class="relative z-[2] wrap">
+    <div class="proof-head">
+      <h2>The <b>Proof</b></h2>
+      <span class="count">
+        {% if approved_count %}
+        {{ approved_count }} verified video review{% if approved_count != 1 %}s{% endif %} · approved by {{ profile.first_name|default:"this trainer" }}, filmed by clients
+        {% else %}
+        Verified video reviews appear here once approved
+        {% endif %}
       </span>
     </div>
-    {% endif %}
-  </header>
 
   {% if approved_testimonials %}
   <div class="mx-auto grid w-full grid-cols-2 gap-x-2 gap-y-5 sm:max-w-[48rem] sm:gap-x-7 sm:gap-y-7 lg:max-w-[72rem] xl:grid-cols-3">

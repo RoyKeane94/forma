@@ -1,0 +1,434 @@
+<div class="welcome-video-recorder" id="welcome-video-recorder">
+  <p class="field-label field-label--flush">{{ form.intro_video.label }}</p>
+  <p class="field-help">Record a short welcome video. Work through the three prompts in order.</p>
+
+  <ol class="welcome-video-prompts" aria-label="Recording prompts">
+    <li data-prompt-index="0">Who are you, and who do you help?</li>
+    <li data-prompt-index="1">What's it like to train with you?</li>
+    <li data-prompt-index="2">What happens when someone gets in touch?</li>
+  </ol>
+
+  <div class="welcome-video-stage hidden" id="welcome-video-stage" aria-hidden="true">
+    <video id="welcome-video-live" class="welcome-video-preview welcome-video-preview--live" playsinline autoplay muted></video>
+    <div class="welcome-video-overlay">
+      <p class="welcome-video-prompt-active" id="welcome-video-active-prompt"></p>
+      <p class="welcome-video-recording-badge hidden" id="welcome-video-recording-badge">Recording</p>
+    </div>
+  </div>
+
+  <div class="welcome-video-playback-wrap hidden" id="welcome-video-playback-wrap">
+    <video id="welcome-video-playback" class="welcome-video-preview" playsinline controls></video>
+  </div>
+
+  <div class="welcome-video-success hidden" id="welcome-video-success" role="status">
+    <p class="welcome-video-success__title">Welcome video saved</p>
+    <p class="welcome-video-success__text">Your video is ready. Scroll down and click <strong>Save profile</strong> to keep it on your Proof page.</p>
+  </div>
+  {% if profile.intro_video %}
+  <p class="field-help field-help--tight" id="welcome-video-existing-note">You already have a welcome video saved on your Proof page.</p>
+  {% endif %}
+
+  <div class="welcome-video-actions welcome-video-actions--idle" id="welcome-video-actions-idle">
+    <button type="button" class="btn" id="welcome-video-record-btn">Record welcome video</button>
+    <button type="button" class="btn btn-outline" id="welcome-video-upload-btn">Upload welcome video</button>
+  </div>
+
+  <div class="welcome-video-actions hidden" id="welcome-video-actions-preview">
+    <button type="button" class="btn" id="welcome-video-start-btn">Start recording</button>
+  </div>
+
+  <div class="welcome-video-actions hidden" id="welcome-video-actions-recording">
+    <button type="button" class="btn btn-outline" id="welcome-video-stop-btn">Stop recording</button>
+  </div>
+
+  <div class="welcome-video-actions hidden" id="welcome-video-actions-review">
+    <button type="button" class="btn" id="welcome-video-use-btn">Use this video</button>
+    <button type="button" class="textlink" id="welcome-video-retake-btn">Rerecord</button>
+  </div>
+
+  <p class="welcome-video-error hidden" id="welcome-video-error" role="alert"></p>
+
+  <input type="file" name="intro_video" id="id_intro_video" accept="video/*" class="welcome-video-file-input">
+  <div class="visually-hidden">
+    <input type="file" id="welcome-video-upload-input" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v">
+    <input type="file" id="welcome-video-capture-input" accept="video/*" capture="user">
+  </div>
+  {% if form.intro_video.errors %}
+  <ul class="errorlist">{% for e in form.intro_video.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  var PROMPTS = [
+    'Who are you, and who do you help?',
+    "What's it like to train with you?",
+    'What happens when someone gets in touch?',
+  ];
+
+  var recorderRoot = document.getElementById('welcome-video-recorder');
+  if (!recorderRoot) return;
+
+  var introInput = document.getElementById('id_intro_video') ||
+    recorderRoot.querySelector('input[name="intro_video"]');
+  var uploadInput = document.getElementById('welcome-video-upload-input');
+  var captureInput = document.getElementById('welcome-video-capture-input');
+  var stage = document.getElementById('welcome-video-stage');
+  var liveVideo = document.getElementById('welcome-video-live');
+  var playbackWrap = document.getElementById('welcome-video-playback-wrap');
+  var playbackVideo = document.getElementById('welcome-video-playback');
+  var activePrompt = document.getElementById('welcome-video-active-prompt');
+  var recordingBadge = document.getElementById('welcome-video-recording-badge');
+  var actionsIdle = document.getElementById('welcome-video-actions-idle');
+  var actionsPreview = document.getElementById('welcome-video-actions-preview');
+  var actionsRecording = document.getElementById('welcome-video-actions-recording');
+  var actionsReview = document.getElementById('welcome-video-actions-review');
+  var recordBtn = document.getElementById('welcome-video-record-btn');
+  var startBtn = document.getElementById('welcome-video-start-btn');
+  var stopBtn = document.getElementById('welcome-video-stop-btn');
+  var useBtn = document.getElementById('welcome-video-use-btn');
+  var retakeBtn = document.getElementById('welcome-video-retake-btn');
+  var uploadBtn = document.getElementById('welcome-video-upload-btn');
+  var errorEl = document.getElementById('welcome-video-error');
+  var successEl = document.getElementById('welcome-video-success');
+  var existingNote = document.getElementById('welcome-video-existing-note');
+  var promptItems = recorderRoot.querySelectorAll('.welcome-video-prompts li');
+  var saveProfileBtn = document.querySelector('.profile-setup-form button[type="submit"]');
+
+  if (introInput) introInput.classList.add('welcome-video-file-input');
+
+  var mediaStream = null;
+  var mediaRecorder = null;
+  var recordedChunks = [];
+  var recordedBlob = null;
+  var promptTimer = null;
+  var promptIndex = 0;
+  var uiState = 'idle';
+  var canUseInBrowserRecorder =
+    typeof MediaRecorder !== 'undefined' &&
+    !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+  function showError(message) {
+    if (!errorEl) return;
+    if (!message) {
+      errorEl.textContent = '';
+      errorEl.classList.add('hidden');
+      return;
+    }
+    errorEl.textContent = message;
+    errorEl.classList.remove('hidden');
+  }
+
+  function setHidden(el, hidden) {
+    if (!el) return;
+    el.classList.toggle('hidden', hidden);
+  }
+
+  function setUiState(state) {
+    uiState = state;
+    var isIdle = state === 'idle';
+    var isPreview = state === 'preview';
+    var isRecording = state === 'recording';
+    var isReview = state === 'review';
+    var isSaved = state === 'saved';
+
+    setHidden(stage, !(isPreview || isRecording));
+    if (stage) stage.setAttribute('aria-hidden', isPreview || isRecording ? 'false' : 'true');
+
+    setHidden(playbackWrap, !(isReview || isSaved));
+    if (playbackWrap) playbackWrap.setAttribute('aria-hidden', isReview || isSaved ? 'false' : 'true');
+
+    setHidden(recordingBadge, !isRecording);
+    setHidden(successEl, !isSaved);
+
+    setHidden(actionsIdle, !(isIdle || isSaved));
+    setHidden(actionsPreview, !isPreview);
+    setHidden(actionsRecording, !isRecording);
+    setHidden(actionsReview, !isReview);
+  }
+
+  function selectWelcomeVideoMode() {
+    var videoRadio = document.querySelector('input[name="hero_media"][value="video"]');
+    if (videoRadio) videoRadio.checked = true;
+  }
+
+  function setPromptHighlight(index) {
+    promptItems.forEach(function (item, i) {
+      item.classList.toggle('is-active', i === index);
+      item.classList.toggle('is-done', i < index);
+    });
+    if (activePrompt) activePrompt.textContent = PROMPTS[index] || PROMPTS[PROMPTS.length - 1];
+  }
+
+  function clearPromptHighlight() {
+    promptItems.forEach(function (item) {
+      item.classList.remove('is-active', 'is-done');
+    });
+  }
+
+  function startPromptRotation() {
+    promptIndex = 0;
+    setPromptHighlight(0);
+    if (promptTimer) window.clearInterval(promptTimer);
+    promptTimer = window.setInterval(function () {
+      if (promptIndex < PROMPTS.length - 1) {
+        promptIndex += 1;
+        setPromptHighlight(promptIndex);
+      }
+    }, 12000);
+  }
+
+  function stopPromptRotation() {
+    if (promptTimer) {
+      window.clearInterval(promptTimer);
+      promptTimer = null;
+    }
+    clearPromptHighlight();
+  }
+
+  function stopMediaStream() {
+    if (!mediaStream) return;
+    mediaStream.getTracks().forEach(function (track) {
+      track.stop();
+    });
+    mediaStream = null;
+  }
+
+  function clearPlayback() {
+    if (!playbackVideo) return;
+    playbackVideo.pause();
+    playbackVideo.removeAttribute('src');
+    playbackVideo.load();
+  }
+
+  function cleanupRecordingSession() {
+    stopPromptRotation();
+    stopMediaStream();
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      try { mediaRecorder.stop(); } catch (e) {}
+    }
+    mediaRecorder = null;
+    recordedChunks = [];
+    if (liveVideo) {
+      liveVideo.pause();
+      liveVideo.srcObject = null;
+    }
+  }
+
+  function resetToIdle() {
+    cleanupRecordingSession();
+    recordedBlob = null;
+    clearPlayback();
+    setHidden(successEl, true);
+    if (existingNote) existingNote.classList.remove('hidden');
+    setUiState('idle');
+  }
+
+  function attachLivePreview(stream) {
+    if (!liveVideo) return Promise.reject(new Error('Missing preview element'));
+    liveVideo.srcObject = stream;
+    liveVideo.muted = true;
+    liveVideo.playsInline = true;
+    return new Promise(function (resolve, reject) {
+      function tryPlay() {
+        var playAttempt = liveVideo.play();
+        if (playAttempt && typeof playAttempt.then === 'function') {
+          playAttempt.then(resolve).catch(reject);
+          return;
+        }
+        resolve();
+      }
+      if (liveVideo.readyState >= 1) {
+        tryPlay();
+        return;
+      }
+      liveVideo.onloadedmetadata = function () {
+        tryPlay();
+      };
+    });
+  }
+
+  function blobToFile(blob) {
+    var ext = (blob.type || '').indexOf('mp4') !== -1 ? 'mp4' : 'webm';
+    return new File([blob], 'welcome-video.' + ext, { type: blob.type || 'video/webm' });
+  }
+
+  function attachFileToInput(file) {
+    if (!file) {
+      showError('No video file to attach.');
+      return false;
+    }
+    if (!introInput) {
+      showError('Could not attach the video. Refresh the page and try again.');
+      return false;
+    }
+    try {
+      var dt = new DataTransfer();
+      dt.items.add(file);
+      introInput.files = dt.files;
+    } catch (e) {
+      showError('Your browser could not attach the video. Try uploading instead.');
+      return false;
+    }
+    if (!introInput.files || !introInput.files.length) {
+      showError('Your browser could not attach the video. Try uploading instead.');
+      return false;
+    }
+    introInput.dispatchEvent(new Event('change', { bubbles: true }));
+    selectWelcomeVideoMode();
+    if (existingNote) existingNote.classList.add('hidden');
+    showError('');
+    return true;
+  }
+
+  function pickRecorderMimeType() {
+    var candidates = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm',
+      'video/mp4',
+    ];
+    for (var i = 0; i < candidates.length; i += 1) {
+      if (MediaRecorder.isTypeSupported(candidates[i])) return candidates[i];
+    }
+    return '';
+  }
+
+  function openCameraPreview() {
+    showError('');
+    cleanupRecordingSession();
+    recordedBlob = null;
+    clearPlayback();
+    setHidden(successEl, true);
+
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: true,
+    }).then(function (stream) {
+      mediaStream = stream;
+      if (activePrompt) {
+        activePrompt.textContent = 'Check the frame, then start recording when you are ready.';
+      }
+      return attachLivePreview(stream);
+    }).then(function () {
+      setUiState('preview');
+    }).catch(function () {
+      showError('Camera access is needed to record. Allow access or upload a video instead.');
+      resetToIdle();
+    });
+  }
+
+  function startBrowserRecording() {
+    if (!mediaStream) return;
+    showError('');
+    var mimeType = pickRecorderMimeType();
+    var options = mimeType ? { mimeType: mimeType } : undefined;
+    mediaRecorder = new MediaRecorder(mediaStream, options);
+    recordedChunks = [];
+    mediaRecorder.addEventListener('dataavailable', function (event) {
+      if (event.data && event.data.size > 0) recordedChunks.push(event.data);
+    });
+    mediaRecorder.addEventListener('stop', onRecordingStopped);
+    try {
+      mediaRecorder.start(250);
+      setUiState('recording');
+      startPromptRotation();
+    } catch (err) {
+      showError('Could not start recording in this browser. Upload a video instead.');
+      resetToIdle();
+    }
+  }
+
+  function onRecordingStopped() {
+    stopPromptRotation();
+    stopMediaStream();
+    if (liveVideo) liveVideo.srcObject = null;
+
+    if (!recordedChunks.length) {
+      showError('No video was captured. Try again.');
+      resetToIdle();
+      return;
+    }
+
+    var type = (mediaRecorder && mediaRecorder.mimeType) || 'video/webm';
+    recordedBlob = new Blob(recordedChunks, { type: type });
+    if (playbackVideo) playbackVideo.src = URL.createObjectURL(recordedBlob);
+    setUiState('review');
+  }
+
+  function stopBrowserRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+    }
+  }
+
+  function useRecordedVideo() {
+    if (!recordedBlob) {
+      showError('No recording found. Rerecord and try again.');
+      return;
+    }
+    if (!attachFileToInput(blobToFile(recordedBlob))) return;
+    setUiState('saved');
+    if (saveProfileBtn && typeof saveProfileBtn.scrollIntoView === 'function') {
+      saveProfileBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  function handleUploadedFile(file) {
+    if (!file) return;
+    cleanupRecordingSession();
+    recordedBlob = null;
+    if (!attachFileToInput(file)) return;
+    if (playbackVideo) playbackVideo.src = URL.createObjectURL(file);
+    setUiState('saved');
+    if (saveProfileBtn && typeof saveProfileBtn.scrollIntoView === 'function') {
+      saveProfileBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  function rerecord() {
+    if (introInput) introInput.value = '';
+    setHidden(successEl, true);
+    recordedBlob = null;
+    clearPlayback();
+    openCameraPreview();
+  }
+
+  if (recordBtn) {
+    recordBtn.addEventListener('click', function () {
+      if (canUseInBrowserRecorder) {
+        openCameraPreview();
+        return;
+      }
+      if (captureInput) captureInput.click();
+    });
+  }
+  if (startBtn) startBtn.addEventListener('click', startBrowserRecording);
+  if (stopBtn) stopBtn.addEventListener('click', stopBrowserRecording);
+  if (useBtn) useBtn.addEventListener('click', useRecordedVideo);
+  if (retakeBtn) retakeBtn.addEventListener('click', rerecord);
+  if (uploadBtn) uploadBtn.addEventListener('click', function () {
+    if (uploadInput) uploadInput.click();
+  });
+  if (uploadInput) {
+    uploadInput.addEventListener('change', function () {
+      var file = uploadInput.files && uploadInput.files[0] ? uploadInput.files[0] : null;
+      handleUploadedFile(file);
+      uploadInput.value = '';
+    });
+  }
+  if (captureInput) {
+    captureInput.addEventListener('change', function () {
+      var file = captureInput.files && captureInput.files[0] ? captureInput.files[0] : null;
+      handleUploadedFile(file);
+      captureInput.value = '';
+    });
+  }
+
+  setUiState('idle');
+
+  window.addEventListener('beforeunload', function () {
+    stopMediaStream();
+  });
+})();
+</script>

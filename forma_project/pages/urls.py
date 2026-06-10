@@ -18,6 +18,7 @@ urlpatterns = [
     ),
     path('enquire/', views.profile_enquiry, name='profile_enquiry'),
     path('account/', views.my_account, name='my_account'),
+    path('account/profile/', views.proof_profile_setup, name='proof_profile_setup'),
     path('account/notifications/', views.proof_notifications, name='proof_notifications'),
     path('account/testimonials/edit/', views.proof_testimonials_edit, name='proof_testimonials_edit'),
     path('account/proof/', views.proof_testimonials_page, name='proof_testimonials_page'),

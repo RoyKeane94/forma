@@ -1,0 +1,107 @@
+<script>
+(function () {
+  function optionLabel(opt) {
+    if (!opt) return '';
+    return (opt.textContent || opt.innerText || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function enhanceCombobox(wrap) {
+    if (!wrap || wrap.classList.contains('forma-combobox--enhanced')) return;
+    var sel = wrap.querySelector('select');
+    if (!sel || wrap.querySelector('[data-combobox-trigger]')) return;
+
+    var origId = sel.id || ('forma_combobox_' + Math.random().toString(36).slice(2, 9));
+    var listId = origId + '_listbox';
+    var placeholder = wrap.getAttribute('data-combobox-placeholder') || 'Select…';
+    var labelEl = wrap.querySelector('label[for="' + origId + '"]');
+    if (labelEl && !labelEl.id) labelEl.id = origId + '_label';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = origId;
+    sel.id = origId + '_native';
+    btn.setAttribute('data-combobox-trigger', '');
+    btn.setAttribute('aria-haspopup', 'listbox');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', listId);
+    if (labelEl && labelEl.id) btn.setAttribute('aria-labelledby', labelEl.id);
+
+    var labelSpan = document.createElement('span');
+    labelSpan.className = 'forma-combobox__label forma-combobox__label--placeholder';
+    var chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    chevron.setAttribute('data-combobox-chevron', '');
+    chevron.setAttribute('viewBox', '0 0 24 24');
+    chevron.setAttribute('fill', 'none');
+    chevron.setAttribute('stroke', 'currentColor');
+    chevron.setAttribute('stroke-width', '2');
+    chevron.setAttribute('aria-hidden', 'true');
+    var poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    poly.setAttribute('points', '6 9 12 15 18 9');
+    chevron.appendChild(poly);
+    btn.appendChild(labelSpan);
+    btn.appendChild(chevron);
+
+    var panel = document.createElement('div');
+    panel.id = listId;
+    panel.hidden = true;
+    panel.setAttribute('data-combobox-panel', '');
+    panel.setAttribute('role', 'listbox');
+
+    var isOpen = false;
+
+    function syncTrigger() {
+      var opt = sel.options[sel.selectedIndex];
+      var empty = !sel.value;
+      labelSpan.textContent = empty ? placeholder : optionLabel(opt);
+      labelSpan.classList.toggle('forma-combobox__label--placeholder', empty);
+      Array.prototype.forEach.call(panel.children, function (row) {
+        row.setAttribute('aria-selected', row.getAttribute('data-value') === sel.value ? 'true' : 'false');
+      });
+    }
+
+    function setOpen(open) {
+      isOpen = open;
+      btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      panel.hidden = !isOpen;
+      if (!isOpen) {
+        Array.prototype.forEach.call(panel.children, function (row) {
+          row.removeAttribute('data-active');
+        });
+      }
+    }
+
+    Array.prototype.forEach.call(sel.options, function (opt) {
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.setAttribute('role', 'option');
+      row.setAttribute('data-value', opt.value);
+      row.textContent = optionLabel(opt) || placeholder;
+      row.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        sel.value = row.getAttribute('data-value');
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+        setOpen(false);
+        syncTrigger();
+        btn.focus();
+      });
+      panel.appendChild(row);
+    });
+
+    wrap.insertBefore(btn, sel);
+    wrap.appendChild(panel);
+    wrap.classList.add('forma-combobox--enhanced');
+    syncTrigger();
+
+    sel.addEventListener('change', syncTrigger);
+    btn.addEventListener('click', function () {
+      setOpen(!isOpen);
+    });
+    document.addEventListener('click', function (ev) {
+      if (!isOpen) return;
+      if (!wrap.contains(ev.target)) setOpen(false);
+    });
+  }
+
+  document.querySelectorAll('[data-forma-combobox]').forEach(enhanceCombobox);
+})();
+</script>

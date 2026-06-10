@@ -116,7 +116,7 @@
   .account-page .progress-dot{width:0.45rem;height:0.45rem;border-radius:50%;background:var(--rule);flex-shrink:0;}
   .account-page .progress-list li.done .progress-dot{background:var(--ink);}
   .account-page .progress-list li.active .progress-dot{background:var(--blue);}
-  .account-page .progress-meta{margin-left:auto;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);}
+  .account-page .progress-meta{font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);}
   .account-page .progress-list li.active .progress-meta{color:var(--blue);}
   .account-page .checkbox-row{display:flex;align-items:flex-start;gap:0.65rem;font-size:0.92rem;line-height:1.65;color:var(--ink);}
   .account-page .checkbox-row input{margin-top:0.2rem;accent-color:var(--blue);}
@@ -143,4 +143,70 @@
   .account-page .field-label--flush{margin-top:0;}
   .account-page .field-help--tight{margin:0;}
   .account-page :focus-visible{outline:2px solid var(--blue);outline-offset:3px;}
+
+  .profile-setup-page .profile-setup-wrap{max-width:36rem;}
+  .profile-setup-page .setup-section{margin-bottom:1.25rem;}
+  .profile-setup-page .field{margin-bottom:1.25rem;}
+  .profile-setup-page .field label{display:block;font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink);margin-bottom:0.45rem;}
+  .profile-setup-page .field .errorlist{list-style:none;margin:0.45rem 0 0;padding:0;font-size:0.82rem;color:var(--slate);}
+  .profile-setup-page .forma-input,
+  .profile-setup-page input[type="text"],
+  .profile-setup-page input[type="email"],
+  .profile-setup-page input[type="tel"],
+  .profile-setup-page input[type="file"],
+  .profile-setup-page select{width:100%;border:1px solid var(--rule);background:#fff;border-radius:0.55rem;padding:0.85rem 1rem;font-family:inherit;font-size:0.95rem;color:var(--ink);transition:border-color 0.15s,box-shadow 0.15s;}
+  .profile-setup-page .forma-input:focus,
+  .profile-setup-page input[type="text"]:focus,
+  .profile-setup-page input[type="email"]:focus,
+  .profile-setup-page input[type="tel"]:focus,
+  .profile-setup-page select:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(31,73,214,0.08);}
+  .profile-setup-page .radio-row{display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.5rem;}
+  .profile-setup-page .radio-option{display:inline-flex;align-items:center;gap:0.45rem;font-size:0.92rem;font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink);}
+  .profile-setup-page .radio-option input{accent-color:var(--blue);}
+  .profile-setup-page .alert{border:1px solid var(--rule);background:var(--blue-light);border-radius:0.75rem;padding:1rem 1.1rem;margin-bottom:1.25rem;}
+  .profile-setup-page .alert-title{font-size:0.7rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--blue);margin:0 0 0.55rem;}
+  .profile-setup-page .forma-combobox{position:relative;}
+  .profile-setup-page .forma-combobox label{display:block;font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink);margin-bottom:0.45rem;}
+  .profile-setup-page .forma-combobox select.forma-input{width:100%;}
+  .profile-setup-page .forma-combobox--enhanced select.forma-input{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;opacity:0;pointer-events:none;}
+  .profile-setup-page .forma-combobox [data-combobox-trigger]{display:none;width:100%;align-items:center;justify-content:space-between;gap:0.75rem;border:1px solid var(--rule);background:#fff;border-radius:0.55rem;padding:0.85rem 1rem;text-align:left;font-family:inherit;font-size:0.95rem;font-weight:400;color:var(--ink);cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s;}
+  .profile-setup-page .forma-combobox--enhanced [data-combobox-trigger]{display:flex;}
+  .profile-setup-page .forma-combobox [data-combobox-trigger]:hover{border-color:rgba(31,73,214,0.3);}
+  .profile-setup-page .forma-combobox [data-combobox-trigger]:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(31,73,214,0.08);}
+  .profile-setup-page .forma-combobox [data-combobox-trigger][aria-expanded="true"]{border-color:rgba(31,73,214,0.4);}
+  .profile-setup-page .forma-combobox [data-combobox-trigger] .forma-combobox__label{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .profile-setup-page .forma-combobox [data-combobox-trigger] .forma-combobox__label--placeholder{color:var(--slate);}
+  .profile-setup-page .forma-combobox [data-combobox-chevron]{width:0.875rem;height:0.875rem;flex-shrink:0;color:var(--slate);transition:transform 0.15s;}
+  .profile-setup-page .forma-combobox [data-combobox-trigger][aria-expanded="true"] [data-combobox-chevron]{transform:rotate(180deg);}
+  .profile-setup-page .forma-combobox [data-combobox-panel]{position:absolute;left:0;right:0;z-index:120;margin-top:1px;max-height:min(16rem,55vh);overflow-y:auto;border:1px solid var(--rule);border-top:0;background:#fff;border-radius:0 0 0.55rem 0.55rem;padding:0.25rem 0;}
+  .profile-setup-page .forma-combobox [data-combobox-panel][hidden]{display:none;}
+  .profile-setup-page .forma-combobox [data-combobox-panel] [role="option"]{display:block;width:100%;border:0;background:transparent;padding:0.65rem 1rem;text-align:left;font-family:inherit;font-size:0.95rem;color:var(--ink);cursor:pointer;transition:background 0.15s,color 0.15s;}
+  .profile-setup-page .forma-combobox [data-combobox-panel] [role="option"]:hover,
+  .profile-setup-page .forma-combobox [data-combobox-panel] [role="option"][data-active="true"],
+  .profile-setup-page .forma-combobox [data-combobox-panel] [role="option"][aria-selected="true"]{background:var(--blue-light);color:var(--blue);}
+
+  .profile-setup-page .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+  .profile-setup-page .welcome-video-prompts{margin:0 0 1.25rem;padding:0;list-style:none;display:grid;gap:0.65rem;}
+  .profile-setup-page .welcome-video-prompts li{border:1px solid var(--rule);border-radius:0.75rem;padding:0.85rem 1rem;font-size:0.92rem;line-height:1.55;color:var(--slate);transition:border-color 0.15s,background 0.15s,color 0.15s;}
+  .profile-setup-page .welcome-video-prompts li.is-active{border-color:rgba(31,73,214,0.35);background:var(--blue-light);color:var(--ink);font-weight:500;}
+  .profile-setup-page .welcome-video-prompts li.is-done{color:var(--ink);}
+
+  .profile-setup-page .welcome-video-stage,
+  .profile-setup-page .welcome-video-playback-wrap{position:relative;margin:0 0 1rem;border-radius:1rem;overflow:hidden;background:#e6e9ef;}
+  .profile-setup-page .welcome-video-preview{display:block;position:relative;z-index:1;width:100%;min-height:16rem;aspect-ratio:3/4;object-fit:cover;background:#111;}
+  .profile-setup-page .welcome-video-preview--live{transform:scaleX(-1);}
+  .profile-setup-page .welcome-video-overlay{position:absolute;inset:auto 0 0 0;z-index:2;padding:1rem 1.1rem 1.2rem;background:linear-gradient(to top,rgba(0,0,0,0.72),transparent);color:#fff;pointer-events:none;}
+  .profile-setup-page .welcome-video-prompt-active{margin:0;font-family:'Instrument Serif',serif;font-size:1.05rem;line-height:1.45;}
+  .profile-setup-page .welcome-video-recording-badge{margin:0.65rem 0 0;font-size:0.68rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#ffb4b4;}
+  .profile-setup-page .welcome-video-actions{display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem 1rem;margin-top:1rem;}
+  .profile-setup-page .welcome-video-actions.hidden{display:none;}
+  .profile-setup-page .welcome-video-actions .btn-outline{background:#fff;}
+  .account-page .hidden,
+  .profile-setup-page .hidden{display:none;}
+  .profile-setup-page .welcome-video-error{margin:0.75rem 0 0;font-size:0.88rem;line-height:1.55;color:#b42318;}
+  .profile-setup-page .welcome-video-file-input{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;opacity:0;pointer-events:none;}
+  .profile-setup-page .welcome-video-success{margin:0 0 1rem;border:1px solid rgba(31,73,214,0.25);border-radius:0.75rem;background:var(--blue-light);padding:0.9rem 1rem;}
+  .profile-setup-page .welcome-video-success__title{margin:0 0 0.35rem;font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);}
+  .profile-setup-page .welcome-video-success__text{margin:0;font-size:0.92rem;line-height:1.6;color:var(--ink);}
 </style>
