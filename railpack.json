@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "steps": {
+    "packages:mise": {
+      "variables": {
+        "MISE_PYTHON_GITHUB_ATTESTATIONS": "0"
+      }
+    }
+  },
+  "deploy": {
+    "startCommand": "bash start.sh"
+  }
+}

@@ -3,5 +3,8 @@
 [tools]
 python = "3.12.8"
 
+[env]
+MISE_PYTHON_GITHUB_ATTESTATIONS = "0"
+
 [settings]
 python.github_attestations = false
