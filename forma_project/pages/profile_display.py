@@ -207,12 +207,12 @@ def proof_location_byline_segments(profile) -> list[dict]:
             return [
                 {'text': f'{profession} at ', 'emph': False},
                 {'text': gym, 'emph': True},
-                {'text': ', working across ', 'emph': False},
+                {'text': ', working by ', 'emph': False},
                 {'text': _join_areas_natural(areas), 'emph': True},
                 {'text': '.', 'emph': False},
             ]
         return [
-            {'text': 'Working across ', 'emph': False},
+            {'text': 'Working by ', 'emph': False},
             {'text': _join_areas_natural(areas), 'emph': True},
             {'text': '.', 'emph': False},
         ]
@@ -230,12 +230,12 @@ def proof_location_byline_segments(profile) -> list[dict]:
     if areas:
         if profession:
             return [
-                {'text': f'{profession} working across ', 'emph': False},
+                {'text': f'{profession} working by ', 'emph': False},
                 {'text': _join_areas_natural(areas), 'emph': True},
                 {'text': '.', 'emph': False},
             ]
         return [
-            {'text': 'Working across ', 'emph': False},
+            {'text': 'Working by ', 'emph': False},
             {'text': _join_areas_natural(areas), 'emph': True},
             {'text': '.', 'emph': False},
         ]
@@ -256,6 +256,41 @@ def proof_intro_video_pull_quote(profile) -> str:
         if candidate:
             return candidate
     return ''
+
+
+def _proof_testimonial_pull_quote(testimonial) -> str:
+    quote = (getattr(testimonial, 'pull_quote', '') or '').strip()
+    if quote:
+        return quote
+    for item in getattr(testimonial, 'suggested_quotes', None) or []:
+        candidate = (str(item or '')).strip()
+        if candidate:
+            return candidate
+    return ''
+
+
+def proof_hero_client_quote(approved_testimonials) -> dict | None:
+    """First approved testimonial with a pull quote for the Proof hero."""
+    for testimonial in approved_testimonials:
+        quote = _proof_testimonial_pull_quote(testimonial)
+        if not quote:
+            continue
+        first = (testimonial.client_first_name or '').strip()
+        initial = (testimonial.client_last_initial or '').strip()[:1]
+        name = f'{first} {initial}.'.strip() if initial else first
+        detail_parts = []
+        job = (testimonial.client_job_title or '').strip()
+        location = (testimonial.client_location or '').strip()
+        if job:
+            detail_parts.append(job)
+        if location:
+            detail_parts.append(location)
+        return {
+            'quote': quote,
+            'client_name': name,
+            'client_detail': ', '.join(detail_parts),
+        }
+    return None
 
 
 def proof_trains_in_labels(profile, trainer_gyms) -> list[str]:

@@ -110,6 +110,7 @@ from .profile_display import (
     proof_specialism_titles,
     proof_intro_video_pull_quote,
     proof_profession_label,
+    proof_hero_client_quote,
 )
 from .posters import poster_bytes_from_video_file, resolve_ffmpeg_binary
 
@@ -1730,6 +1731,7 @@ def _proof_page_context(request, profile: TrainerProfile, *, approved_testimonia
         'proof_specialism_titles': proof_specialism_titles(profile),
         'proof_intro_video_pull_quote': proof_intro_video_pull_quote(profile),
         'proof_profession_label': proof_profession_label(profile),
+        'proof_hero_client_quote': proof_hero_client_quote(approved_testimonials),
         'trains_in_labels': proof_trains_in_labels(profile, trainer_gyms),
         'proof_location_strap': proof_location_strap(profile),
         'proof_hero_media_mode': proof_hero_media_mode(profile),

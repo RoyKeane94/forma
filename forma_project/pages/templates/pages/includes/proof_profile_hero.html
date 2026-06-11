@@ -17,36 +17,44 @@
   }
   .proof-profile-hero .label{font-size:0.68rem;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--slate,#5c5f66);}
   .proof-profile-hero .label.blue{color:var(--blue,#1f49d6);}
-  .proof-profile-hero .identity-col{display:flex;flex-direction:column;align-items:flex-start;gap:0;max-width:30rem;}
+  .proof-profile-hero .identity-col{display:flex;flex-direction:column;align-items:flex-start;gap:0;max-width:34rem;}
   .proof-profile-hero .identity-col > *{margin:0;}
   .proof-profile-hero .identity-head{display:flex;flex-direction:column;align-items:flex-start;}
   .proof-profile-hero .identity-head > .label{margin:0;}
   .proof-profile-hero .identity-head h1{font-size:clamp(2.35rem,5vw,3.65rem);font-weight:500;letter-spacing:-0.025em;line-height:1.02;margin:2.25rem 0 0;}
-  .proof-profile-hero .identity-head + .byline,
-  .proof-profile-hero .identity-head + .focus-line,
-  .proof-profile-hero .identity-head + .proof-anchor-line{margin-top:0.75rem;}
+  .proof-profile-hero .identity-head + .byline{margin-top:0.75rem;}
   .proof-profile-hero .byline{margin-top:0;font-family:'Instrument Serif',serif;font-size:1.14rem;line-height:1.6;}
-  .proof-profile-hero .byline + .focus-line,
-  .proof-profile-hero .byline + .proof-anchor-line{margin-top:1.25rem;}
+  .proof-profile-hero .byline + .specialism-pills{margin-top:1.25rem;}
   .proof-profile-hero .byline-soft{color:var(--slate,#5c5f66);font-weight:400;}
   .proof-profile-hero .byline-em{color:var(--ink,#0e0f12);font-weight:400;}
-  .proof-profile-hero .focus-line{margin-top:0;font-size:0.9rem;line-height:1.6;color:var(--ink,#0e0f12);}
-  .proof-profile-hero .focus-line + .proof-anchor-line{margin-top:1rem;}
-  .proof-profile-hero .focus-dot{color:var(--blue,#1f49d6);}
-  .proof-profile-hero .proof-anchor-line{margin-top:0;font-size:0.82rem;line-height:1.55;color:var(--slate,#5c5f66);}
+  .proof-profile-hero .specialism-pills{display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:0;}
+  .proof-profile-hero .specialism-pill{display:inline-flex;align-items:center;font-size:0.78rem;font-weight:500;color:var(--blue,#1f49d6);background:var(--blue-light,#eef3ff);border-radius:999px;padding:0.4rem 0.85rem;line-height:1.3;}
+  .proof-profile-hero .specialism-pills + .proof-quote{margin-top:1.35rem;}
+  .proof-profile-hero .byline + .proof-quote{margin-top:1.35rem;}
+  .proof-profile-hero .proof-quote{margin:0;padding:0 0 0 1rem;border:0;border-left:3px solid var(--blue,#1f49d6);}
+  .proof-profile-hero .proof-quote-text{margin:0;font-family:'Instrument Serif',serif;font-size:clamp(1.35rem,2.8vw,1.75rem);line-height:1.35;color:var(--ink,#0e0f12);}
+  .proof-profile-hero .proof-quote-meta{margin:0.65rem 0 0;font-size:0.82rem;line-height:1.55;color:var(--slate,#5c5f66);}
+  .proof-profile-hero .proof-quote-meta a{color:var(--blue,#1f49d6);font-weight:500;text-decoration:none;border-bottom:1px solid rgba(31,73,214,0.35);padding-bottom:1px;}
+  .proof-profile-hero .proof-quote-meta a:hover{border-bottom-color:var(--blue,#1f49d6);}
+  .proof-profile-hero .proof-anchor-line{margin-top:1.25rem;font-size:0.82rem;line-height:1.55;color:var(--slate,#5c5f66);}
   .proof-profile-hero .proof-anchor-line a{color:var(--blue,#1f49d6);font-weight:500;text-decoration:none;border-bottom:1px solid rgba(31,73,214,0.35);padding-bottom:1px;}
   .proof-profile-hero .proof-anchor-line a:hover{border-bottom-color:var(--blue,#1f49d6);}
-  .proof-profile-hero .contact-block{margin-top:2rem;padding-top:1.15rem;border-top:1px solid var(--rule,#ebebe9);}
-  .proof-profile-hero .consult-pill{display:inline-block;margin:0 0 0.7rem;font-size:0.78rem;font-weight:500;color:var(--blue,#1f49d6);background:var(--blue-light,#eef3ff);border-radius:999px;padding:0.38rem 0.8rem;}
-  .proof-profile-hero .contact{display:flex;flex-direction:column;gap:0.5rem;}
-  @media(min-width:820px){.proof-profile-hero .contact{flex-direction:row;flex-wrap:wrap;gap:0.55rem;}}
-  .proof-profile-hero .copy-btn{display:inline-flex;align-items:center;gap:0.55rem;font-family:'Instrument Sans',sans-serif;font-size:0.84rem;font-weight:500;background:#fff;border:1px solid var(--rule,#ebebe9);border-radius:999px;padding:0.55rem 1rem;cursor:pointer;transition:border-color 0.15s,background 0.15s;}
-  .proof-profile-hero .copy-btn:hover{border-color:var(--ink,#0e0f12);}
-  .proof-profile-hero .copy-btn svg{flex:none;color:var(--slate,#5c5f66);}
-  .proof-profile-hero .copy-btn.copied{background:var(--blue-light,#eef3ff);border-color:transparent;color:var(--blue,#1f49d6);}
-  .proof-profile-hero .copy-btn.copied svg{color:var(--blue,#1f49d6);}
-  .proof-profile-hero .copy-btn .hint{font-size:0.72rem;color:var(--slate,#5c5f66);font-weight:400;}
-  .proof-profile-hero .copy-btn.copied .hint{color:var(--blue,#1f49d6);}
+  .proof-profile-hero .proof-quote + .contact-block,
+  .proof-profile-hero .proof-anchor-line + .contact-block,
+  .proof-profile-hero .specialism-pills + .contact-block{margin-top:2rem;}
+  .proof-profile-hero .contact-block{margin-top:2rem;padding-top:1.15rem;border-top:1px solid var(--rule,#ebebe9);width:100%;}
+  .proof-profile-hero .contact-row{display:flex;flex-direction:column;align-items:flex-start;gap:0.85rem;}
+  @media(min-width:640px){.proof-profile-hero .contact-row{flex-direction:row;flex-wrap:wrap;align-items:center;gap:1rem 1.25rem;}}
+  .proof-profile-hero .consult-cta{display:inline-flex;align-items:center;justify-content:center;font-family:'Instrument Sans',sans-serif;font-size:0.88rem;font-weight:500;color:#fff;background:var(--blue,#1f49d6);border:none;border-radius:999px;padding:0.7rem 1.25rem;text-decoration:none;cursor:pointer;transition:background 0.15s;white-space:nowrap;}
+  .proof-profile-hero .consult-cta:hover{background:var(--blue-deep,#16339b);color:#fff;}
+  .proof-profile-hero .contact-details{display:flex;flex-direction:column;gap:0.45rem;}
+  @media(min-width:640px){.proof-profile-hero .contact-details{flex-direction:row;flex-wrap:wrap;align-items:center;gap:0.65rem 1.1rem;}}
+  .proof-profile-hero .contact-link{display:inline-flex;align-items:center;gap:0.45rem;font-family:'Instrument Sans',sans-serif;font-size:0.84rem;font-weight:500;color:var(--ink,#0e0f12);background:none;border:none;padding:0;cursor:pointer;text-decoration:none;}
+  .proof-profile-hero .contact-link:hover{color:var(--blue,#1f49d6);}
+  .proof-profile-hero .contact-link svg{flex:none;color:var(--slate,#5c5f66);}
+  .proof-profile-hero .contact-link:hover svg{color:var(--blue,#1f49d6);}
+  .proof-profile-hero .contact-link.copied{color:var(--blue,#1f49d6);}
+  .proof-profile-hero .contact-link.copied svg{color:var(--blue,#1f49d6);}
   .proof-profile-hero .media-col{width:100%;}
   .proof-profile-hero .media-card{position:relative;width:100%;max-width:22rem;margin:0 auto;border-radius:1.25rem;overflow:hidden;background:#f2f2f0;}
   .proof-profile-hero .media-card img,.proof-profile-hero .media-card video{width:100%;aspect-ratio:3/4;display:block;object-fit:cover;}
@@ -62,14 +70,16 @@
     .proof-profile-hero .identity-col{display:contents;max-width:none;}
     .proof-profile-hero .identity-head{order:1;display:flex;flex-direction:column;align-items:center;width:100%;}
     .proof-profile-hero .byline{order:3;text-align:center;}
-    .proof-profile-hero .focus-line{order:4;text-align:center;}
+    .proof-profile-hero .specialism-pills{order:4;justify-content:center;}
+    .proof-profile-hero .proof-quote{order:5;text-align:left;max-width:20rem;margin-left:auto;margin-right:auto;}
     .proof-profile-hero .proof-anchor-line{order:5;text-align:center;}
     .proof-profile-hero .media-col{order:2;}
-    .proof-profile-hero .contact-block{order:6;width:100%;max-width:20rem;margin:2rem auto 0;}
+    .proof-profile-hero .contact-block{order:6;width:100%;max-width:24rem;margin:2rem auto 0;}
+    .proof-profile-hero .contact-row{align-items:stretch;}
+    .proof-profile-hero .contact-details{align-items:stretch;}
     .proof-profile-hero .identity-head h1{font-size:2.1rem;margin-top:1.85rem;text-align:center;}
     .proof-profile-hero .label.blue{text-align:center;display:block;}
     .proof-profile-hero .media-card{max-width:17rem;}
-    .proof-profile-hero .copy-btn{width:100%;justify-content:space-between;}
   }
 </style>
 
@@ -77,7 +87,7 @@
   <div class="wrap profile-inner">
     <div class="identity-col">
       <div class="identity-head">
-        <p class="label blue">Trainer profile · Verified by Forma</p>
+        <p class="label blue">{% if proof_profession_label %}{{ proof_profession_label }}{% else %}Trainer{% endif %} profile · Verified by Forma</p>
         <h1>{{ profile.first_name }} {{ profile.last_name }}</h1>
       </div>
 
@@ -86,36 +96,53 @@
       {% endif %}
 
       {% if proof_specialism_titles %}
-      <p class="focus-line">{% for title in proof_specialism_titles %}{% if not forloop.first %}<span class="focus-dot" aria-hidden="true"> · </span>{% endif %}{{ title }}{% endfor %}</p>
+      <div class="specialism-pills">
+        {% for title in proof_specialism_titles %}
+        <span class="specialism-pill">{{ title }}</span>
+        {% endfor %}
+      </div>
       {% endif %}
 
-      {% if approved_count %}
+      {% if proof_hero_client_quote %}
+      <blockquote class="proof-quote">
+        <p class="proof-quote-text">&ldquo;{{ proof_hero_client_quote.quote }}&rdquo;</p>
+        <footer class="proof-quote-meta">
+          {{ proof_hero_client_quote.client_name }}{% if proof_hero_client_quote.client_detail %} · {{ proof_hero_client_quote.client_detail }}{% endif %}{% if approved_count %} · <a href="#proof-wall">1 of {{ approved_count }} verified video review{% if approved_count != 1 %}s{% endif %} ↓</a>{% endif %}
+        </footer>
+      </blockquote>
+      {% elif approved_count %}
       <p class="proof-anchor-line">{{ approved_count }} verified video review{% if approved_count != 1 %}s{% endif %} · <a href="#proof-wall">watch the proof ↓</a></p>
       {% endif %}
 
       {% if proof_contact_phone or proof_contact_email or profile.free_consultation %}
       <div class="contact-block" id="contact">
-        {% if profile.free_consultation %}
-        <span class="consult-pill">Free first consultation</span>
-        {% endif %}
-        {% if proof_contact_phone or proof_contact_email %}
-        <div class="contact">
+        <div class="contact-row">
+          {% if profile.free_consultation %}
           {% if proof_contact_phone %}
-          <button class="copy-btn" data-copy="{{ proof_contact_phone|escape }}" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            <span class="val">{{ proof_contact_phone }}</span>
-            <span class="hint">Tap to copy</span>
-          </button>
+          <a href="tel:{{ proof_contact_phone|cut:' ' }}" class="consult-cta">Book a free first consultation</a>
+          {% elif proof_contact_email %}
+          <a href="mailto:{{ proof_contact_email }}" class="consult-cta">Book a free first consultation</a>
+          {% else %}
+          <span class="consult-cta">Book a free first consultation</span>
           {% endif %}
-          {% if proof_contact_email %}
-          <button class="copy-btn" data-copy="{{ proof_contact_email|escape }}" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
-            <span class="val">{{ proof_contact_email }}</span>
-            <span class="hint">Tap to copy</span>
-          </button>
+          {% endif %}
+          {% if proof_contact_phone or proof_contact_email %}
+          <div class="contact-details">
+            {% if proof_contact_phone %}
+            <button class="contact-link" data-copy="{{ proof_contact_phone|escape }}" type="button" aria-label="Copy phone number">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <span>{{ proof_contact_phone }}</span>
+            </button>
+            {% endif %}
+            {% if proof_contact_email %}
+            <button class="contact-link" data-copy="{{ proof_contact_email|escape }}" type="button" aria-label="Copy email address">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+              <span>{{ proof_contact_email }}</span>
+            </button>
+            {% endif %}
+          </div>
           {% endif %}
         </div>
-        {% endif %}
       </div>
       {% endif %}
     </div>
@@ -125,12 +152,12 @@
         {% if proof_hero_media_mode == 'video' %}
         <span class="badge badge-video">Welcome video</span>
         <video id="proofHeroIntroVideo" class="proof-hero-intro-video" src="{{ profile.intro_video.url }}" playsinline preload="metadata" data-proof-hero-video></video>
+        {% if not proof_hero_client_quote and proof_intro_video_pull_quote %}
         <div class="meta" data-proof-hero-meta>
-          {% if proof_intro_video_pull_quote %}
-          <p class="quote">"{{ proof_intro_video_pull_quote }}"</p>
-          {% endif %}
+          <p class="quote">&ldquo;{{ proof_intro_video_pull_quote }}&rdquo;</p>
           <p class="who">{{ profile.first_name }} {{ profile.last_name }}{% if proof_profession_label %} · {{ proof_profession_label }}{% endif %}</p>
         </div>
+        {% endif %}
         <button
           type="button"
           class="proof-approved-play absolute left-1/2 top-1/2 z-20 flex h-[3.15rem] w-[3.15rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/35 text-[#f0f0f0] shadow-[0_0_0_1px_rgba(100,200,255,0.12)] backdrop-blur-[2px] transition-[transform,background-color,border-color] duration-200 hover:scale-[1.04] hover:border-[#6eb8ff]/45 hover:bg-black/45 sm:h-[4.25rem] sm:w-[4.25rem]"
@@ -159,19 +186,14 @@
 
 <script>
 (function () {
-  document.querySelectorAll('.proof-profile-hero .copy-btn').forEach(function (btn) {
+  document.querySelectorAll('.proof-profile-hero .contact-link').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var val = btn.getAttribute('data-copy');
       if (!val) return;
       function done() {
         btn.classList.add('copied');
-        var hint = btn.querySelector('.hint');
-        if (!hint) return;
-        var old = hint.textContent;
-        hint.textContent = 'Copied';
         setTimeout(function () {
           btn.classList.remove('copied');
-          hint.textContent = old;
         }, 1800);
       }
       if (navigator.clipboard && navigator.clipboard.writeText) {
