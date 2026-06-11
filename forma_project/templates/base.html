@@ -38,12 +38,8 @@
       <div
         class="flex w-full flex-col items-center justify-between gap-3 px-3 py-5 sm:flex-row sm:items-center sm:px-page"
       >
-        <a
-          href="{% url 'home' %}"
-          class="shrink-0 self-start font-display text-[1.4rem] font-normal leading-none tracking-[0.1em] text-paper no-underline sm:self-center"
-        >
-          FORMA
-        </a>
+        {% url 'home' as home_url %}
+        {% include "partials/forma_logo.html" with href=home_url wrapper_class="shrink-0 self-start text-paper sm:self-center" svg_class="h-[1.4rem] w-auto" %}
         <div
           class="flex max-w-md flex-col items-center gap-2.5 self-stretch text-center sm:max-w-lg sm:items-end sm:justify-center sm:self-center sm:text-right"
         >

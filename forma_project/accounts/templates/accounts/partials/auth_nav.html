@@ -1,6 +1,11 @@
 <nav class="fixed top-0 inset-x-0 z-[200] h-[60px] flex items-stretch {% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'register' %}bg-blue border-b border-white/15{% else %}bg-paper border-b border-rule{% endif %}" aria-label="Main">
   <div class="flex items-center px-4 sm:px-8 border-r {% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'register' %}border-white/15{% else %}border-rule{% endif %} shrink-0">
-    <a href="{% url 'home' %}" class="font-display text-[1.55rem] tracking-[0.1em] {% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'register' %}text-white{% else %}text-blue{% endif %} no-underline leading-none">Forma</a>
+    {% url 'home' as home_url %}
+    {% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'register' %}
+    {% include "partials/forma_logo.html" with href=home_url wrapper_class="inline-flex text-white no-underline" svg_class="h-[1.35rem] w-auto" %}
+    {% else %}
+    {% include "partials/forma_logo.html" with href=home_url wrapper_class="inline-flex text-ink no-underline" svg_class="h-[1.35rem] w-auto" %}
+    {% endif %}
   </div>
   <div class="flex-1 flex items-center justify-end gap-2 px-3 sm:px-8 min-w-0 sm:gap-3">
     {% if user.is_authenticated %}

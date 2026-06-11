@@ -2,7 +2,8 @@
   {% include "partials/logged_in_nav.html" %}
 {% else %}
 <nav class="home-nav" aria-label="Main">
-  <a class="logo" href="{% url 'home' %}">Forma</a>
+  {% url 'home' as home_url %}
+  {% include "partials/forma_logo.html" with href=home_url %}
   <div class="links">
     <a href="{% url 'home' %}#why">Why video</a>
     <a href="{% url 'home' %}#how">How it works</a>

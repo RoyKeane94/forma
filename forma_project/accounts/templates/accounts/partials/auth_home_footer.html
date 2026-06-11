@@ -1,7 +1,15 @@
 <footer class="home-footer">
-  <span class="logo">Forma</span>
+  {% include "partials/forma_logo.html" %}
   <nav class="legal" aria-label="Legal">
     <a href="{% url 'pages:privacy' %}">Privacy</a>
     <a href="{% url 'pages:terms' %}">Terms</a>
   </nav>
 </footer>
+<style>
+  .home-footer{border-top:1px solid #ebebe9;padding:1.7rem 7.5%;background:#fff;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1rem;}
+  .home-footer .forma-logo{display:inline-flex;align-items:center;color:#0e0f12;}
+  .home-footer .forma-logo__svg{display:block;height:1.15rem;width:auto;}
+  .home-footer .legal{display:flex;gap:1.5rem;font-size:0.78rem;color:#5c5f66;}
+  .home-footer .legal a{text-decoration:none;color:#5c5f66;}
+  .home-footer .legal a:hover{color:#0e0f12;}
+</style>

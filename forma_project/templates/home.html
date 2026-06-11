@@ -38,7 +38,8 @@
     .home-page .wrap{width:85%;max-width:none;margin:0 auto;padding:0;}
 
     .home-nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 7.5%;background:rgba(255,255,255,0.85);backdrop-filter:blur(10px);}
-    .home-nav .logo{font-family:'Instrument Serif',serif;font-size:1.35rem;letter-spacing:0;text-decoration:none;}
+    .home-nav .forma-logo{display:inline-flex;align-items:center;color:var(--ink);text-decoration:none;flex-shrink:0;}
+    .home-nav .forma-logo__svg{display:block;height:1.35rem;width:auto;}
     .home-nav .links{display:flex;align-items:center;gap:1.8rem;font-size:0.88rem;font-weight:500;}
     .home-nav .links a{text-decoration:none;color:var(--slate);}
     .home-nav .links a:hover{color:var(--ink);}
@@ -118,7 +119,8 @@
     .home-page .final p{margin:1.4rem auto 2.3rem;color:var(--slate);max-width:26rem;line-height:1.7;}
 
     .home-footer{border-top:1px solid var(--rule);padding:1.7rem 7.5%;background:#fff;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1rem;}
-    .home-footer .logo{font-family:'Instrument Serif',serif;font-size:1.15rem;}
+    .home-footer .forma-logo{display:inline-flex;align-items:center;color:var(--ink);}
+    .home-footer .forma-logo__svg{display:block;height:1.15rem;width:auto;}
     .home-footer .legal{display:flex;gap:1.5rem;font-size:0.78rem;color:var(--slate);}
     .home-footer .legal a{text-decoration:none;color:var(--slate);}
     .home-footer .legal a:hover{color:var(--ink);}
@@ -298,7 +300,7 @@
 
 {% block site_footer %}
 <footer class="home-footer">
-  <span class="logo">Forma</span>
+  {% include "partials/forma_logo.html" %}
   <nav class="legal" aria-label="Legal">
     <a href="{% url 'pages:privacy' %}">Privacy</a>
     <a href="{% url 'pages:terms' %}">Terms</a>

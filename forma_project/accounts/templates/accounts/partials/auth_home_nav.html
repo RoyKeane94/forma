@@ -1,5 +1,6 @@
 <nav class="home-nav" aria-label="Main">
-  <a class="logo" href="{% url 'home' %}">Forma</a>
+  {% url 'home' as home_url %}
+  {% include "partials/forma_logo.html" with href=home_url %}
   <div class="links">
     <a href="{% url 'home' %}">Home</a>
     {% if request.resolver_match.url_name == 'register' %}
