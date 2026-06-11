@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}My account — Forma{% endblock %}
-{% block content_shell_class %}min-h-screen{% endblock %}
+{% block content_shell_class %}pt-[62px] min-h-screen{% endblock %}
 
 {% block font_assets %}{% include "partials/fonts_instrument.html" %}{% endblock %}
 
@@ -60,9 +60,9 @@
           </div>
         </div>
 
-        <div class="actions">
-          <a href="{% url 'pages:proof_testimonials_page' %}" class="textlink">See my testimonials</a>
-          <a href="{% url 'pages:proof_testimonials_edit' %}" class="textlink">Edit testimonials</a>
+        <div class="actions actions--touch">
+          <a href="{% url 'pages:proof_testimonials_page' %}" class="textlink textlink--touch">See my testimonials</a>
+          <a href="{% url 'pages:proof_testimonials_edit' %}" class="textlink textlink--touch">Edit testimonials</a>
         </div>
 
         <p class="field-label">Client testimonial link</p>

@@ -66,7 +66,7 @@
   .home-nav .links form{display:inline;margin:0;}
   .home-nav .links .logout-btn{display:inline-flex;align-items:center;border:1px solid var(--rule);background:transparent;color:var(--ink);border-radius:999px;padding:0.6rem 1.3rem;font-family:inherit;font-size:0.88rem;font-weight:500;cursor:pointer;transition:background 0.15s,border-color 0.15s,color 0.15s;}
   .home-nav .links .logout-btn:hover{background:var(--blue-light);border-color:var(--blue);color:var(--ink);}
-  @media(max-width:640px){.home-nav .links a:not(.cta){display:none;}}
+  {% include "partials/home_nav_menu_styles.html" %}
 
   .home-footer{border-top:1px solid var(--rule);padding:1.7rem 7.5%;background:#fff;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1rem;}
   .home-footer .forma-logo{display:inline-flex;align-items:center;color:var(--ink);}
@@ -75,7 +75,7 @@
   .home-footer .legal a{text-decoration:none;color:var(--slate);}
   .home-footer .legal a:hover{color:var(--ink);}
 
-  .account-page{background:#fff;color:var(--ink);font-family:'Instrument Sans',sans-serif;font-weight:400;-webkit-font-smoothing:antialiased;min-height:calc(100vh - 62px);padding:calc(62px + 2.5rem) 0 5rem;}
+  .account-page{background:#fff;color:var(--ink);font-family:'Instrument Sans',sans-serif;font-weight:400;-webkit-font-smoothing:antialiased;min-height:calc(100vh - 62px);padding:2.5rem 0 5rem;}
   .account-page a{color:inherit;}
   .account-page .wrap{width:85%;max-width:none;margin:0 auto;padding:0;}
   .account-page .label{font-size:0.7rem;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--slate);margin-bottom:1.1rem;}
@@ -144,6 +144,50 @@
   .account-page .field-label--flush{margin-top:0;}
   .account-page .field-help--tight{margin:0;}
   .account-page :focus-visible{outline:2px solid var(--blue);outline-offset:3px;}
+  .account-page .textlink--touch{display:inline-flex;align-items:center;min-height:2.75rem;}
+  @media(max-width:640px){
+    .account-page{padding:1.25rem 0 2.5rem;}
+    .account-page .wrap{width:calc(100% - 2rem);max-width:none;}
+    .account-page .grid{gap:2rem;}
+    .account-page h1{font-size:clamp(1.85rem,8vw,2.4rem);margin-bottom:1.25rem;}
+    .account-page h2{font-size:clamp(1.3rem,5.5vw,1.65rem);line-height:1.2;}
+    .account-page .card{padding:1.25rem 1.15rem;border-radius:1.25rem;margin-bottom:1.15rem;}
+    .account-page .card-label{margin-bottom:0.6rem;}
+    .account-page .stat-grid{gap:0.75rem;margin:1rem 0;}
+    .account-page .stat{padding:0.9rem 1rem;}
+    .account-page .stat-value{font-size:1.75rem;}
+    .account-page .actions{flex-direction:column;align-items:stretch;gap:0.55rem;margin:1rem 0;}
+    .account-page .actions--touch .textlink--touch{
+      justify-content:center;width:100%;min-height:2.85rem;padding:0.55rem 1rem;
+      border:1px solid var(--rule);border-radius:0.75rem;background:#fff;text-align:center;
+    }
+    .account-page .actions--touch .textlink--touch:hover{border-color:var(--blue);background:var(--blue-light);}
+    .account-page .btn,.account-page .btn-outline{
+      justify-content:center;width:100%;min-height:2.85rem;padding:0.85rem 1.25rem;
+    }
+    .account-page .link-row{flex-direction:column;align-items:stretch;gap:0.5rem;}
+    .account-page .link-box{
+      white-space:normal;word-break:break-all;line-height:1.45;
+      font-size:0.82rem;padding:0.9rem 1rem;
+    }
+    .account-page .copy-btn{width:100%;min-height:2.85rem;padding:0.85rem 1rem;}
+    .account-page .field-label{margin-top:1.15rem;}
+    .account-page .field-help{font-size:0.88rem;}
+    .account-page .note{font-size:0.88rem;}
+    .account-page .lede{font-size:0.95rem;margin-bottom:1.5rem;}
+    .account-page .progress-list li{align-items:flex-start;gap:0.55rem;line-height:1.45;}
+    .account-page .progress-list .progress-meta{margin-left:auto;flex-shrink:0;}
+    .account-page .sidebar{
+      border-top:1px solid var(--rule);margin-top:0.5rem;padding:1.25rem 1.15rem;
+      border-radius:1.25rem;background:var(--blue-light);
+    }
+    .account-page .sidebar-nav{gap:0.35rem;margin-top:0.5rem;}
+    .account-page .sidebar-nav a{
+      display:flex;align-items:center;width:100%;min-height:2.85rem;
+      padding:0.45rem 0;border-bottom:none;border-radius:0.55rem;
+    }
+    .account-page .sidebar-nav a:hover{background:rgba(255,255,255,0.65);}
+  }
 
   .profile-setup-page .profile-setup-wrap{max-width:36rem;}
   .profile-setup-page .setup-section{margin-bottom:1.25rem;}

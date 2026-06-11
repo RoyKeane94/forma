@@ -1,7 +1,7 @@
 <nav class="home-nav" aria-label="Main">
   {% url 'home' as home_url %}
   {% include "partials/forma_logo.html" with href=home_url %}
-  <div class="links">
+  <div class="links home-nav-desktop-only">
     <a href="{% url 'home' %}">Home</a>
     {% if request.resolver_match.url_name == 'register' %}
     <a class="cta" href="{% url 'accounts:login' %}">Sign in</a>
@@ -11,4 +11,56 @@
     <a class="cta" href="{% url 'accounts:register' %}">Get started</a>
     {% endif %}
   </div>
+  <div class="home-nav-menu" id="home-nav-menu">
+    <button
+      type="button"
+      class="home-nav-menu-toggle"
+      id="home-nav-menu-toggle"
+      aria-expanded="false"
+      aria-controls="home-nav-menu-panel"
+      aria-label="Open menu"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="4" y1="7" x2="20" y2="7"/>
+        <line x1="4" y1="12" x2="20" y2="12"/>
+        <line x1="4" y1="17" x2="20" y2="17"/>
+      </svg>
+    </button>
+    <div class="home-nav-menu-panel" id="home-nav-menu-panel" role="menu">
+      <a href="{% url 'home' %}" class="home-nav-menu-item" role="menuitem">Home</a>
+      {% if request.resolver_match.url_name == 'register' %}
+      <a href="{% url 'accounts:login' %}" class="home-nav-menu-item home-nav-menu-item--cta" role="menuitem">Sign in</a>
+      {% elif request.resolver_match.url_name == 'waitlist' %}
+      <a href="{% url 'accounts:register' %}" class="home-nav-menu-item home-nav-menu-item--cta" role="menuitem">Register</a>
+      {% else %}
+      <a href="{% url 'accounts:register' %}" class="home-nav-menu-item home-nav-menu-item--cta" role="menuitem">Get started</a>
+      {% endif %}
+    </div>
+  </div>
 </nav>
+<script>
+(function () {
+  var menu = document.getElementById('home-nav-menu');
+  var toggle = document.getElementById('home-nav-menu-toggle');
+  var panel = document.getElementById('home-nav-menu-panel');
+  if (!menu || !toggle || !panel) return;
+  function setOpen(open) {
+    panel.classList.toggle('is-open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  }
+  toggle.addEventListener('click', function (event) {
+    event.stopPropagation();
+    setOpen(!panel.classList.contains('is-open'));
+  });
+  panel.querySelectorAll('a').forEach(function (link) {
+    link.addEventListener('click', function () { setOpen(false); });
+  });
+  document.addEventListener('click', function (event) {
+    if (!menu.contains(event.target)) setOpen(false);
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') setOpen(false);
+  });
+})();
+</script>

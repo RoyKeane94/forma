@@ -42,13 +42,41 @@
     font-size:0.78rem;font-weight:600;text-decoration:none;transition:background 0.15s;
   }
   .app-nav-avatar:hover{background:#dce6ff;}
+  .app-nav-menu{position:relative;display:none;}
+  .app-nav-menu-toggle{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:2.5rem;height:2.5rem;border:1px solid #ebebe9;border-radius:0.65rem;
+    background:#fff;color:#0e0f12;cursor:pointer;padding:0;transition:border-color 0.15s,background 0.15s;
+  }
+  .app-nav-menu-toggle:hover{border-color:#c8c9cc;background:#f8f8f7;}
+  .app-nav-menu-toggle svg{display:block;}
+  .app-nav-menu-panel{
+    position:absolute;top:calc(100% + 0.55rem);right:0;min-width:15rem;
+    border:1px solid #ebebe9;border-radius:0.85rem;background:#fff;
+    box-shadow:0 12px 32px rgba(14,15,18,0.12);padding:0.45rem;
+    display:none;
+  }
+  .app-nav-menu-panel.is-open{display:block;}
+  .app-nav-menu-item{
+    display:flex;align-items:center;justify-content:space-between;gap:0.75rem;
+    width:100%;border:none;background:transparent;border-radius:0.55rem;
+    padding:0.75rem 0.85rem;font-family:inherit;font-size:0.92rem;font-weight:500;
+    color:#0e0f12;text-align:left;cursor:pointer;transition:background 0.15s;
+  }
+  a.app-nav-menu-item{text-decoration:none;}
+  .app-nav-menu-item:hover,.app-nav-menu-item:focus-visible{background:#f4f5f7;outline:none;}
+  .app-nav-menu-item.is-active{background:#eef3ff;color:#1f49d6;}
   @media(max-width:900px){
     .app-nav-links{gap:1.25rem;}
     .app-nav-share span{display:none;}
     .app-nav-share{padding:0.65rem 0.85rem;}
   }
   @media(max-width:640px){
+    .app-nav{padding:0 1rem;gap:1rem;}
+    .app-nav-left,.app-nav-right{gap:0.75rem;}
     .app-nav-links{display:none;}
+    .app-nav-desktop-only{display:none !important;}
+    .app-nav-menu{display:block;}
   }
 </style>
 <nav class="app-nav" aria-label="Main">
@@ -56,7 +84,7 @@
     {% url 'home' as home_url %}
     {% include "partials/forma_logo.html" with href=home_url %}
     {% if nav_trainer_profile %}
-    <div class="app-nav-links">
+    <div class="app-nav-links app-nav-desktop-only">
       <a
         href="{% url 'pages:proof_testimonials_page' %}"
         class="app-nav-link{% if request.resolver_match.url_name == 'proof_testimonials_page' or request.resolver_match.url_name == 'proof_testimonials_edit' %} is-active{% endif %}"
@@ -77,7 +105,7 @@
     {% if nav_trainer_profile %}
     <button
       type="button"
-      class="app-nav-share"
+      class="app-nav-share app-nav-desktop-only"
       id="nav-share-review-link"
       data-copy-value="{{ nav_proof_submit_url|escape }}"
       aria-label="Copy review link"
@@ -92,33 +120,109 @@
     {% endif %}
     <a
       href="{% url 'pages:my_account' %}"
-      class="app-nav-avatar{% if request.resolver_match.url_name == 'my_account' %} is-active{% endif %}"
+      class="app-nav-avatar app-nav-desktop-only{% if request.resolver_match.url_name == 'my_account' %} is-active{% endif %}"
       aria-label="My account"
       title="My account"
     >{{ nav_user_initials }}</a>
+
+    <div class="app-nav-menu" id="app-nav-menu">
+      <button
+        type="button"
+        class="app-nav-menu-toggle"
+        id="app-nav-menu-toggle"
+        aria-expanded="false"
+        aria-controls="app-nav-menu-panel"
+        aria-label="Open menu"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <line x1="4" y1="7" x2="20" y2="7"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="17" x2="20" y2="17"/>
+        </svg>
+      </button>
+      <div class="app-nav-menu-panel" id="app-nav-menu-panel" role="menu">
+        {% if nav_trainer_profile %}
+        <a
+          href="{% url 'pages:proof_testimonials_page' %}"
+          class="app-nav-menu-item{% if request.resolver_match.url_name == 'proof_testimonials_page' or request.resolver_match.url_name == 'proof_testimonials_edit' %} is-active{% endif %}"
+          role="menuitem"
+        >My Proof page</a>
+        <a
+          href="{% url 'pages:proof_notifications' %}"
+          class="app-nav-menu-item{% if request.resolver_match.url_name == 'proof_notifications' %} is-active{% endif %}"
+          role="menuitem"
+        >
+          <span>Reviews</span>
+          {% if proof_pending_approvals_count > 0 %}
+          <span class="app-nav-badge">{{ proof_pending_approvals_count }}</span>
+          {% endif %}
+        </a>
+        <button
+          type="button"
+          class="app-nav-menu-item"
+          id="nav-share-review-link-mobile"
+          data-copy-value="{{ nav_proof_submit_url|escape }}"
+          role="menuitem"
+        >Share your review link</button>
+        {% endif %}
+        <a
+          href="{% url 'pages:my_account' %}"
+          class="app-nav-menu-item{% if request.resolver_match.url_name == 'my_account' %} is-active{% endif %}"
+          role="menuitem"
+        >My account</a>
+      </div>
+    </div>
   </div>
 </nav>
-{% if nav_trainer_profile %}
 <script>
 (function () {
-  var btn = document.getElementById('nav-share-review-link');
-  if (!btn) return;
-  var value = btn.getAttribute('data-copy-value') || '';
-  var label = btn.querySelector('span');
-  var original = label ? label.textContent : '';
-  btn.addEventListener('click', function () {
-    if (!value) return;
-    function done(ok) {
-      if (!label) return;
-      label.textContent = ok ? 'Link copied' : 'Copy failed';
-      setTimeout(function () { label.textContent = original; }, ok ? 1600 : 2200);
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(value).then(function () { done(true); }).catch(function () { done(false); });
-      return;
-    }
-    done(false);
+  function wireCopyButton(btn) {
+    if (!btn) return;
+    var value = btn.getAttribute('data-copy-value') || '';
+    var original = btn.textContent;
+    btn.addEventListener('click', function () {
+      if (!value) return;
+      function done(ok) {
+        btn.textContent = ok ? 'Link copied' : 'Copy failed';
+        setTimeout(function () { btn.textContent = original; }, ok ? 1600 : 2200);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(value).then(function () { done(true); }).catch(function () { done(false); });
+        return;
+      }
+      done(false);
+    });
+  }
+
+  wireCopyButton(document.getElementById('nav-share-review-link'));
+  wireCopyButton(document.getElementById('nav-share-review-link-mobile'));
+
+  var menu = document.getElementById('app-nav-menu');
+  var toggle = document.getElementById('app-nav-menu-toggle');
+  var panel = document.getElementById('app-nav-menu-panel');
+  if (!menu || !toggle || !panel) return;
+
+  function setOpen(open) {
+    panel.classList.toggle('is-open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  }
+
+  toggle.addEventListener('click', function (event) {
+    event.stopPropagation();
+    setOpen(!panel.classList.contains('is-open'));
+  });
+
+  panel.querySelectorAll('a.app-nav-menu-item').forEach(function (link) {
+    link.addEventListener('click', function () { setOpen(false); });
+  });
+
+  document.addEventListener('click', function (event) {
+    if (!menu.contains(event.target)) setOpen(false);
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') setOpen(false);
   });
 })();
 </script>
-{% endif %}

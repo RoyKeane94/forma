@@ -45,7 +45,7 @@
     .home-nav .links a:hover{color:var(--ink);}
     .home-nav .links a.cta{color:#fff;background:var(--ink);border-radius:999px;padding:0.6rem 1.3rem;}
     .home-nav .links a.cta:hover{background:var(--blue);color:#fff;}
-    @media(max-width:640px){.home-nav .links a:not(.cta){display:none;}}
+    {% include "partials/home_nav_menu_styles.html" %}
 
     .home-page .hero{padding:9.5rem 0 5rem;}
     .home-page .hero-inner{display:grid;gap:4rem;align-items:center;}
