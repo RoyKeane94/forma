@@ -3,8 +3,9 @@
 {% block title %}Forma — Authenticated video testimonials for health and fitness professionals in the City of London{% endblock %}
 {% block content_shell_class %}min-h-screen{% endblock %}
 
+{% block font_assets %}{% include "partials/fonts_instrument.html" %}{% endblock %}
+
 {% block extra_head %}
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <link rel="preload" href="{% static 'video/IMG_2403-poster-hq.jpg' %}" as="image">
   <style>
     :root{
