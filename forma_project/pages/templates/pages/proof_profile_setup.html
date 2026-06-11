@@ -53,6 +53,10 @@
           {{ form.last_name }}
           {% if form.last_name.errors %}<ul class="errorlist">{% for e in form.last_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
+
+        <div id="profession">
+          {% include "partials/forma_combobox_field.html" with field=form.profession placeholder="Select profession" %}
+        </div>
       </section>
 
       <section id="media" class="setup-section card">

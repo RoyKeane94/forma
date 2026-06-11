@@ -2,7 +2,7 @@
   <div
     class="forma-combobox forma-combobox--sentence forma-combobox--fluid"
     data-forma-combobox
-    data-combobox-placeholder="{{ placeholder|default:field.field.empty_label|default:'Select…'|escape }}"
+    data-combobox-placeholder="{% if placeholder %}{{ placeholder|escape }}{% else %}{{ field.field.empty_label|default:'Select…'|escape }}{% endif %}"
   >
     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
     {{ field }}

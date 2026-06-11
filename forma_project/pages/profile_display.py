@@ -1,9 +1,10 @@
 """Label resolution for public trainer profile (mirrors model/form choice keys)."""
 
-from .models import QUICK_QUALIFICATION_CHOICES, TRAINING_LOCATION_CHOICES
+from .models import PROFESSION_CHOICES, QUICK_QUALIFICATION_CHOICES, TRAINING_LOCATION_CHOICES
 
 _QUICK = dict(QUICK_QUALIFICATION_CHOICES)
 _LOCS = dict(TRAINING_LOCATION_CHOICES)
+_PROFESSIONS = dict(PROFESSION_CHOICES)
 
 
 def quick_qualification_labels(keys):
@@ -183,8 +184,14 @@ def _join_areas_natural(areas: list[str]) -> str:
     return ', '.join(areas[:-1]) + f' and {areas[-1]}'
 
 
+def proof_profession_label(profile) -> str:
+    key = (getattr(profile, 'profession', '') or '').strip()
+    return _PROFESSIONS.get(key, '')
+
+
 def proof_location_byline_segments(profile) -> list[dict]:
     """Composed location byline segments for the Proof hero (emphasis flags for template)."""
+    profession = proof_profession_label(profile)
     gym = proof_primary_gym_label(profile)
     seen = {gym.casefold()} if gym else set()
     areas: list[str] = []
@@ -196,22 +203,39 @@ def proof_location_byline_segments(profile) -> list[dict]:
         areas.append(label)
 
     if gym and areas:
+        if profession:
+            return [
+                {'text': f'{profession} at ', 'emph': False},
+                {'text': gym, 'emph': True},
+                {'text': ', working across ', 'emph': False},
+                {'text': _join_areas_natural(areas), 'emph': True},
+                {'text': '.', 'emph': False},
+            ]
         return [
-            {'text': 'Personal trainer at ', 'emph': False},
-            {'text': gym, 'emph': True},
-            {'text': ', working across ', 'emph': False},
+            {'text': 'Working across ', 'emph': False},
             {'text': _join_areas_natural(areas), 'emph': True},
             {'text': '.', 'emph': False},
         ]
     if gym:
+        if profession:
+            return [
+                {'text': f'{profession} at ', 'emph': False},
+                {'text': gym, 'emph': True},
+                {'text': '.', 'emph': False},
+            ]
         return [
-            {'text': 'Personal trainer at ', 'emph': False},
             {'text': gym, 'emph': True},
             {'text': '.', 'emph': False},
         ]
     if areas:
+        if profession:
+            return [
+                {'text': f'{profession} working across ', 'emph': False},
+                {'text': _join_areas_natural(areas), 'emph': True},
+                {'text': '.', 'emph': False},
+            ]
         return [
-            {'text': 'Personal trainer working across ', 'emph': False},
+            {'text': 'Working across ', 'emph': False},
             {'text': _join_areas_natural(areas), 'emph': True},
             {'text': '.', 'emph': False},
         ]

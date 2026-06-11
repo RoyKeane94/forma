@@ -129,7 +129,7 @@
           {% if proof_intro_video_pull_quote %}
           <p class="quote">"{{ proof_intro_video_pull_quote }}"</p>
           {% endif %}
-          <p class="who">{{ profile.first_name }} {{ profile.last_name }} · Personal trainer</p>
+          <p class="who">{{ profile.first_name }} {{ profile.last_name }}{% if proof_profession_label %} · {{ proof_profession_label }}{% endif %}</p>
         </div>
         <button
           type="button"

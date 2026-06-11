@@ -20,6 +20,7 @@ def _profile_setup_url(anchor: str = '') -> str:
 
 PROFILE_CHECKLIST_SECTIONS = (
     ('name', 'Your name'),
+    ('profession', 'Your profession'),
     ('media', 'Profile photo or welcome video'),
     ('location', 'Where you train'),
     ('specialisms', 'Specialisms'),
@@ -49,6 +50,8 @@ def _section_complete(profile, key: str, trainer_gyms) -> bool:
     if key == 'name':
         first, last = _profile_name_parts(profile)
         return bool(first and last)
+    if key == 'profession':
+        return bool((profile.profession or '').strip())
     if key == 'media':
         return proof_hero_media_mode(profile) != 'empty'
     if key == 'location':
@@ -81,9 +84,9 @@ def profile_outstanding_items(profile) -> list[dict]:
 
 def save_proof_profile_setup(profile, cleaned_data) -> bool:
     """Save profile setup form. Returns True when a new welcome video was uploaded."""
-    """Persist ProofProfileSetupForm data onto profile and related rows."""
     profile.first_name = (cleaned_data.get('first_name') or '').strip()[:150]
     profile.last_name = (cleaned_data.get('last_name') or '').strip()[:150]
+    profile.profession = (cleaned_data.get('profession') or '').strip()
 
     selected_areas = [
         cleaned_data.get('primary_area'),

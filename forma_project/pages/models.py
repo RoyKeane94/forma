@@ -58,6 +58,12 @@ CONTACT_PHONE_PREFERENCE_CHOICES = [
     ('text', 'Text message'),
 ]
 
+PROFESSION_CHOICES = [
+    ('personal_trainer', 'Personal trainer'),
+    ('physiotherapist', 'Physiotherapist'),
+    ('sports_massage_therapist', 'Sports massage therapist'),
+]
+
 
 def _reserved_public_profile_slugs() -> frozenset[str]:
     """Single-segment URL paths reserved for the app; self-serve profile slugs must not collide."""
@@ -163,6 +169,12 @@ class TrainerProfile(models.Model):
     # Step 1 — About you
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
+    profession = models.CharField(
+        max_length=32,
+        blank=True,
+        choices=PROFESSION_CHOICES,
+        help_text='Primary profession shown on the Proof page.',
+    )
     tagline = models.CharField(
         max_length=80,
         help_text='One line — what you do and for whom.',

@@ -24,6 +24,7 @@ from django.forms import inlineformset_factory
 from django.forms.models import BaseInlineFormSet
 
 from .models import (
+    PROFESSION_CHOICES,
     QUICK_QUALIFICATION_CHOICES,
     TRAINING_LOCATION_CHOICES,
     PrimaryArea,
@@ -1454,6 +1455,17 @@ def _specialism_model_choice_field(*, label: str, empty_label: str = 'Select spe
     )
 
 
+def _profession_choice_field(*, label: str = 'Profession', empty_label: str = 'Select profession') -> forms.ChoiceField:
+    field = forms.ChoiceField(
+        choices=[('', empty_label), *PROFESSION_CHOICES],
+        required=True,
+        label=label,
+        widget=forms.Select(attrs={'class': FORMA_INPUT_CLASS}),
+    )
+    field.empty_label = empty_label
+    return field
+
+
 class ProofProfileSetupForm(forms.Form):
     """Focused Proof profile setup — name, photo/video, location, specialisms, contact."""
 
@@ -1467,6 +1479,7 @@ class ProofProfileSetupForm(forms.Form):
         label='Last name',
         widget=forms.TextInput(attrs=_forma_attrs({'autocomplete': 'family-name'})),
     )
+    profession = _profession_choice_field()
     hero_media = forms.ChoiceField(
         choices=(('photo', 'Profile photo'), ('video', 'Welcome video')),
         required=False,
@@ -1531,6 +1544,8 @@ class ProofProfileSetupForm(forms.Form):
             last = (user.last_name or '').strip()
         self.fields['first_name'].initial = first
         self.fields['last_name'].initial = last
+        if (profile.profession or '').strip():
+            self.fields['profession'].initial = profile.profession
         if profile.show_intro_video and profile.intro_video:
             self.fields['hero_media'].initial = 'video'
         else:
@@ -1567,6 +1582,12 @@ class ProofProfileSetupForm(forms.Form):
 
     def clean(self):
         data = super().clean()
+        profession = (data.get('profession') or '').strip()
+        valid_professions = {key for key, _ in PROFESSION_CHOICES}
+        if not profession:
+            self.add_error('profession', 'Select your profession.')
+        elif profession not in valid_professions:
+            self.add_error('profession', 'Select a valid profession.')
         seen_areas: set[int] = set()
         for field_name in ('primary_area', 'area_2', 'area_3'):
             area = data.get(field_name)
