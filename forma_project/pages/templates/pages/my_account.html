@@ -19,9 +19,6 @@
         <p class="card-label">Your Proof profile</p>
         {% if profile_outstanding_items %}
         <h2>Complete your profile</h2>
-        {% else %}
-        <h2>Profile complete</h2>
-        {% endif %}
         <p class="field-help">These details appear at the top of your public Proof page.</p>
         <ul class="progress-list">
           {% for item in profile_checklist_items %}
@@ -33,8 +30,13 @@
           {% endfor %}
         </ul>
         <div class="actions">
-          <a href="{% url 'pages:proof_profile_setup' %}" class="btn{% if not profile_outstanding_items %} btn-outline{% endif %}">{% if profile_outstanding_items %}Complete profile{% else %}Edit profile{% endif %}</a>
+          <a href="{% url 'pages:proof_profile_setup' %}" class="btn">Complete profile</a>
         </div>
+        {% else %}
+        <div class="actions">
+          <a href="{% url 'pages:proof_profile_setup' %}" class="btn btn-outline">Edit profile</a>
+        </div>
+        {% endif %}
       </section>
 
       <section class="card auth-anim-3">

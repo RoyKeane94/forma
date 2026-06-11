@@ -63,7 +63,6 @@ from .forma_yaml_import import (
 )
 from .models import (
     QUICK_QUALIFICATION_CHOICES,
-    ProofOutcomeTag,
     ProfilePageView,
     ProfileScrollEvent,
     ProofTestimonial,
@@ -111,6 +110,7 @@ from .profile_display import (
     proof_intro_video_pull_quote,
     proof_profession_label,
     proof_hero_client_quote,
+    active_proof_outcome_label_map,
 )
 from .posters import poster_bytes_from_video_file, resolve_ffmpeg_binary
 
@@ -1496,7 +1496,7 @@ def trainer_proof_submit(request, profile_slug: str):
             video_url = ''
 
     preview = draft.get('details') or {}
-    outcome_labels = dict(ProofOutcomeTag.objects.filter(is_active=True).values_list('key', 'label'))
+    outcome_labels = active_proof_outcome_label_map()
     preview_outcomes = [outcome_labels.get(k, k.replace('_', ' ').title()) for k in preview.get('outcome_tags', [])]
 
     return render(
@@ -1667,7 +1667,7 @@ def proof_notifications(request):
         .exclude(status=ProofTestimonial.STATUS_PENDING)
         .order_by('-reviewed_at', '-submitted_at')[:20]
     )
-    outcome_label_map = dict(ProofOutcomeTag.objects.filter(is_active=True).values_list('key', 'label'))
+    outcome_label_map = active_proof_outcome_label_map()
     for item in pending_submissions + recently_reviewed:
         item.outcome_labels = [outcome_label_map.get(k, str(k).replace('_', ' ').title()) for k in (item.outcome_tags or [])]
 
@@ -1748,7 +1748,7 @@ def proof_testimonials_page(request):
 
     approved_testimonials = _approved_proof_testimonials_for_profile(profile)
     approved_count = len(approved_testimonials)
-    outcome_label_map = dict(ProofOutcomeTag.objects.filter(is_active=True).values_list('key', 'label'))
+    outcome_label_map = active_proof_outcome_label_map()
     for item in approved_testimonials:
         item.outcome_labels = [outcome_label_map.get(k, str(k).replace('_', ' ').title()) for k in (item.outcome_tags or [])]
 
@@ -2131,7 +2131,7 @@ def trainer_public_proof_page(request, profile_slug: str, url_key: str | None = 
 
     approved_testimonials = _approved_proof_testimonials_for_profile(profile)
     approved_count = len(approved_testimonials)
-    outcome_label_map = dict(ProofOutcomeTag.objects.filter(is_active=True).values_list('key', 'label'))
+    outcome_label_map = active_proof_outcome_label_map()
     for item in approved_testimonials:
         item.outcome_labels = [
             outcome_label_map.get(k, str(k).replace('_', ' ').title()) for k in (item.outcome_tags or [])

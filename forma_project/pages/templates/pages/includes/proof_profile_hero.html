@@ -151,7 +151,7 @@
       <article class="media-card" data-mode="{{ proof_hero_media_mode }}" id="proofHeroMediaCard"{% if proof_hero_media_mode == 'video' %} data-proof-hero-video-card{% endif %}>
         {% if proof_hero_media_mode == 'video' %}
         <span class="badge badge-video">Welcome video</span>
-        <video id="proofHeroIntroVideo" class="proof-hero-intro-video" src="{{ profile.intro_video.url }}" playsinline preload="metadata" data-proof-hero-video></video>
+        <video id="proofHeroIntroVideo" class="proof-hero-intro-video" src="{{ profile.intro_video.url }}" playsinline preload="none" data-proof-hero-video></video>
         {% if not proof_hero_client_quote and proof_intro_video_pull_quote %}
         <div class="meta" data-proof-hero-meta>
           <p class="quote">&ldquo;{{ proof_intro_video_pull_quote }}&rdquo;</p>

@@ -1,6 +1,13 @@
 """Label resolution for public trainer profile (mirrors model/form choice keys)."""
 
-from .models import PROFESSION_CHOICES, QUICK_QUALIFICATION_CHOICES, TRAINING_LOCATION_CHOICES
+from django.core.cache import cache
+
+from .models import (
+    PROFESSION_CHOICES,
+    QUICK_QUALIFICATION_CHOICES,
+    TRAINING_LOCATION_CHOICES,
+    ProofOutcomeTag,
+)
 
 _QUICK = dict(QUICK_QUALIFICATION_CHOICES)
 _LOCS = dict(TRAINING_LOCATION_CHOICES)
@@ -48,10 +55,18 @@ def non_empty_additional_qualifications(profile):
     return rows
 
 
+def _specialisms_for_profile(profile, max_order: int = 4):
+    """Use prefetched specialisms when available; avoids filter() re-queries."""
+    return sorted(
+        (s for s in profile.specialisms.all() if s.order <= max_order),
+        key=lambda s: s.order,
+    )
+
+
 def non_empty_specialisms(profile):
     return [
         s.resolved_title()
-        for s in profile.specialisms.filter(order__lte=4).select_related('catalog')
+        for s in _specialisms_for_profile(profile)
         if s.resolved_title()
     ]
 
@@ -85,13 +100,27 @@ def areas_covered_count(profile) -> int:
 def specialism_display_items(profile):
     """Titles with optional brief descriptions for public profile / marketing blocks."""
     out = []
-    for s in profile.specialisms.filter(order__lte=4).select_related('catalog'):
+    for s in _specialisms_for_profile(profile):
         title = s.resolved_title()
         if not title:
             continue
         desc = (s.description or '').strip()
         out.append({'title': title, 'description': desc})
     return out
+
+
+_OUTCOME_LABELS_CACHE_KEY = 'forma:active_proof_outcome_labels'
+_OUTCOME_LABELS_CACHE_TIMEOUT = 3600
+
+
+def active_proof_outcome_label_map() -> dict[str, str]:
+    """Active Proof outcome tag labels; cached for one hour."""
+    cached = cache.get(_OUTCOME_LABELS_CACHE_KEY)
+    if cached is not None:
+        return cached
+    labels = dict(ProofOutcomeTag.objects.filter(is_active=True).values_list('key', 'label'))
+    cache.set(_OUTCOME_LABELS_CACHE_KEY, labels, _OUTCOME_LABELS_CACHE_TIMEOUT)
+    return labels
 
 
 def proof_hero_media_mode(profile) -> str:
