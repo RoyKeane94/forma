@@ -115,6 +115,7 @@ def save_proof_profile_setup(profile, cleaned_data) -> bool:
         profile.intro_video = None
         profile.intro_video_suggested_quotes = []
         profile.intro_video_pull_quote = ''
+        profile.intro_video_transcript = ''
         profile.intro_video_quote_generation_status = 'pending'
         profile.intro_video_quote_generation_updated_at = None
     elif intro_video:

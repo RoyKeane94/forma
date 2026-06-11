@@ -348,7 +348,7 @@ class ProofTestimonialAdmin(admin.ModelAdmin):
         'client_location',
         'client_specialism',
     )
-    readonly_fields = ('submitted_at', 'quote_generation_updated_at')
+    readonly_fields = ('submitted_at', 'quote_generation_updated_at', 'video_transcript')
     autocomplete_fields = ('profile', 'reviewed_by')
     ordering = ('-submitted_at',)
 

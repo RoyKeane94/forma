@@ -235,13 +235,13 @@ def _normalize_quote_candidates(raw_candidates) -> list[str]:
     return out
 
 
-def _suggested_quotes_from_stored_video(video_name: str, *, log_context: str) -> tuple[list[str], str]:
+def _suggested_quotes_from_stored_video(video_name: str, *, log_context: str) -> tuple[list[str], str, str]:
     api_key = (getattr(settings, 'OPENAI_API_KEY', '') or '').strip()
     if not api_key:
-        return [], ProofTestimonial.QUOTE_STATUS_SKIPPED
+        return [], ProofTestimonial.QUOTE_STATUS_SKIPPED, ''
     filename = (video_name or '').strip()
     if not filename:
-        return [], ProofTestimonial.QUOTE_STATUS_FAILED
+        return [], ProofTestimonial.QUOTE_STATUS_FAILED, ''
     ext = os.path.splitext(filename)[1].lower()
     supported_exts = {'.flac', '.m4a', '.mp3', '.mp4', '.mpeg', '.mpga', '.oga', '.ogg', '.wav', '.webm'}
     upload_filename = os.path.basename(filename) or 'audio_upload'
@@ -252,7 +252,7 @@ def _suggested_quotes_from_stored_video(video_name: str, *, log_context: str) ->
             source_bytes = video_file.read()
     except Exception:
         logger.exception('Could not read media for quote generation (%s)', log_context)
-        return [], ProofTestimonial.QUOTE_STATUS_FAILED
+        return [], ProofTestimonial.QUOTE_STATUS_FAILED, ''
     if ext in supported_exts:
         upload_bytes = source_bytes
     elif ext == '.mov':
@@ -261,7 +261,7 @@ def _suggested_quotes_from_stored_video(video_name: str, *, log_context: str) ->
         ffmpeg_bin = resolve_ffmpeg_binary()
         if not ffmpeg_bin:
             logger.warning('No ffmpeg binary available; cannot transcode .mov for %s', log_context)
-            return [], ProofTestimonial.QUOTE_STATUS_FAILED
+            return [], ProofTestimonial.QUOTE_STATUS_FAILED, ''
         try:
             with tempfile.NamedTemporaryFile(delete=False, suffix='.mov') as in_tmp:
                 in_tmp.write(source_bytes)
@@ -313,7 +313,7 @@ def _suggested_quotes_from_stored_video(video_name: str, *, log_context: str) ->
             upload_filename = f'{os.path.splitext(upload_filename)[0]}.m4a'
         except Exception:
             logger.warning('Failed to transcode .mov for %s', log_context)
-            return [], ProofTestimonial.QUOTE_STATUS_FAILED
+            return [], ProofTestimonial.QUOTE_STATUS_FAILED, ''
         finally:
             if input_path and os.path.exists(input_path):
                 os.remove(input_path)
@@ -321,14 +321,14 @@ def _suggested_quotes_from_stored_video(video_name: str, *, log_context: str) ->
                 os.remove(output_path)
     else:
         logger.info('Skipping AI quote generation for unsupported extension: %s (%s)', ext or '(none)', log_context)
-        return [], ProofTestimonial.QUOTE_STATUS_SKIPPED
+        return [], ProofTestimonial.QUOTE_STATUS_SKIPPED, ''
     if not upload_bytes:
-        return [], ProofTestimonial.QUOTE_STATUS_FAILED
+        return [], ProofTestimonial.QUOTE_STATUS_FAILED, ''
     try:
         from openai import OpenAI
     except Exception:
         logger.exception('OpenAI SDK import failed; skipping quote generation')
-        return [], ProofTestimonial.QUOTE_STATUS_FAILED
+        return [], ProofTestimonial.QUOTE_STATUS_FAILED, ''
     try:
         client = OpenAI(api_key=api_key)
         transcript_res = client.audio.transcriptions.create(
@@ -337,7 +337,7 @@ def _suggested_quotes_from_stored_video(video_name: str, *, log_context: str) ->
         )
         transcript = (getattr(transcript_res, 'text', '') or '').strip()
         if not transcript:
-            return [], ProofTestimonial.QUOTE_STATUS_FAILED
+            return [], ProofTestimonial.QUOTE_STATUS_FAILED, ''
         quote_prompt = (
             "Return the three most compelling sentences from this transcript "
             "that would make a stranger want to watch the video. "
@@ -354,14 +354,14 @@ def _suggested_quotes_from_stored_video(video_name: str, *, log_context: str) ->
             content = (quote_res.choices[0].message.content or '').strip()
         quotes = _normalize_quote_candidates(_extract_json_array_from_text(content))
         if quotes:
-            return quotes, ProofTestimonial.QUOTE_STATUS_COMPLETE
-        return [], ProofTestimonial.QUOTE_STATUS_FAILED
+            return quotes, ProofTestimonial.QUOTE_STATUS_COMPLETE, transcript
+        return [], ProofTestimonial.QUOTE_STATUS_FAILED, transcript
     except Exception:
         logger.exception('AI quote generation failed for %s', log_context)
-        return [], ProofTestimonial.QUOTE_STATUS_FAILED
+        return [], ProofTestimonial.QUOTE_STATUS_FAILED, ''
 
 
-def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> tuple[list[str], str]:
+def _suggested_quotes_from_submission_video(submission: ProofTestimonial) -> tuple[list[str], str, str]:
     return _suggested_quotes_from_stored_video(
         submission.video.name,
         log_context=f'testimonial {submission.pk}',
@@ -397,12 +397,17 @@ def _generate_and_store_suggested_quotes(submission_id: int) -> None:
         submission.quote_generation_updated_at = timezone.now()
         submission.save(update_fields=['quote_generation_status', 'quote_generation_updated_at'])
         print(f'[proof-quotes] submission={submission_id} status=processing', flush=True)
-        suggested_quotes, quote_status = _suggested_quotes_from_submission_video(submission)
+        suggested_quotes, quote_status, transcript = _suggested_quotes_from_submission_video(submission)
+        update_fields = ['quote_generation_status', 'quote_generation_updated_at']
+        if transcript:
+            submission.video_transcript = transcript
+            update_fields.append('video_transcript')
         if suggested_quotes:
             submission.suggested_quotes = suggested_quotes
             submission.quote_generation_status = ProofTestimonial.QUOTE_STATUS_COMPLETE
             submission.quote_generation_updated_at = timezone.now()
-            submission.save(update_fields=['suggested_quotes', 'quote_generation_status', 'quote_generation_updated_at'])
+            update_fields.append('suggested_quotes')
+            submission.save(update_fields=update_fields)
             print(
                 f'[proof-quotes] submission={submission_id} status=complete quotes={len(suggested_quotes)}',
                 flush=True,
@@ -410,7 +415,7 @@ def _generate_and_store_suggested_quotes(submission_id: int) -> None:
         else:
             submission.quote_generation_status = quote_status
             submission.quote_generation_updated_at = timezone.now()
-            submission.save(update_fields=['quote_generation_status', 'quote_generation_updated_at'])
+            submission.save(update_fields=update_fields)
             print(
                 f'[proof-quotes] submission={submission_id} no quotes status={quote_status}',
                 flush=True,
@@ -454,7 +459,7 @@ def _generate_and_store_intro_video_quotes(profile_id: int) -> None:
             intro_video_quote_generation_status=ProofTestimonial.QUOTE_STATUS_PROCESSING,
             intro_video_quote_generation_updated_at=timezone.now(),
         )
-        suggested_quotes, quote_status = _suggested_quotes_from_stored_video(
+        suggested_quotes, quote_status, transcript = _suggested_quotes_from_stored_video(
             profile.intro_video.name,
             log_context=f'profile intro video {profile_id}',
         )
@@ -462,6 +467,9 @@ def _generate_and_store_intro_video_quotes(profile_id: int) -> None:
         profile.refresh_from_db(fields=['intro_video'])
         if not profile.intro_video or not profile.intro_video.name:
             return
+        if transcript:
+            profile.intro_video_transcript = transcript
+            update_fields.append('intro_video_transcript')
         if suggested_quotes:
             profile.intro_video_suggested_quotes = suggested_quotes
             profile.intro_video_pull_quote = suggested_quotes[0][:120]
@@ -485,6 +493,7 @@ def _enqueue_intro_video_quotes_generation(profile_id: int) -> None:
     TrainerProfile.objects.filter(pk=profile_id).update(
         intro_video_suggested_quotes=[],
         intro_video_pull_quote='',
+        intro_video_transcript='',
         intro_video_quote_generation_status=ProofTestimonial.QUOTE_STATUS_PENDING,
         intro_video_quote_generation_updated_at=timezone.now(),
     )

@@ -248,6 +248,10 @@ class TrainerProfile(models.Model):
         blank=True,
         help_text='Pull quote shown on the welcome video caption.',
     )
+    intro_video_transcript = models.TextField(
+        blank=True,
+        help_text='Full Whisper transcript from the welcome video.',
+    )
     intro_video_quote_generation_status = models.CharField(
         max_length=16,
         default='pending',
@@ -570,6 +574,10 @@ class ProofTestimonial(models.Model):
         max_length=120,
         blank=True,
         help_text='PT-selected pull quote used when presenting the testimonial.',
+    )
+    video_transcript = models.TextField(
+        blank=True,
+        help_text='Full Whisper transcript from the client video.',
     )
     prompt_start = models.TextField(
         max_length=1200,
