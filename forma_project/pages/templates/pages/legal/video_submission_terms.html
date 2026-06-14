@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Video Submission Terms — Forma{% endblock %}
+{% block body %}
+<section class="min-h-[calc(100vh-60px)] border-t border-rule bg-surface px-page py-section">
+  <div class="mx-auto max-w-2xl">
+    <p class="mb-6 flex items-center gap-3 font-body text-[0.62rem] font-semibold uppercase tracking-[0.25em] text-blue after:block after:h-px after:max-w-[3rem] after:flex-1 after:bg-rule">
+      Legal
+    </p>
+    <h1 class="mb-4 font-display text-[clamp(2.2rem,3.5vw,3rem)] leading-heading text-ink">Forma — Video Submission Terms</h1>
+    <div class="space-y-4 border-t border-rule pt-8 font-body text-[0.88rem] font-light leading-[1.75] text-slate">
+      <p>
+        By submitting a video review through this link, you agree to the following.
+      </p>
+      <p>
+        Your video, name, and the details you provide will be displayed publicly on your practitioner's Forma profile
+        page. Anyone visiting that page will be able to see your submission.
+      </p>
+      <p>
+        You confirm that what you have said is true and reflects your genuine experience.
+      </p>
+      <p>
+        Forma stores your video securely on Amazon S3. It is transcribed and summarised using OpenAI's tools under a
+        zero data retention agreement, meaning OpenAI does not store or retain your data after processing.
+      </p>
+      <p>
+        Your practitioner can remove your video from their profile at any time. If you want your submission removed,
+        contact us at
+        <a href="mailto:tom@thisisforma.co.uk" class="text-ink border-b border-blue/30 no-underline transition hover:border-blue">tom@thisisforma.co.uk</a>
+        and we will action it within 5 business days.
+      </p>
+
+      <h2 class="pt-2 font-body text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ink">Marketing use (optional)</h2>
+      <p>
+        During submission you will be asked whether you are happy for your video to appear in Forma's own marketing,
+        including our website and social channels. This is optional and separate from the profile display above. You
+        can withdraw this consent at any time by contacting us at the address above.
+      </p>
+
+      <p class="text-ink/80">Last updated June 2026.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

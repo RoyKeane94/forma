@@ -16,6 +16,11 @@ urlpatterns = [
         TemplateView.as_view(template_name='pages/legal/terms.html'),
         name='terms',
     ),
+    path(
+        'legal/video-submission-terms/',
+        TemplateView.as_view(template_name='pages/legal/video_submission_terms.html'),
+        name='video_submission_terms',
+    ),
     path('enquire/', views.profile_enquiry, name='profile_enquiry'),
     path('account/', views.my_account, name='my_account'),
     path('account/profile/', views.proof_profile_setup, name='proof_profile_setup'),

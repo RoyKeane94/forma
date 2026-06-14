@@ -122,7 +122,7 @@
             {% for checkbox in details_form.outcome_tags %}
             <label class="tag-option">
               {{ checkbox.tag }}
-              <span>{{ checkbox.choice_label }}</span>
+              <span class="tag-option__text">{{ checkbox.choice_label }}</span>
             </label>
             {% endfor %}
           </div>
@@ -180,11 +180,23 @@
           </div>
         </div>
 
-        <form method="post" class="proof-preview-actions">
+        <form method="post" class="proof-preview-actions" id="proof-preview-submit-form">
           {% csrf_token %}
           <input type="hidden" name="proof_action" value="submit_testimonial">
-          <button type="submit" class="btn">Submit for approval</button>
-          <a href="?step=details" class="textlink">Edit details</a>
+          <div class="proof-consent-block">
+            <label class="proof-consent-row">
+              <input type="checkbox" name="accept_video_submission_terms" id="accept-video-submission-terms" required>
+              <span>I agree to the <a href="{% url 'pages:video_submission_terms' %}" target="_blank" rel="noopener">Video Submission Terms</a></span>
+            </label>
+            <label class="proof-consent-row proof-consent-row--optional">
+              <input type="checkbox" name="forma_marketing_consent" id="forma-marketing-consent">
+              <span>I am happy for my video to appear in Forma's marketing, including our website and social channels (optional)</span>
+            </label>
+          </div>
+          <div class="proof-preview-buttons">
+            <button type="submit" id="proof-submit-btn" class="btn" disabled>Submit for approval</button>
+            <a href="?step=details" class="textlink">Edit details</a>
+          </div>
         </form>
       </div>
       {% endif %}
@@ -453,6 +465,16 @@
   }
 
   if (step === 'preview') {
+    var termsCheckbox = document.getElementById('accept-video-submission-terms');
+    var submitBtn = document.getElementById('proof-submit-btn');
+    if (termsCheckbox && submitBtn) {
+      function refreshSubmitState() {
+        submitBtn.disabled = !termsCheckbox.checked;
+      }
+      termsCheckbox.addEventListener('change', refreshSubmitState);
+      refreshSubmitState();
+    }
+
     var previewCard = document.getElementById('proof-preview-card');
     var previewVideo = document.getElementById('proof-preview-video');
     var previewButton = document.getElementById('proof-preview-play');

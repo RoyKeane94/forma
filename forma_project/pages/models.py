@@ -615,6 +615,15 @@ class ProofTestimonial(models.Model):
         blank=True,
     )
     share_to_instagram = models.BooleanField(default=False)
+    forma_marketing_consent = models.BooleanField(
+        default=False,
+        help_text='Client opted in to Forma using this video in our own marketing.',
+    )
+    video_submission_terms_accepted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When the client accepted the Video Submission Terms.',
+    )
     status = models.CharField(
         max_length=16,
         choices=STATUS_CHOICES,

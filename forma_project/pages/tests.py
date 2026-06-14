@@ -158,6 +158,15 @@ class TrainerProofSubmissionTests(TestCase):
             'outcome_tags': ['built_strength', 'improved_mental_health'],
         }
 
+    def _submit_payload(self, *, marketing_consent: bool = False) -> dict:
+        payload = {
+            'proof_action': 'submit_testimonial',
+            'accept_video_submission_terms': 'on',
+        }
+        if marketing_consent:
+            payload['forma_marketing_consent'] = 'on'
+        return payload
+
     def test_proof_submission_page_is_public_for_published_profile(self):
         profile = self._create_profile()
         response = self.client.get(
@@ -202,7 +211,7 @@ class TrainerProofSubmissionTests(TestCase):
 
         final_response = self.client.post(
             reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
-            data={'proof_action': 'submit_testimonial'},
+            data=self._submit_payload(),
         )
         self.assertEqual(final_response.status_code, 302)
         submission = ProofTestimonial.objects.get(profile=profile)
@@ -217,6 +226,50 @@ class TrainerProofSubmissionTests(TestCase):
             final_response.url,
             reverse('pages:trainer_proof_submit_success', kwargs={'profile_slug': profile.slug}),
         )
+        self.assertIsNotNone(submission.video_submission_terms_accepted_at)
+        self.assertFalse(submission.forma_marketing_consent)
+
+    def test_submit_requires_video_submission_terms(self):
+        profile = self._create_profile()
+        self.client.post(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+            data={
+                'proof_action': 'upload_video',
+                'video': SimpleUploadedFile('clip.mp4', b'fake-video-content', content_type='video/mp4'),
+            },
+        )
+        self.client.post(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+            data=self._details_payload(),
+        )
+        response = self.client.post(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+            data={'proof_action': 'submit_testimonial'},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Please agree to the Video Submission Terms')
+        self.assertEqual(ProofTestimonial.objects.filter(profile=profile).count(), 0)
+
+    @mock.patch('pages.views.poster_bytes_from_video_file', return_value=b'poster-bytes')
+    def test_submit_stores_forma_marketing_consent_when_opted_in(self, _poster_mock):
+        profile = self._create_profile()
+        self.client.post(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+            data={
+                'proof_action': 'upload_video',
+                'video': SimpleUploadedFile('clip.mp4', b'fake-video-content', content_type='video/mp4'),
+            },
+        )
+        self.client.post(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+            data=self._details_payload(),
+        )
+        self.client.post(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+            data=self._submit_payload(marketing_consent=True),
+        )
+        submission = ProofTestimonial.objects.get(profile=profile)
+        self.assertTrue(submission.forma_marketing_consent)
 
     def test_success_page_renders_after_submission(self):
         profile = self._create_profile()
@@ -247,7 +300,7 @@ class TrainerProofSubmissionTests(TestCase):
         )
         self.client.post(
             reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
-            data={'proof_action': 'submit_testimonial'},
+            data=self._submit_payload(),
         )
         submission = ProofTestimonial.objects.get(profile=profile)
         enqueue_mock.assert_called_once_with(submission.pk)

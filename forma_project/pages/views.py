@@ -1453,39 +1453,45 @@ def trainer_proof_submit(request, profile_slug: str):
             video_path = (draft.get('video_path') or '').strip()
             if not video_path or not details:
                 return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=upload")
-            if not default_storage.exists(video_path):
+            if request.POST.get('accept_video_submission_terms') != 'on':
+                messages.error(request, 'Please agree to the Video Submission Terms before submitting.')
+                step = 'preview'
+            elif not default_storage.exists(video_path):
                 messages.error(request, 'Your uploaded video could not be found. Please upload again.')
                 request.session.pop(session_key, None)
                 return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=upload")
-            submission = ProofTestimonial(
-                profile=profile,
-                client_first_name=details.get('client_first_name', ''),
-                client_last_initial=details.get('client_last_initial', ''),
-                client_job_title=details.get('client_job_title', ''),
-                star_rating=int(details.get('star_rating') or 0),
-                outcome_tags=list(details.get('outcome_tags') or []),
-                prompt_start='Submitted via Proof quick capture flow.',
-                prompt_change='Submitted via Proof quick capture flow.',
-                prompt_recommend='Submitted via Proof quick capture flow.',
-                status=ProofTestimonial.STATUS_PENDING,
-            )
-            source_ext = os.path.splitext(video_path)[1].lower() or '.mp4'
-            submission.save()
-            copied_via_storage = _fast_copy_temp_video_to_submission(submission, video_path)
-            if not copied_via_storage:
-                with default_storage.open(video_path, 'rb') as fh:
-                    submission.video.save(os.path.basename(video_path), File(fh), save=False)
-                submission.save(update_fields=['video'])
-            print(
-                f'[proof-submit] created submission={submission.pk} profile={profile.pk} ext={source_ext} '
-                f'copy_mode={"server-copy" if copied_via_storage else "stream-upload"}',
-                flush=True,
-            )
-            _enqueue_submission_poster_generation(submission.pk)
-            _enqueue_suggested_quotes_generation(submission.pk)
-            default_storage.delete(video_path)
-            request.session.pop(session_key, None)
-            return redirect(reverse('pages:trainer_proof_submit_success', kwargs={'profile_slug': profile.slug}))
+            else:
+                submission = ProofTestimonial(
+                    profile=profile,
+                    client_first_name=details.get('client_first_name', ''),
+                    client_last_initial=details.get('client_last_initial', ''),
+                    client_job_title=details.get('client_job_title', ''),
+                    star_rating=int(details.get('star_rating') or 0),
+                    outcome_tags=list(details.get('outcome_tags') or []),
+                    prompt_start='Submitted via Proof quick capture flow.',
+                    prompt_change='Submitted via Proof quick capture flow.',
+                    prompt_recommend='Submitted via Proof quick capture flow.',
+                    status=ProofTestimonial.STATUS_PENDING,
+                    forma_marketing_consent=request.POST.get('forma_marketing_consent') == 'on',
+                    video_submission_terms_accepted_at=timezone.now(),
+                )
+                source_ext = os.path.splitext(video_path)[1].lower() or '.mp4'
+                submission.save()
+                copied_via_storage = _fast_copy_temp_video_to_submission(submission, video_path)
+                if not copied_via_storage:
+                    with default_storage.open(video_path, 'rb') as fh:
+                        submission.video.save(os.path.basename(video_path), File(fh), save=False)
+                    submission.save(update_fields=['video'])
+                print(
+                    f'[proof-submit] created submission={submission.pk} profile={profile.pk} ext={source_ext} '
+                    f'copy_mode={"server-copy" if copied_via_storage else "stream-upload"}',
+                    flush=True,
+                )
+                _enqueue_submission_poster_generation(submission.pk)
+                _enqueue_suggested_quotes_generation(submission.pk)
+                default_storage.delete(video_path)
+                request.session.pop(session_key, None)
+                return redirect(reverse('pages:trainer_proof_submit_success', kwargs={'profile_slug': profile.slug}))
 
     video_url = ''
     video_path = (draft.get('video_path') or '').strip()
