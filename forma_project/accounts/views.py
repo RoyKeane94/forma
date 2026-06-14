@@ -274,7 +274,13 @@ def _testimonial_link_for_profile(profile, site_base_url: str) -> str:
     return f'{site_base_url}{path}'
 
 
-def _post_registration_background(user_id: int, site_base_url: str, *, fresh_connection=True) -> None:
+def _post_registration_background(
+    user_id: int,
+    site_base_url: str,
+    *,
+    founding_member: bool = False,
+    fresh_connection=True,
+) -> None:
     if fresh_connection:
         close_old_connections()
     User = get_user_model()
@@ -288,20 +294,31 @@ def _post_registration_background(user_id: int, site_base_url: str, *, fresh_con
         if profile is None:
             profile = _ensure_trainer_profile_for_user(user)
         testimonial_link = _testimonial_link_for_profile(profile, site_base_url)
-        _send_founder_welcome_email(user, testimonial_link)
+        _send_welcome_email(user, testimonial_link, founding_member=founding_member)
     except Exception:
         logger.exception('Post-registration worker failed for user_id=%s', user_id)
 
 
-def _enqueue_post_registration_tasks(user_id: int, site_base_url: str) -> None:
+def _enqueue_post_registration_tasks(
+    user_id: int,
+    site_base_url: str,
+    *,
+    founding_member: bool = False,
+) -> None:
     if getattr(settings, 'SYNC_POST_REGISTRATION_TASKS', False):
-        _post_registration_background(user_id, site_base_url, fresh_connection=False)
+        _post_registration_background(
+            user_id,
+            site_base_url,
+            founding_member=founding_member,
+            fresh_connection=False,
+        )
         return
 
     def start_worker() -> None:
         worker = threading.Thread(
             target=_post_registration_background,
             args=(user_id, site_base_url),
+            kwargs={'founding_member': founding_member},
             daemon=True,
             name=f'post-registration-{user_id}',
         )
@@ -314,12 +331,16 @@ def _finish_new_registration(request, user):
     Profile.objects.get_or_create(user=user)
     _ensure_trainer_profile_for_user(user)
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-    _enqueue_post_registration_tasks(user.pk, request.build_absolute_uri('/').rstrip('/'))
+    _enqueue_post_registration_tasks(
+        user.pk,
+        request.build_absolute_uri('/').rstrip('/'),
+        founding_member=True,
+    )
     messages.success(request, 'Welcome to Forma.')
     return redirect('pages:my_account')
 
 
-def _send_founder_welcome_email(user, testimonial_link: str) -> None:
+def _send_welcome_email(user, testimonial_link: str, *, founding_member: bool) -> None:
     email = (user.email or '').strip()
     if not email:
         return
@@ -330,7 +351,28 @@ def _send_founder_welcome_email(user, testimonial_link: str) -> None:
             return
 
         first_name = (user.first_name or '').strip() or 'there'
-        message = f"""Hi {first_name},
+        if founding_member:
+            subject = "You're in. Founding member of Forma."
+            message = f"""Hi {first_name},
+
+You're one of a small group of founding members on Forma, which means you have free access for life. No catches.
+
+Your clients already trust you. Most of them would happily tell someone else that. Right now, none of that goes anywhere a stranger would find it. Forma changes that: your clients film a short testimonial through your unique link, you approve it, and it lives on your Proof page permanently.
+
+One thing to do now: send your submission link to clients you trust.
+
+{testimonial_link}
+
+The idea is simple. Your existing clients find you your next ones. As more profiles build up on Forma, I'll start driving traffic to them directly across personal trainers, physiotherapists, and sports massage therapists. The more testimonials you have when that happens, the better placed you are.
+
+In return I just ask that you send the link to as many clients as you can, and tell me honestly what you think. Reply to this email any time.
+
+Tom
+
+Founder, Forma"""
+        else:
+            subject = 'Welcome to Forma'
+            message = f"""Hi {first_name},
 
 Thanks for joining.
 
@@ -348,18 +390,23 @@ Tom
 Founder, Forma"""
         try:
             send_mail(
-                subject='Welcome to Forma',
+                subject=subject,
                 message=message,
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', ''),
                 recipient_list=[email],
                 fail_silently=False,
             )
         except Exception:
-            logger.exception('Failed to send founder welcome email for user_id=%s', user.pk)
+            logger.exception('Failed to send welcome email for user_id=%s', user.pk)
             return
 
         locked_profile.welcome_email_sent_at = timezone.now()
         locked_profile.save(update_fields=['welcome_email_sent_at'])
+
+
+def _send_founder_welcome_email(user, testimonial_link: str) -> None:
+    """Backward-compatible alias for standard (non-founding) welcome email."""
+    _send_welcome_email(user, testimonial_link, founding_member=False)
 
 
 @login_required

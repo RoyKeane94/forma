@@ -50,6 +50,12 @@ class RegistrationFlowTests(TestCase):
         self.assertTrue('_auth_user_id' in self.client.session)
         self.assertTrue(TrainerProfile.objects.filter(user=user).exists())
         send_mail_mock.assert_called_once()
+        kwargs = send_mail_mock.call_args.kwargs
+        self.assertEqual(kwargs['subject'], "You're in. Founding member of Forma.")
+        self.assertIn('founding members on Forma', kwargs['message'])
+        self.assertIn('free access for life', kwargs['message'])
+        profile = TrainerProfile.objects.get(user=user)
+        self.assertIn(f'/{profile.slug}/submit/', kwargs['message'])
 
     @register_settings
     @mock.patch('accounts.views.create_register_checkout_session')
