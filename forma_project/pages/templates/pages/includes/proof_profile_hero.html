@@ -87,7 +87,7 @@
   <div class="wrap profile-inner">
     <div class="identity-col">
       <div class="identity-head">
-        <p class="label blue">{% if proof_profession_label %}{{ proof_profession_label }}{% else %}Trainer{% endif %} profile · Verified by Forma</p>
+        <p class="label blue">{% if proof_profession_label %}{{ proof_profession_label }}{% else %}Trainer{% endif %} · Verified by Forma</p>
         <h1>{{ profile.first_name }} {{ profile.last_name }}</h1>
       </div>
 
@@ -151,7 +151,7 @@
       <article class="media-card" data-mode="{{ proof_hero_media_mode }}" id="proofHeroMediaCard"{% if proof_hero_media_mode == 'video' %} data-proof-hero-video-card{% endif %}>
         {% if proof_hero_media_mode == 'video' %}
         <span class="badge badge-video">Welcome video</span>
-        <video id="proofHeroIntroVideo" class="proof-hero-intro-video" src="{{ profile.intro_video.url }}" playsinline preload="none" data-proof-hero-video></video>
+        <video id="proofHeroIntroVideo" class="proof-hero-intro-video" src="{{ profile.intro_video.url }}#t=0.001" playsinline preload="metadata" data-proof-hero-video></video>
         {% if not proof_hero_client_quote and proof_intro_video_pull_quote %}
         <div class="meta" data-proof-hero-meta>
           <p class="quote">&ldquo;{{ proof_intro_video_pull_quote }}&rdquo;</p>
@@ -209,6 +209,14 @@
   var pauseIcon = playBtn && playBtn.querySelector('.proof-approved-icon-pause');
   var meta = heroCard && heroCard.querySelector('[data-proof-hero-meta]');
   if (playBtn && introVideo && playIcon && pauseIcon) {
+    introVideo.addEventListener('loadedmetadata', function () {
+      if (introVideo.currentTime === 0) {
+        try {
+          introVideo.currentTime = 0.001;
+        } catch (e) {}
+      }
+    });
+
     var isTouchUi =
       window.matchMedia('(max-width: 768px)').matches ||
       window.matchMedia('(hover: none), (pointer: coarse)').matches;
