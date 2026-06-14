@@ -7,7 +7,30 @@ from django.utils import timezone
 from unittest import mock
 
 from .models import ProofTestimonial, TrainerProfile
+from .profile_display import PROOF_PAGE_MIN_LIVE_TESTIMONIALS
 from .views import _finalize_keep_forma_profile
+
+
+def _create_live_proof_testimonials(profile: TrainerProfile, count: int = PROOF_PAGE_MIN_LIVE_TESTIMONIALS) -> None:
+    for i in range(count):
+        ProofTestimonial.objects.create(
+            profile=profile,
+            client_first_name=f'Client{i}',
+            client_last_initial='A',
+            client_job_title='Designer',
+            star_rating=5,
+            outcome_tags=['built_strength'],
+            prompt_start='Before',
+            prompt_change='After',
+            prompt_recommend='Recommend',
+            video=SimpleUploadedFile(
+                f'clip-{i}.mp4',
+                b'fake-video-content',
+                content_type='video/mp4',
+            ),
+            status=ProofTestimonial.STATUS_APPROVED,
+            reviewed_at=timezone.now(),
+        )
 
 
 class TrainerPublicProfileVisibilityTests(TestCase):
@@ -81,6 +104,7 @@ class TrainerPublicProfileVisibilityTests(TestCase):
             is_published=True,
             completed=True,
         )
+        _create_live_proof_testimonials(profile)
 
         response = self.client.get(
             reverse('pages:trainer_profile_proof', kwargs={'profile_slug': profile.slug})
@@ -88,6 +112,23 @@ class TrainerPublicProfileVisibilityTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'pages/proof_testimonials_page.html')
+
+    def test_public_proof_hidden_until_three_live_testimonials(self):
+        profile = self._create_profile(
+            username='proof_gate_trainer',
+            first_name='Agi',
+            last_name='Alexander',
+            forma_made=False,
+            is_published=True,
+            completed=True,
+        )
+        _create_live_proof_testimonials(profile, count=PROOF_PAGE_MIN_LIVE_TESTIMONIALS - 1)
+
+        response = self.client.get(
+            reverse('pages:trainer_profile_proof', kwargs={'profile_slug': profile.slug})
+        )
+
+        self.assertEqual(response.status_code, 404)
 
     def test_public_proof_visible_when_unpublished(self):
         profile = self._create_profile(
@@ -98,6 +139,7 @@ class TrainerPublicProfileVisibilityTests(TestCase):
             is_published=False,
             completed=False,
         )
+        _create_live_proof_testimonials(profile)
 
         response = self.client.get(
             reverse('pages:trainer_profile_proof', kwargs={'profile_slug': profile.slug})
@@ -598,6 +640,7 @@ class ProofApprovalWorkflowTests(TestCase):
 
     def test_my_account_shows_submission_and_public_proof_links(self):
         profile = self._create_profile('account_links_owner')
+        proof_url = reverse('pages:trainer_profile_proof', kwargs={'profile_slug': profile.slug})
         self.client.login(username='account_links_owner', password='pass1234')
 
         response = self.client.get(reverse('pages:my_account'))
@@ -605,11 +648,21 @@ class ProofApprovalWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Client testimonial link')
         self.assertContains(response, 'Public proof page')
+        self.assertNotContains(response, proof_url)
+        self.assertContains(response, '0 of 3')
         self.assertContains(
             response,
             reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
         )
-        self.assertContains(response, profile.get_absolute_url())
+
+        _create_live_proof_testimonials(profile, count=PROOF_PAGE_MIN_LIVE_TESTIMONIALS - 1)
+        response = self.client.get(reverse('pages:my_account'))
+        self.assertNotContains(response, proof_url)
+        self.assertContains(response, '2 of 3')
+
+        _create_live_proof_testimonials(profile, count=1)
+        response = self.client.get(reverse('pages:my_account'))
+        self.assertContains(response, proof_url)
 
     def test_notifications_page_includes_my_testimonials_link(self):
         self._create_profile('notifications_link_owner')

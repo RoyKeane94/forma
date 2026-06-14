@@ -111,6 +111,8 @@ from .profile_display import (
     proof_profession_label,
     proof_hero_client_quote,
     active_proof_outcome_label_map,
+    PROOF_PAGE_MIN_LIVE_TESTIMONIALS,
+    proof_page_is_public,
 )
 from .posters import poster_bytes_from_video_file, resolve_ffmpeg_binary
 
@@ -865,6 +867,8 @@ def my_account(request):
             'show_legacy_profile_admin': show_legacy_profile_admin,
             'profile_checklist_items': profile_checklist,
             'profile_outstanding_items': profile_outstanding_items_list,
+            'proof_page_is_public': proof_page_is_public(testimonial_total_count),
+            'proof_page_min_live_testimonials': PROOF_PAGE_MIN_LIVE_TESTIMONIALS,
         },
     )
 
@@ -2137,6 +2141,8 @@ def trainer_public_proof_page(request, profile_slug: str, url_key: str | None = 
 
     approved_testimonials = _approved_proof_testimonials_for_profile(profile)
     approved_count = len(approved_testimonials)
+    if not proof_page_is_public(approved_count):
+        raise Http404
     outcome_label_map = active_proof_outcome_label_map()
     for item in approved_testimonials:
         item.outcome_labels = [

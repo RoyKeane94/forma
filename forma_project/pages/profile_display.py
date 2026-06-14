@@ -14,6 +14,13 @@ _LOCS = dict(TRAINING_LOCATION_CHOICES)
 _PROFESSIONS = dict(PROFESSION_CHOICES)
 _PROFESSION_KEYS = set(_PROFESSIONS)
 
+PROOF_PAGE_MIN_LIVE_TESTIMONIALS = 3
+
+
+def proof_page_is_public(live_count: int) -> bool:
+    """Public proof URL is available once the practitioner has enough live testimonials."""
+    return live_count >= PROOF_PAGE_MIN_LIVE_TESTIMONIALS
+
 
 def proof_outcome_profession(profile) -> str:
     """Profession key for outcome tag catalogue; defaults to personal trainer."""

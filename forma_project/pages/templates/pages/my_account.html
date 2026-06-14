@@ -41,7 +41,7 @@
 
       <section class="card auth-anim-3">
         <p class="card-label">Next step</p>
-        <h2>Your next client is one link away</h2>
+        <h2>Every link you send builds the page that sells for you.</h2>
 
         {% if testimonial_to_review_count > 0 %}
         <p class="actions">
@@ -79,6 +79,7 @@
           >Copy</button>
         </div>
 
+        {% if proof_page_is_public %}
         <p class="field-label">Public proof page</p>
         <p class="field-help">Share this with prospects so they can view your proof page.</p>
         <div class="link-row">
@@ -92,6 +93,10 @@
             aria-label="Copy public proof page link"
           >Copy</button>
         </div>
+        {% else %}
+        <p class="field-label">Public proof page</p>
+        <p class="field-help">Your proof page goes live once you have {{ proof_page_min_live_testimonials }} live testimonials. You have {{ testimonial_total_count }} of {{ proof_page_min_live_testimonials }}.</p>
+        {% endif %}
 
         <p class="note">You approve every testimonial before it goes live.</p>
       </section>

@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import ProfilePageView, ProfileScrollEvent, TrainerProfile
+from .tests import _create_live_proof_testimonials
 
 
 class SiteSmokeTests(TestCase):
@@ -46,6 +47,7 @@ class SiteSmokeTests(TestCase):
     def test_public_pages_render(self):
         owner = self._create_user("public_profile_owner")
         profile = self._create_profile(user=owner, forma_made=False, is_published=True, completed=True)
+        _create_live_proof_testimonials(profile)
 
         urls = [
             reverse("home"),
@@ -75,6 +77,7 @@ class SiteSmokeTests(TestCase):
             last_name="Made",
             created_by=staff,
         )
+        _create_live_proof_testimonials(profile)
 
         urls = [
             reverse(
