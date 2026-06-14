@@ -334,13 +334,13 @@ def _send_founder_welcome_email(user, testimonial_link: str) -> None:
 
 Thanks for joining.
 
-I built Forma because the best trainers I've seen lose clients they've already won - not because their work isn't good, but because there's nowhere credible for that work to land. Your Proof page fixes that.
+I built Forma because the best trainers I've seen are invisible to the people looking for them.I built Forma because the best trainers I've seen are invisible to the people looking for them. The work is good. The clients love them. But none of that is visible anywhere a stranger would look. Your Proof page fixes that.
 
-One thing to do now: send your testimonial link to three clients you trust.
+To go live, you need at least three testimonials. Send your submission link to three clients you trust now, while it's front of mind.
 
 Your link: {testimonial_link}
 
-Once those first videos come in, you have something worth sharing.
+Once those first videos come in, your page goes live and you have something worth sharing.
 
 Reply to this email if you need anything. I read every one.
 
