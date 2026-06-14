@@ -439,14 +439,33 @@
       detailsContinueBtn.classList.toggle('is-ready', isReady);
     }
 
+    function outcomeTagsCheckedCount() {
+      var count = 0;
+      outcomeCheckboxes.forEach(function (checkbox) {
+        if (checkbox.checked) count += 1;
+      });
+      return count;
+    }
+
+    function updateOutcomeTagLimit(changedCheckbox) {
+      var checkedCount = outcomeTagsCheckedCount();
+      if (changedCheckbox && changedCheckbox.checked && checkedCount > 2) {
+        changedCheckbox.checked = false;
+        checkedCount = outcomeTagsCheckedCount();
+      }
+      outcomeCheckboxes.forEach(function (checkbox) {
+        var atLimit = checkedCount >= 2 && !checkbox.checked;
+        checkbox.disabled = atLimit;
+        var label = checkbox.closest('.tag-option');
+        if (label) label.classList.toggle('is-disabled', atLimit);
+      });
+    }
+
     function detailsFormIsComplete() {
       var firstNameOk = detailsFirstName && detailsFirstName.value.trim().length > 0;
       var lastInitialOk = detailsLastInitial && detailsLastInitial.value.trim().length > 0;
       var jobTitleOk = detailsJobTitle && detailsJobTitle.value.trim().length > 0;
-      var checkedCount = 0;
-      outcomeCheckboxes.forEach(function (checkbox) {
-        if (checkbox.checked) checkedCount += 1;
-      });
+      var checkedCount = outcomeTagsCheckedCount();
       var tagsOk = checkedCount >= 1 && checkedCount <= 2;
       return firstNameOk && lastInitialOk && jobTitleOk && tagsOk;
     }
@@ -455,12 +474,18 @@
       setDetailsContinueReady(detailsFormIsComplete());
     }
 
+    function onOutcomeTagChange(event) {
+      updateOutcomeTagLimit(event.target);
+      refreshDetailsContinueState();
+    }
+
     if (detailsFirstName) detailsFirstName.addEventListener('input', refreshDetailsContinueState);
     if (detailsLastInitial) detailsLastInitial.addEventListener('input', refreshDetailsContinueState);
     if (detailsJobTitle) detailsJobTitle.addEventListener('input', refreshDetailsContinueState);
     outcomeCheckboxes.forEach(function (checkbox) {
-      checkbox.addEventListener('change', refreshDetailsContinueState);
+      checkbox.addEventListener('change', onOutcomeTagChange);
     });
+    updateOutcomeTagLimit(null);
     refreshDetailsContinueState();
   }
 
