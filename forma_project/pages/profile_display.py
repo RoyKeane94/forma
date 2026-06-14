@@ -12,6 +12,26 @@ from .models import (
 _QUICK = dict(QUICK_QUALIFICATION_CHOICES)
 _LOCS = dict(TRAINING_LOCATION_CHOICES)
 _PROFESSIONS = dict(PROFESSION_CHOICES)
+_PROFESSION_KEYS = set(_PROFESSIONS)
+
+
+def proof_outcome_profession(profile) -> str:
+    """Profession key for outcome tag catalogue; defaults to personal trainer."""
+    key = (getattr(profile, 'profession', '') or '').strip()
+    if key in _PROFESSION_KEYS:
+        return key
+    return 'personal_trainer'
+
+
+def proof_outcome_tag_choices_for_profession(profession: str) -> list[tuple[str, str]]:
+    profession = (profession or '').strip()
+    if profession not in _PROFESSION_KEYS:
+        profession = 'personal_trainer'
+    return list(
+        ProofOutcomeTag.objects.filter(profession=profession, is_active=True)
+        .order_by('sort_order', 'label')
+        .values_list('key', 'label')
+    )
 
 
 def quick_qualification_labels(keys):
@@ -109,16 +129,16 @@ def specialism_display_items(profile):
     return out
 
 
-_OUTCOME_LABELS_CACHE_KEY = 'forma:active_proof_outcome_labels'
+_OUTCOME_LABELS_CACHE_KEY = 'forma:proof_outcome_labels_v2'
 _OUTCOME_LABELS_CACHE_TIMEOUT = 3600
 
 
 def active_proof_outcome_label_map() -> dict[str, str]:
-    """Active Proof outcome tag labels; cached for one hour."""
+    """Proof outcome tag labels keyed by slug (all professions, for display)."""
     cached = cache.get(_OUTCOME_LABELS_CACHE_KEY)
     if cached is not None:
         return cached
-    labels = dict(ProofOutcomeTag.objects.filter(is_active=True).values_list('key', 'label'))
+    labels = dict(ProofOutcomeTag.objects.values_list('key', 'label'))
     cache.set(_OUTCOME_LABELS_CACHE_KEY, labels, _OUTCOME_LABELS_CACHE_TIMEOUT)
     return labels
 

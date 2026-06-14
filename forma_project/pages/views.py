@@ -1387,7 +1387,7 @@ def trainer_proof_submit(request, profile_slug: str):
         return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=details")
 
     upload_form = ProofVideoUploadForm()
-    details_form = ProofDetailsForm()
+    details_form = ProofDetailsForm(profile=profile)
 
     if request.method == 'POST':
         action = (request.POST.get('proof_action') or '').strip()
@@ -1435,7 +1435,7 @@ def trainer_proof_submit(request, profile_slug: str):
                     request.session.modified = True
                     return redirect(f"{reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug})}?step=details")
         elif action == 'save_details':
-            details_form = ProofDetailsForm(request.POST)
+            details_form = ProofDetailsForm(request.POST, profile=profile)
             if details_form.is_valid():
                 draft['details'] = {
                     'client_first_name': details_form.cleaned_data['client_first_name'],

@@ -64,7 +64,8 @@ class SpecialismCatalogAdmin(admin.ModelAdmin):
 
 @admin.register(ProofOutcomeTag)
 class ProofOutcomeTagAdmin(admin.ModelAdmin):
-    list_display = ('label', 'key', 'sort_order', 'is_active')
+    list_display = ('label', 'key', 'profession', 'sort_order', 'is_active')
+    list_filter = ('profession', 'is_active')
     list_editable = ('sort_order', 'is_active')
     search_fields = ('label', 'key')
     ordering = ('sort_order', 'label')

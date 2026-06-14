@@ -40,6 +40,7 @@ from .models import (
     TrainerSpecialism,
     TrainerWhoIWorkWithItem,
 )
+from .profile_display import proof_outcome_profession, proof_outcome_tag_choices_for_profession
 from .profile_display import non_empty_specialisms
 
 FORMA_INPUT_CLASS = 'forma-input'
@@ -156,11 +157,8 @@ class ProofTestimonialSubmissionForm(forms.ModelForm):
         self.fields['client_location'].required = False
         self.fields['client_specialism'].required = False
         self.fields['share_to_instagram'].required = False
-        self.fields['outcome_tags'].choices = list(
-            ProofOutcomeTag.objects.filter(is_active=True)
-            .order_by('sort_order', 'label')
-            .values_list('key', 'label')
-        )
+        profession = proof_outcome_profession(profile) if profile is not None else 'personal_trainer'
+        self.fields['outcome_tags'].choices = proof_outcome_tag_choices_for_profession(profession)
 
         profile_specialisms = list(dict.fromkeys(non_empty_specialisms(profile))) if profile is not None else []
         if profile_specialisms:
@@ -193,6 +191,9 @@ class ProofTestimonialSubmissionForm(forms.ModelForm):
         tags = list(self.cleaned_data.get('outcome_tags') or [])
         if len(tags) < 1 or len(tags) > 2:
             raise ValidationError('Choose one or two outcome tags.')
+        valid_keys = {key for key, _ in self.fields['outcome_tags'].choices}
+        if any(tag not in valid_keys for tag in tags):
+            raise ValidationError('Choose valid outcome tags for this practitioner.')
         return tags
 
     def clean_prompt_start(self):
@@ -258,13 +259,11 @@ class ProofDetailsForm(forms.Form):
         widget=forms.CheckboxSelectMultiple,
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, profile: TrainerProfile | None = None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['outcome_tags'].choices = list(
-            ProofOutcomeTag.objects.filter(is_active=True)
-            .order_by('sort_order', 'label')
-            .values_list('key', 'label')
-        )
+        self._profile = profile
+        profession = proof_outcome_profession(profile) if profile is not None else 'personal_trainer'
+        self.fields['outcome_tags'].choices = proof_outcome_tag_choices_for_profession(profession)
 
     def clean_client_first_name(self):
         return (self.cleaned_data.get('client_first_name') or '').strip()
@@ -282,6 +281,9 @@ class ProofDetailsForm(forms.Form):
         tags = list(self.cleaned_data.get('outcome_tags') or [])
         if len(tags) < 1 or len(tags) > 2:
             raise ValidationError('Choose one or two outcome tags.')
+        valid_keys = {key for key, _ in self.fields['outcome_tags'].choices}
+        if any(tag not in valid_keys for tag in tags):
+            raise ValidationError('Choose valid outcome tags for this practitioner.')
         return tags
 
     def clean_star_rating(self):

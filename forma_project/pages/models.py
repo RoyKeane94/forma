@@ -52,6 +52,34 @@ PROOF_OUTCOME_TAG_DEFAULTS = [
     ('trained_through_pregnancy', 'Trained through pregnancy'),
 ]
 
+PROOF_OUTCOME_TAGS_BY_PROFESSION = {
+    'personal_trainer': PROOF_OUTCOME_TAG_DEFAULTS,
+    'physiotherapist': [
+        ('pain_resolved', 'Pain resolved'),
+        ('avoided_surgery', 'Avoided surgery'),
+        ('back_in_sport', 'Back in sport'),
+        ('physio_recovered_from_injury', 'Recovered from injury'),
+        ('improved_mobility', 'Improved mobility'),
+        ('post_op_rehab_complete', 'Post-op rehab complete'),
+        ('returned_to_work', 'Returned to work'),
+        ('running_again', 'Running again'),
+        ('reduced_medication', 'Reduced medication'),
+        ('living_without_limits', 'Living without limits'),
+    ],
+    'sports_massage_therapist': [
+        ('tension_gone', 'Tension gone'),
+        ('back_in_training', 'Back in training'),
+        ('injury_prevented', 'Injury prevented'),
+        ('mobility_restored', 'Mobility restored'),
+        ('performance_improved', 'Performance improved'),
+        ('recovered_faster', 'Recovered faster'),
+        ('pain_managed', 'Pain managed'),
+        ('postural_issues_resolved', 'Postural issues resolved'),
+        ('pre_event_ready', 'Pre-event ready'),
+        ('sleep_improved', 'Sleep improved'),
+    ],
+}
+
 CONTACT_PHONE_PREFERENCE_CHOICES = [
     ('call', 'Phone call'),
     ('whatsapp', 'WhatsApp'),
@@ -512,13 +540,26 @@ class ProofOutcomeTag(models.Model):
     """Controlled catalogue for Proof outcome options shown to clients."""
 
     key = models.SlugField(max_length=64, unique=True)
-    label = models.CharField(max_length=120, unique=True)
+    label = models.CharField(max_length=120)
+    profession = models.CharField(
+        max_length=32,
+        choices=PROFESSION_CHOICES,
+        default='personal_trainer',
+        db_index=True,
+        help_text='Which practitioner profession sees this tag on the submit form.',
+    )
     sort_order = models.PositiveIntegerField(default=0, db_index=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = 'pages_proof_outcome_tag'
         ordering = ['sort_order', 'label']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['profession', 'label'],
+                name='pages_outcome_tag_profession_label_unique',
+            ),
+        ]
 
     def __str__(self):
         return self.label
