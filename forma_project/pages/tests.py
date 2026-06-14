@@ -123,12 +123,16 @@ class TrainerPublicProfileVisibilityTests(TestCase):
             completed=True,
         )
         _create_live_proof_testimonials(profile, count=PROOF_PAGE_MIN_LIVE_TESTIMONIALS - 1)
+        proof_url = reverse('pages:trainer_profile_proof', kwargs={'profile_slug': profile.slug})
 
-        response = self.client.get(
-            reverse('pages:trainer_profile_proof', kwargs={'profile_slug': profile.slug})
-        )
+        anonymous_response = self.client.get(proof_url)
+        self.assertEqual(anonymous_response.status_code, 404)
 
-        self.assertEqual(response.status_code, 404)
+        self.client.login(username='proof_gate_trainer', password='pass1234')
+        owner_response = self.client.get(proof_url)
+        self.assertEqual(owner_response.status_code, 200)
+        self.assertTrue(owner_response.context['proof_page_preview_only'])
+        self.assertContains(owner_response, 'Preview only.')
 
     def test_public_proof_visible_when_unpublished(self):
         profile = self._create_profile(
@@ -270,6 +274,36 @@ class TrainerProofSubmissionTests(TestCase):
         )
         self.assertIsNotNone(submission.video_submission_terms_accepted_at)
         self.assertFalse(submission.forma_marketing_consent)
+
+    @override_settings(SYNC_PROOF_REVIEW_EMAIL=True)
+    @mock.patch('pages.views.poster_bytes_from_video_file', return_value=b'poster-bytes')
+    @mock.patch('pages.proof_emails.send_mail')
+    def test_submission_sends_review_email_to_owner(self, send_mail_mock, _poster_mock):
+        profile = self._create_profile()
+        self.client.post(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+            data={
+                'proof_action': 'upload_video',
+                'video': SimpleUploadedFile('clip.mp4', b'fake-video-content', content_type='video/mp4'),
+            },
+        )
+        self.client.post(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+            data=self._details_payload(),
+        )
+        self.client.post(
+            reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
+            data=self._submit_payload(),
+        )
+
+        send_mail_mock.assert_called_once()
+        kwargs = send_mail_mock.call_args.kwargs
+        self.assertEqual(kwargs['subject'], 'New testimonial to review')
+        self.assertIn('Hi Agi,', kwargs['message'])
+        self.assertIn('A client just submitted a testimonial for your Forma profile.', kwargs['message'])
+        self.assertIn(reverse('pages:proof_notifications'), kwargs['message'])
+        self.assertIn('Tom\n\nForma', kwargs['message'])
+        self.assertEqual(kwargs['recipient_list'], ['proof_owner@example.com'])
 
     def test_submit_requires_video_submission_terms(self):
         profile = self._create_profile()
@@ -635,6 +669,8 @@ class ProofApprovalWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['testimonial_total_count'], 1)
         self.assertEqual(response.context['testimonial_to_review_count'], 1)
+        self.assertContains(response, 'Review now')
+        self.assertContains(response, 'waiting for your approval')
         self.assertContains(response, reverse('pages:proof_notifications'))
         self.assertContains(response, reverse('pages:proof_testimonials_edit'))
 
@@ -647,9 +683,11 @@ class ProofApprovalWorkflowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Client testimonial link')
-        self.assertContains(response, 'Public proof page')
+        self.assertContains(response, 'Proof page')
         self.assertNotContains(response, proof_url)
+        self.assertContains(response, 'not accessible to the public')
         self.assertContains(response, '0 of 3')
+        self.assertContains(response, reverse('pages:proof_testimonials_page'))
         self.assertContains(
             response,
             reverse('pages:trainer_proof_submit', kwargs={'profile_slug': profile.slug}),
@@ -659,10 +697,12 @@ class ProofApprovalWorkflowTests(TestCase):
         response = self.client.get(reverse('pages:my_account'))
         self.assertNotContains(response, proof_url)
         self.assertContains(response, '2 of 3')
+        self.assertContains(response, 'Preview proof page')
 
         _create_live_proof_testimonials(profile, count=1)
         response = self.client.get(reverse('pages:my_account'))
         self.assertContains(response, proof_url)
+        self.assertContains(response, 'Public proof page')
 
     def test_notifications_page_includes_my_testimonials_link(self):
         self._create_profile('notifications_link_owner')

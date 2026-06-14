@@ -17,6 +17,11 @@
     .proof-wall-section{border-top:1px solid #ebebe9;padding:1.5rem 0 4rem;}
     .proof-wall-section .wrap{max-width:66rem;margin:0 auto;padding:0 1.5rem;}
     @media(min-width:768px){.proof-wall-section .wrap{padding:0 3rem;}}
+    .proof-preview-banner{margin:0 0 1.25rem;padding:0.85rem 1rem;border:1px solid #d8e2ff;border-radius:0.65rem;background:#f5f8ff;color:#1a2744;font-size:0.88rem;line-height:1.45;}
+    .proof-preview-banner-wrap{max-width:66rem;margin:0 auto;padding:1rem 1.5rem 0;}
+    @media(min-width:768px){.proof-preview-banner-wrap{padding:1rem 3rem 0;}}
+    .proof-preview-banner strong{font-weight:600;color:#1f49d6;}
+    @media(min-width:640px){.proof-preview-banner{margin-bottom:1.5rem;padding:1rem 1.15rem;font-size:0.92rem;}}
     .proof-wall-section .proof-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:2rem;}
     .proof-wall-section .proof-head h2{font-family:'Instrument Sans',sans-serif;font-size:clamp(2rem,4vw,2.9rem);font-weight:500;letter-spacing:-0.025em;margin:0;}
     .proof-wall-section .proof-head h2 b{font-family:'Instrument Serif',serif;font-weight:400;color:#1f49d6;}
@@ -44,6 +49,13 @@
 {% endblock %}
 
 {% block body %}
+{% if proof_page_preview_only %}
+<div class="proof-preview-banner-wrap">
+  <p class="proof-preview-banner" role="status">
+    <strong>Preview only.</strong> This page is not accessible to the public yet. It goes live once you have {{ proof_page_min_live_testimonials }} live testimonials. You have {{ approved_count }} of {{ proof_page_min_live_testimonials }}.
+  </p>
+</div>
+{% endif %}
 {% include "pages/includes/proof_profile_hero.html" %}
 
 <section class="proof-wall proof-wall-section relative overflow-hidden bg-white" id="proof-wall">

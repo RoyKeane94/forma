@@ -114,6 +114,7 @@ from .profile_display import (
     PROOF_PAGE_MIN_LIVE_TESTIMONIALS,
     proof_page_is_public,
 )
+from .proof_emails import enqueue_new_testimonial_review_email
 from .posters import poster_bytes_from_video_file, resolve_ffmpeg_binary
 
 STEP_COUNT = 7
@@ -1493,6 +1494,10 @@ def trainer_proof_submit(request, profile_slug: str):
                 )
                 _enqueue_submission_poster_generation(submission.pk)
                 _enqueue_suggested_quotes_generation(submission.pk)
+                enqueue_new_testimonial_review_email(
+                    profile.pk,
+                    request.build_absolute_uri('/').rstrip('/'),
+                )
                 default_storage.delete(video_path)
                 request.session.pop(session_key, None)
                 return redirect(reverse('pages:trainer_proof_submit_success', kwargs={'profile_slug': profile.slug}))
@@ -1748,6 +1753,9 @@ def _proof_page_context(request, profile: TrainerProfile, *, approved_testimonia
         'proof_contact_phone': proof_contact_phone(profile),
         'proof_contact_email': proof_contact_email(profile),
         'is_proof_owner': is_owner,
+        'proof_page_is_public': proof_page_is_public(approved_count),
+        'proof_page_min_live_testimonials': PROOF_PAGE_MIN_LIVE_TESTIMONIALS,
+        'proof_page_preview_only': is_owner and not proof_page_is_public(approved_count),
     }
 
 
@@ -2141,7 +2149,8 @@ def trainer_public_proof_page(request, profile_slug: str, url_key: str | None = 
 
     approved_testimonials = _approved_proof_testimonials_for_profile(profile)
     approved_count = len(approved_testimonials)
-    if not proof_page_is_public(approved_count):
+    is_owner = request.user.is_authenticated and request.user.pk == profile.user_id
+    if not proof_page_is_public(approved_count) and not is_owner:
         raise Http404
     outcome_label_map = active_proof_outcome_label_map()
     for item in approved_testimonials:

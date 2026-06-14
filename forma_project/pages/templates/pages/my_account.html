@@ -15,6 +15,22 @@
       <p class="label blue auth-anim-1">Account</p>
       <h1 class="auth-anim-2">My account</h1>
 
+      {% if testimonial_to_review_count > 0 %}
+      <div class="review-alert auth-anim-3" role="status">
+        <p class="review-alert-label">To review</p>
+        <p class="review-alert-text">
+          {% if testimonial_to_review_count == 1 %}
+          A client testimonial is waiting for your approval. Review it to add it to your Proof page.
+          {% else %}
+          {{ testimonial_to_review_count }} client testimonials are waiting for your approval. Review them to add them to your Proof page.
+          {% endif %}
+        </p>
+        <div class="review-alert-actions">
+          <a href="{% url 'pages:proof_notifications' %}" class="btn">Review now</a>
+        </div>
+      </div>
+      {% endif %}
+
       <section class="card auth-anim-3">
         <p class="card-label">Your Proof profile</p>
         {% if profile_outstanding_items %}
@@ -42,12 +58,6 @@
       <section class="card auth-anim-3">
         <p class="card-label">Next step</p>
         <h2>Every link you send builds the page that sells for you.</h2>
-
-        {% if testimonial_to_review_count > 0 %}
-        <p class="actions">
-          <a href="{% url 'pages:proof_notifications' %}" class="textlink">Review testimonials ({{ testimonial_to_review_count }})</a>
-        </p>
-        {% endif %}
 
         <div class="stat-grid">
           <div class="stat">
@@ -94,8 +104,11 @@
           >Copy</button>
         </div>
         {% else %}
-        <p class="field-label">Public proof page</p>
-        <p class="field-help">Your proof page goes live once you have {{ proof_page_min_live_testimonials }} live testimonials. You have {{ testimonial_total_count }} of {{ proof_page_min_live_testimonials }}.</p>
+        <p class="field-label">Proof page</p>
+        <p class="field-help">Your proof page will not be accessible to the public until you have {{ proof_page_min_live_testimonials }} live testimonials. You have {{ testimonial_total_count }} of {{ proof_page_min_live_testimonials }}.</p>
+        <div class="actions">
+          <a href="{% url 'pages:proof_testimonials_page' %}" class="textlink textlink--touch">Preview proof page</a>
+        </div>
         {% endif %}
 
         <p class="note">You approve every testimonial before it goes live.</p>
@@ -190,6 +203,10 @@
       <p class="label blue">Security</p>
       <nav class="sidebar-nav">
         <a href="{% url 'accounts:password_change' %}">Change password</a>
+        <form method="post" action="{% url 'accounts:logout' %}" class="sidebar-logout-form">
+          {% csrf_token %}
+          <button type="submit">Log out</button>
+        </form>
         <a href="{% url 'accounts:delete_account' %}" class="danger">Delete account</a>
       </nav>
     </aside>

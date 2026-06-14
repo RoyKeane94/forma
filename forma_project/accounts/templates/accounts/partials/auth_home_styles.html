@@ -104,6 +104,10 @@
   .account-page .copy-btn{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--rule);background:#fff;border-radius:999px;padding:0.75rem 1.1rem;font-family:inherit;font-size:0.78rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);cursor:pointer;transition:background 0.15s,border-color 0.15s;}
   .account-page .copy-btn:hover{background:var(--blue-light);border-color:var(--blue);}
   .account-page .note{margin:1.25rem 0 0;font-size:0.94rem;line-height:1.65;color:var(--ink);}
+  .account-page .review-alert{border:1px solid #d8e2ff;border-radius:1rem;background:var(--blue-light);padding:1.15rem 1.25rem;margin:0 0 1.5rem;}
+  .account-page .review-alert-label{margin:0 0 0.45rem;font-size:0.68rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);}
+  .account-page .review-alert-text{margin:0;font-size:0.95rem;line-height:1.6;color:var(--ink);}
+  .account-page .review-alert-actions{margin:1rem 0 0;}
   .account-page .sidebar{padding-top:0.5rem;}
   @media(min-width:960px){.account-page .sidebar{border-left:1px solid var(--rule);padding-left:2rem;}}
   @media(max-width:959px){.account-page .sidebar{border-top:1px solid var(--rule);padding-top:2rem;}}
@@ -111,6 +115,12 @@
   .account-page .sidebar-nav a{font-size:0.92rem;color:var(--slate);text-decoration:none;border-bottom:1px solid var(--rule);padding-bottom:2px;width:fit-content;}
   .account-page .sidebar-nav a:hover{color:var(--ink);border-color:var(--ink);}
   .account-page .sidebar-nav a.danger:hover{color:#b42318;border-color:rgba(180,35,24,0.35);}
+  .account-page .sidebar-logout-form{margin:0;}
+  .account-page .sidebar-logout-form button{
+    display:inline-flex;padding:0;border:none;border-bottom:1px solid var(--rule);background:transparent;
+    font-family:inherit;font-size:0.92rem;color:var(--slate);cursor:pointer;width:fit-content;
+  }
+  .account-page .sidebar-logout-form button:hover{color:var(--ink);border-color:var(--ink);}
   .account-page .progress-list{list-style:none;margin:0;padding:0;display:grid;gap:0.75rem;}
   .account-page .progress-list li{display:flex;align-items:center;gap:0.65rem;font-size:0.92rem;color:var(--slate);}
   .account-page .progress-list li.active{color:var(--ink);font-weight:500;}
