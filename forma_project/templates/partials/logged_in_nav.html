@@ -42,7 +42,11 @@
     font-size:0.78rem;font-weight:600;text-decoration:none;transition:background 0.15s;
   }
   .app-nav-avatar:hover{background:#dce6ff;}
-  .app-nav-menu{position:relative;display:none;}
+  .app-nav-menu{position:relative;display:none;align-items:center;gap:0.45rem;}
+  .app-nav-menu-pending{
+    display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+    min-width:1rem;font-size:0.82rem;font-weight:600;line-height:1;color:#1f49d6;
+  }
   .app-nav-menu-toggle{
     display:inline-flex;align-items:center;justify-content:center;
     width:2.5rem;height:2.5rem;border:1px solid #ebebe9;border-radius:0.65rem;
@@ -76,7 +80,7 @@
     .app-nav-left,.app-nav-right{gap:0.75rem;}
     .app-nav-links{display:none;}
     .app-nav-desktop-only{display:none !important;}
-    .app-nav-menu{display:block;}
+    .app-nav-menu{display:flex;}
   }
 </style>
 <nav class="app-nav" aria-label="Main">
@@ -126,13 +130,16 @@
     >{{ nav_user_initials }}</a>
 
     <div class="app-nav-menu" id="app-nav-menu">
+      {% if proof_pending_approvals_count > 0 %}
+      <span class="app-nav-menu-pending" aria-hidden="true">{{ proof_pending_approvals_count }}</span>
+      {% endif %}
       <button
         type="button"
         class="app-nav-menu-toggle"
         id="app-nav-menu-toggle"
         aria-expanded="false"
         aria-controls="app-nav-menu-panel"
-        aria-label="Open menu"
+        aria-label="{% if proof_pending_approvals_count > 0 %}Open menu, {{ proof_pending_approvals_count }} review{{ proof_pending_approvals_count|pluralize }} pending{% else %}Open menu{% endif %}"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <line x1="4" y1="7" x2="20" y2="7"/>
@@ -205,8 +212,11 @@
   function setOpen(open) {
     panel.classList.toggle('is-open', open);
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    var pendingLabel = toggle.getAttribute('data-pending-label') || '';
+    toggle.setAttribute('aria-label', open ? 'Close menu' : (pendingLabel || 'Open menu'));
   }
+
+  toggle.setAttribute('data-pending-label', toggle.getAttribute('aria-label') || 'Open menu');
 
   toggle.addEventListener('click', function (event) {
     event.stopPropagation();
