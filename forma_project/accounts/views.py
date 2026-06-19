@@ -363,7 +363,7 @@ One thing to do now: send your submission link to clients you trust.
 
 {testimonial_link}
 
-The idea is simple. Your existing clients find you your next ones. As more profiles build up on Forma, I'll start driving traffic to them directly across personal trainers, physiotherapists, and sports massage therapists. The more testimonials you have when that happens, the better placed you are.
+The idea is simple. Your existing clients find your next ones. As more profiles build up on Forma, I'll start driving traffic to them directly across personal trainers, physiotherapists, and sports massage therapists. The more testimonials you have when that happens, the better placed you are.
 
 In return I just ask that you send the link to as many clients as you can, and tell me honestly what you think. Reply to this email any time.
 
