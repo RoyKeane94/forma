@@ -1457,6 +1457,46 @@ def _specialism_model_choice_field(*, label: str, empty_label: str = 'Select spe
     )
 
 
+PROOF_SPECIALISM_CUSTOM_VALUE = '__custom__'
+
+
+def _proof_specialism_choice_options(*, optional: bool = False) -> list[tuple[str, str]]:
+    rows = list(
+        SpecialismCatalog.objects.filter(is_active=True).order_by('title').values_list('pk', 'title')
+    )
+    empty_label = 'Select specialism (optional)' if optional else 'Select specialism'
+    return [
+        ('', empty_label),
+        *[(str(pk), title) for pk, title in rows],
+        (PROOF_SPECIALISM_CUSTOM_VALUE, 'My specialism is not in the list'),
+    ]
+
+
+def _proof_specialism_choice_field(*, label: str) -> forms.ChoiceField:
+    return forms.ChoiceField(
+        choices=[],
+        required=False,
+        label=label,
+        widget=forms.Select(
+            attrs={
+                'class': FORMA_INPUT_CLASS,
+                'data-proof-specialism-choice': '1',
+            }
+        ),
+    )
+
+
+def _proof_specialism_custom_field() -> forms.CharField:
+    return forms.CharField(
+        max_length=120,
+        required=False,
+        label='Your specialism',
+        widget=forms.TextInput(
+            attrs=_forma_attrs({'placeholder': 'e.g. Postnatal strength'}),
+        ),
+    )
+
+
 def _profession_choice_field(*, label: str = 'Profession', empty_label: str = 'Select profession') -> forms.ChoiceField:
     field = forms.ChoiceField(
         choices=[('', empty_label), *PROFESSION_CHOICES],
@@ -1508,12 +1548,15 @@ class ProofProfileSetupForm(forms.Form):
     primary_gym = forms.CharField(
         max_length=200,
         required=False,
-        label='Primary gym',
+        label='Primary facility operate from',
         widget=forms.TextInput(attrs=_forma_attrs({'placeholder': 'e.g. Virgin Active, Battersea'})),
     )
-    specialism_1 = _specialism_model_choice_field(label='Specialism')
-    specialism_2 = _specialism_model_choice_field(label='Second specialism', empty_label='Select specialism (optional)')
-    specialism_3 = _specialism_model_choice_field(label='Third specialism', empty_label='Select specialism (optional)')
+    specialism_1 = _proof_specialism_choice_field(label='Specialism')
+    specialism_1_custom = _proof_specialism_custom_field()
+    specialism_2 = _proof_specialism_choice_field(label='Second specialism')
+    specialism_2_custom = _proof_specialism_custom_field()
+    specialism_3 = _proof_specialism_choice_field(label='Third specialism')
+    specialism_3_custom = _proof_specialism_custom_field()
     contact_email = forms.EmailField(
         required=False,
         label='Email for enquiries',
@@ -1533,6 +1576,9 @@ class ProofProfileSetupForm(forms.Form):
     def __init__(self, *args, profile=None, **kwargs):
         self.profile = profile
         super().__init__(*args, **kwargs)
+        self.fields['specialism_1'].choices = _proof_specialism_choice_options()
+        self.fields['specialism_2'].choices = _proof_specialism_choice_options(optional=True)
+        self.fields['specialism_3'].choices = _proof_specialism_choice_options(optional=True)
         if profile is not None:
             self._load_initial(profile)
 
@@ -1577,10 +1623,52 @@ class ProofProfileSetupForm(forms.Form):
         )
         for index, spec in enumerate(specs, start=1):
             if spec.catalog_id:
-                self.fields[f'specialism_{index}'].initial = spec.catalog_id
+                self.fields[f'specialism_{index}'].initial = str(spec.catalog_id)
+            elif (spec.title or '').strip():
+                self.fields[f'specialism_{index}'].initial = PROOF_SPECIALISM_CUSTOM_VALUE
+                self.fields[f'specialism_{index}_custom'].initial = spec.title.strip()
         self.fields['contact_email'].initial = (profile.contact_email or '').strip()
         self.fields['contact_phone'].initial = (profile.contact_phone or '').strip()
         self.fields['free_consultation'].initial = profile.free_consultation
+
+    def _resolve_specialism_slot(self, data, index: int, *, required: bool) -> dict | None:
+        choice = (data.get(f'specialism_{index}') or '').strip()
+        custom = (data.get(f'specialism_{index}_custom') or '').strip()
+
+        if not choice and not custom:
+            if required:
+                self.add_error(
+                    f'specialism_{index}',
+                    'Select a specialism from the list or add your own.',
+                )
+            return None
+
+        if choice == PROOF_SPECIALISM_CUSTOM_VALUE:
+            if not custom:
+                self.add_error(f'specialism_{index}_custom', 'Enter your specialism.')
+                return None
+            if len(custom) > 120:
+                self.add_error(f'specialism_{index}_custom', 'Keep to 120 characters or fewer.')
+                return None
+            catalog_match = SpecialismCatalog.objects.filter(title__iexact=custom, is_active=True).first()
+            if catalog_match:
+                return {'catalog': catalog_match, 'title': catalog_match.title}
+            return {'catalog': None, 'title': custom}
+
+        if not choice:
+            return None
+
+        try:
+            pk = int(choice)
+        except (TypeError, ValueError):
+            self.add_error(f'specialism_{index}', 'Invalid choice.')
+            return None
+
+        catalog = SpecialismCatalog.objects.filter(pk=pk, is_active=True).first()
+        if catalog is None:
+            self.add_error(f'specialism_{index}', 'Invalid choice.')
+            return None
+        return {'catalog': catalog, 'title': catalog.title}
 
     def clean(self):
         data = super().clean()
@@ -1599,15 +1687,19 @@ class ProofProfileSetupForm(forms.Form):
                 self.add_error(field_name, 'You already selected this area.')
             else:
                 seen_areas.add(area.pk)
-        seen_specs: set[int] = set()
-        for index in range(1, 4):
-            cat = data.get(f'specialism_{index}')
-            if cat is None:
+        resolved_specialisms: list[dict | None] = []
+        seen_spec_keys: set[tuple] = set()
+        for index, required in ((1, True), (2, False), (3, False)):
+            item = self._resolve_specialism_slot(data, index, required=required)
+            resolved_specialisms.append(item)
+            if item is None:
                 continue
-            if cat.pk in seen_specs:
+            key = ('catalog', item['catalog'].pk) if item['catalog'] else ('title', item['title'].casefold())
+            if key in seen_spec_keys:
                 self.add_error(f'specialism_{index}', 'You already selected this specialism.')
             else:
-                seen_specs.add(cat.pk)
+                seen_spec_keys.add(key)
+        data['resolved_specialisms'] = resolved_specialisms
         return data
 
 

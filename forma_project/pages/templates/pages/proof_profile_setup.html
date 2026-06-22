@@ -89,7 +89,7 @@
 
       <section id="location" class="setup-section card">
         <p class="card-label">Where you train</p>
-        <p class="field-help">Select up to three areas, then your primary gym.</p>
+        <p class="field-help">Select up to three areas, then the primary facility you operate from.</p>
 
         {% include "partials/forma_combobox_field.html" with field=form.primary_area %}
         {% include "partials/forma_combobox_field.html" with field=form.area_2 %}
@@ -104,11 +104,40 @@
 
       <section id="specialisms" class="setup-section card">
         <p class="card-label">Specialisms</p>
-        <p class="field-help">Up to three areas you specialise in.</p>
+        <p class="field-help">Up to three areas you specialise in. Choose from the list where you can, and if yours is not listed, you can choose to add your own.</p>
 
-        {% include "partials/forma_combobox_field.html" with field=form.specialism_1 %}
-        {% include "partials/forma_combobox_field.html" with field=form.specialism_2 %}
-        {% include "partials/forma_combobox_field.html" with field=form.specialism_3 %}
+        <div class="specialism-slot" data-proof-specialism-slot>
+          {% include "partials/forma_combobox_field.html" with field=form.specialism_1 %}
+          <div class="specialism-custom-wrap hidden" data-proof-specialism-custom-wrap>
+            <div class="field">
+              <label for="{{ form.specialism_1_custom.id_for_label }}">{{ form.specialism_1_custom.label }}</label>
+              {{ form.specialism_1_custom }}
+              {% if form.specialism_1_custom.errors %}<ul class="errorlist">{% for e in form.specialism_1_custom.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="specialism-slot" data-proof-specialism-slot>
+          {% include "partials/forma_combobox_field.html" with field=form.specialism_2 %}
+          <div class="specialism-custom-wrap hidden" data-proof-specialism-custom-wrap>
+            <div class="field">
+              <label for="{{ form.specialism_2_custom.id_for_label }}">{{ form.specialism_2_custom.label }}</label>
+              {{ form.specialism_2_custom }}
+              {% if form.specialism_2_custom.errors %}<ul class="errorlist">{% for e in form.specialism_2_custom.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="specialism-slot" data-proof-specialism-slot>
+          {% include "partials/forma_combobox_field.html" with field=form.specialism_3 %}
+          <div class="specialism-custom-wrap hidden" data-proof-specialism-custom-wrap>
+            <div class="field">
+              <label for="{{ form.specialism_3_custom.id_for_label }}">{{ form.specialism_3_custom.label }}</label>
+              {{ form.specialism_3_custom }}
+              {% if form.specialism_3_custom.errors %}<ul class="errorlist">{% for e in form.specialism_3_custom.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="contact" class="setup-section card">
@@ -141,6 +170,21 @@
   </div>
 </div>
 {% include "partials/forma_combobox_script.html" %}
+<script>
+(function () {
+  var CUSTOM = '__custom__';
+  document.querySelectorAll('[data-proof-specialism-slot]').forEach(function (slot) {
+    var sel = slot.querySelector('[data-proof-specialism-choice]');
+    var wrap = slot.querySelector('[data-proof-specialism-custom-wrap]');
+    if (!sel || !wrap) return;
+    function sync() {
+      wrap.classList.toggle('hidden', sel.value !== CUSTOM);
+    }
+    sel.addEventListener('change', sync);
+    sync();
+  });
+})();
+</script>
 {% endblock %}
 
 {% block site_footer %}

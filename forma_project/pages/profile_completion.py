@@ -145,27 +145,22 @@ def save_proof_profile_setup(profile, cleaned_data) -> bool:
         extra_gym.location_area = None
         extra_gym.save()
 
-    catalog_ids = [
-        cleaned_data.get('specialism_1'),
-        cleaned_data.get('specialism_2'),
-        cleaned_data.get('specialism_3'),
-    ]
-    seen: set[int] = set()
-    for order, cat in enumerate(catalog_ids, start=1):
+    catalog_ids = cleaned_data.get('resolved_specialisms') or []
+    for order in range(1, 4):
         spec, _ = TrainerSpecialism.objects.get_or_create(
             profile=profile,
             order=order,
             defaults={'title': ''},
         )
-        if cat is None or cat.pk in seen:
+        item = catalog_ids[order - 1] if order - 1 < len(catalog_ids) else None
+        if not item:
             spec.catalog = None
             spec.title = ''
             spec.description = ''
             spec.save()
             continue
-        seen.add(cat.pk)
-        spec.catalog = cat
-        spec.title = (cat.title or '')[:120]
+        spec.catalog = item.get('catalog')
+        spec.title = (item.get('title') or '')[:120]
         spec.save()
 
     user = getattr(profile, 'user', None)
