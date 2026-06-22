@@ -1,5 +1,6 @@
 """Outstanding Proof profile items for the account page."""
 
+from django.db import transaction
 from django.urls import reverse
 
 from .models import TrainerGym, TrainerSpecialism
@@ -82,8 +83,12 @@ def profile_outstanding_items(profile) -> list[dict]:
     return [item for item in profile_checklist_items(profile) if not item['complete']]
 
 
+@transaction.atomic
 def save_proof_profile_setup(profile, cleaned_data) -> bool:
     """Save profile setup form. Returns True when a new welcome video was uploaded."""
+    old_first = (profile.first_name or '').strip()
+    old_last = (profile.last_name or '').strip()
+
     profile.first_name = (cleaned_data.get('first_name') or '').strip()[:150]
     profile.last_name = (cleaned_data.get('last_name') or '').strip()[:150]
     profile.profession = (cleaned_data.get('profession') or '').strip()
@@ -124,47 +129,102 @@ def save_proof_profile_setup(profile, cleaned_data) -> bool:
     elif intro_video:
         profile.intro_video = intro_video
         intro_video_uploaded = True
+        profile.intro_video_suggested_quotes = []
+        profile.intro_video_pull_quote = ''
+        profile.intro_video_transcript = ''
+        profile.intro_video_quote_generation_status = 'pending'
+        profile.intro_video_quote_generation_updated_at = None
 
     mode = cleaned_data.get('hero_media') or 'photo'
-    if mode == 'video' and profile.intro_video:
-        profile.show_intro_video = True
-    else:
-        profile.show_intro_video = False
+    profile.show_intro_video = bool(mode == 'video' and profile.intro_video)
 
-    profile.save()
+    update_fields = [
+        'profession',
+        'primary_area',
+        'other_areas',
+        'contact_email',
+        'contact_phone',
+        'free_consultation',
+        'show_intro_video',
+    ]
+    if profile.first_name != old_first:
+        update_fields.append('first_name')
+    if profile.last_name != old_last:
+        update_fields.append('last_name')
+    if portrait is False or portrait:
+        update_fields.append('portrait')
+    if intro_video is False or intro_video:
+        update_fields.extend(
+            [
+                'intro_video',
+                'intro_video_suggested_quotes',
+                'intro_video_pull_quote',
+                'intro_video_transcript',
+                'intro_video_quote_generation_status',
+                'intro_video_quote_generation_updated_at',
+            ]
+        )
+    profile.save(update_fields=list(dict.fromkeys(update_fields)))
 
     primary_gym = (cleaned_data.get('primary_gym') or '').strip()
-    gym, _ = TrainerGym.objects.get_or_create(profile=profile, order=1, defaults={'name': ''})
-    gym.name = primary_gym
-    if not primary_gym:
-        gym.location_area = None
-    gym.save()
-    for order in (2, 3):
-        extra_gym, _ = TrainerGym.objects.get_or_create(profile=profile, order=order, defaults={'name': ''})
-        extra_gym.name = ''
-        extra_gym.location_area = None
-        extra_gym.save()
+    gyms_by_order = {
+        gym.order: gym
+        for gym in TrainerGym.objects.filter(profile=profile, order__in=(1, 2, 3))
+    }
+    gyms_to_update: list[TrainerGym] = []
+    gyms_to_create: list[TrainerGym] = []
+    for order in (1, 2, 3):
+        gym = gyms_by_order.get(order)
+        if gym is None:
+            gym = TrainerGym(profile=profile, order=order, name='')
+            gyms_to_create.append(gym)
+        if order == 1:
+            gym.name = primary_gym
+            if not primary_gym:
+                gym.location_area_id = None
+        else:
+            gym.name = ''
+            gym.location_area_id = None
+        if gym.pk:
+            gyms_to_update.append(gym)
+    if gyms_to_create:
+        TrainerGym.objects.bulk_create(gyms_to_create)
+    if gyms_to_update:
+        TrainerGym.objects.bulk_update(gyms_to_update, ['name', 'location_area_id'])
 
-    catalog_ids = cleaned_data.get('resolved_specialisms') or []
+    resolved_specialisms = cleaned_data.get('resolved_specialisms') or []
+    specs_by_order = {
+        spec.order: spec
+        for spec in TrainerSpecialism.objects.filter(profile=profile, order__in=(1, 2, 3))
+    }
+    specs_to_update: list[TrainerSpecialism] = []
+    specs_to_create: list[TrainerSpecialism] = []
     for order in range(1, 4):
-        spec, _ = TrainerSpecialism.objects.get_or_create(
-            profile=profile,
-            order=order,
-            defaults={'title': ''},
-        )
-        item = catalog_ids[order - 1] if order - 1 < len(catalog_ids) else None
+        spec = specs_by_order.get(order)
+        if spec is None:
+            spec = TrainerSpecialism(profile=profile, order=order, title='')
+            specs_to_create.append(spec)
+        item = resolved_specialisms[order - 1] if order - 1 < len(resolved_specialisms) else None
         if not item:
-            spec.catalog = None
+            spec.catalog_id = None
             spec.title = ''
             spec.description = ''
-            spec.save()
-            continue
-        spec.catalog = item.get('catalog')
-        spec.title = (item.get('title') or '')[:120]
-        spec.save()
+        else:
+            catalog = item.get('catalog')
+            spec.catalog_id = catalog.pk if catalog else None
+            spec.title = (item.get('title') or '')[:120]
+        if spec.pk:
+            specs_to_update.append(spec)
+    if specs_to_create:
+        TrainerSpecialism.objects.bulk_create(specs_to_create)
+    if specs_to_update:
+        TrainerSpecialism.objects.bulk_update(specs_to_update, ['catalog_id', 'title', 'description'])
 
     user = getattr(profile, 'user', None)
-    if user is not None:
+    if user is not None and (
+        (user.first_name or '') != profile.first_name
+        or (user.last_name or '') != profile.last_name
+    ):
         user.first_name = profile.first_name
         user.last_name = profile.last_name
         user.save(update_fields=['first_name', 'last_name'])

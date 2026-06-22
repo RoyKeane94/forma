@@ -197,6 +197,16 @@
   if (saveErrors) {
     saveErrors.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
+
+  var setupForm = document.querySelector('.profile-setup-form');
+  if (setupForm) {
+    setupForm.addEventListener('submit', function () {
+      var btn = setupForm.querySelector('button[type="submit"]');
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+    });
+  }
 })();
 </script>
 {% endblock %}

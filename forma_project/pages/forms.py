@@ -1483,10 +1483,11 @@ PROOF_PROFILE_SETUP_FIELD_SECTIONS: dict[str, tuple[str, str]] = {
 }
 
 
-def _proof_specialism_choice_options(*, optional: bool = False) -> list[tuple[str, str]]:
-    rows = list(
-        SpecialismCatalog.objects.filter(is_active=True).order_by('title').values_list('pk', 'title')
-    )
+def _proof_specialism_choice_options(*, optional: bool = False, rows: list[tuple[int, str]] | None = None) -> list[tuple[str, str]]:
+    if rows is None:
+        rows = list(
+            SpecialismCatalog.objects.filter(is_active=True).order_by('title').values_list('pk', 'title')
+        )
     empty_label = 'Select specialism (optional)' if optional else 'Select specialism'
     return [
         ('', empty_label),
@@ -1599,12 +1600,14 @@ class ProofProfileSetupForm(forms.Form):
     def __init__(self, *args, profile=None, **kwargs):
         self.profile = profile
         super().__init__(*args, **kwargs)
-        self.fields['specialism_1'].choices = _proof_specialism_choice_options()
-        self.fields['specialism_2'].choices = _proof_specialism_choice_options(optional=True)
-        self.fields['specialism_3'].choices = _proof_specialism_choice_options(optional=True)
+        self._specialism_catalog = list(SpecialismCatalog.objects.filter(is_active=True).order_by('title'))
+        catalog_rows = [(c.pk, c.title) for c in self._specialism_catalog]
+        self.fields['specialism_1'].choices = _proof_specialism_choice_options(rows=catalog_rows)
+        self.fields['specialism_2'].choices = _proof_specialism_choice_options(optional=True, rows=catalog_rows)
+        self.fields['specialism_3'].choices = _proof_specialism_choice_options(optional=True, rows=catalog_rows)
         # Server-side validation only — avoids browser tooltips on combobox selects.
         self.fields['profession'].required = False
-        if profile is not None:
+        if profile is not None and not self.is_bound:
             self._load_initial(profile)
 
     def _load_initial(self, profile):
@@ -1656,7 +1659,15 @@ class ProofProfileSetupForm(forms.Form):
         self.fields['contact_phone'].initial = (profile.contact_phone or '').strip()
         self.fields['free_consultation'].initial = profile.free_consultation
 
-    def _resolve_specialism_slot(self, data, index: int, *, required: bool) -> dict | None:
+    def _resolve_specialism_slot(
+        self,
+        data,
+        index: int,
+        *,
+        required: bool,
+        catalog_by_pk: dict[str, SpecialismCatalog],
+        catalog_by_title: dict[str, SpecialismCatalog],
+    ) -> dict | None:
         choice = (data.get(f'specialism_{index}') or '').strip()
         custom = (data.get(f'specialism_{index}_custom') or '').strip()
 
@@ -1675,7 +1686,7 @@ class ProofProfileSetupForm(forms.Form):
             if len(custom) > 120:
                 self.add_error(f'specialism_{index}_custom', 'Keep to 120 characters or fewer.')
                 return None
-            catalog_match = SpecialismCatalog.objects.filter(title__iexact=custom, is_active=True).first()
+            catalog_match = catalog_by_title.get(custom.casefold())
             if catalog_match:
                 return {'catalog': catalog_match, 'title': catalog_match.title}
             return {'catalog': None, 'title': custom}
@@ -1683,13 +1694,7 @@ class ProofProfileSetupForm(forms.Form):
         if not choice:
             return None
 
-        try:
-            pk = int(choice)
-        except (TypeError, ValueError):
-            self.add_error(f'specialism_{index}', 'Invalid choice.')
-            return None
-
-        catalog = SpecialismCatalog.objects.filter(pk=pk, is_active=True).first()
+        catalog = catalog_by_pk.get(choice)
         if catalog is None:
             self.add_error(f'specialism_{index}', 'Invalid choice.')
             return None
@@ -1697,6 +1702,8 @@ class ProofProfileSetupForm(forms.Form):
 
     def clean(self):
         data = super().clean()
+        if data is None:
+            return data
         profession = (data.get('profession') or '').strip()
         valid_professions = {key for key, _ in PROFESSION_CHOICES}
         if not profession:
@@ -1712,10 +1719,21 @@ class ProofProfileSetupForm(forms.Form):
                 self.add_error(field_name, 'You already selected this area.')
             else:
                 seen_areas.add(area.pk)
+        catalogs = getattr(self, '_specialism_catalog', None) or list(
+            SpecialismCatalog.objects.filter(is_active=True)
+        )
+        catalog_by_pk = {str(c.pk): c for c in catalogs}
+        catalog_by_title = {c.title.casefold(): c for c in catalogs}
         resolved_specialisms: list[dict | None] = []
         seen_spec_keys: set[tuple] = set()
         for index, required in ((1, True), (2, False), (3, False)):
-            item = self._resolve_specialism_slot(data, index, required=required)
+            item = self._resolve_specialism_slot(
+                data,
+                index,
+                required=required,
+                catalog_by_pk=catalog_by_pk,
+                catalog_by_title=catalog_by_title,
+            )
             resolved_specialisms.append(item)
             if item is None:
                 continue

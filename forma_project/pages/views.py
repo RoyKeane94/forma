@@ -495,13 +495,6 @@ def _generate_and_store_intro_video_quotes(profile_id: int) -> None:
 
 
 def _enqueue_intro_video_quotes_generation(profile_id: int) -> None:
-    TrainerProfile.objects.filter(pk=profile_id).update(
-        intro_video_suggested_quotes=[],
-        intro_video_pull_quote='',
-        intro_video_transcript='',
-        intro_video_quote_generation_status=ProofTestimonial.QUOTE_STATUS_PENDING,
-        intro_video_quote_generation_updated_at=timezone.now(),
-    )
     worker = threading.Thread(
         target=_generate_and_store_intro_video_quotes,
         args=(profile_id,),
@@ -876,24 +869,24 @@ def my_account(request):
 
 @login_required
 def proof_profile_setup(request):
-    profile = _get_profile_fast(request.user)
-    profile = (
-        TrainerProfile.objects.filter(pk=profile.pk)
-        .select_related('primary_area', 'user')
-        .prefetch_related('gyms__location_area', 'specialisms__catalog')
-        .first()
-        or profile
-    )
-
     if request.method == 'POST':
+        profile = _get_profile_fast(request.user)
         form = ProofProfileSetupForm(request.POST, request.FILES, profile=profile)
         if form.is_valid():
             intro_video_uploaded = save_proof_profile_setup(profile, form.cleaned_data)
             if intro_video_uploaded:
-                _enqueue_intro_video_quotes_generation(profile.pk)
+                transaction.on_commit(lambda: _enqueue_intro_video_quotes_generation(profile.pk))
             messages.success(request, 'Your Proof profile has been updated.')
             return redirect('pages:my_account')
     else:
+        profile = _get_profile_fast(request.user)
+        profile = (
+            TrainerProfile.objects.filter(pk=profile.pk)
+            .select_related('primary_area', 'user')
+            .prefetch_related('gyms__location_area', 'specialisms__catalog')
+            .first()
+            or profile
+        )
         form = ProofProfileSetupForm(profile=profile)
 
     return render(
