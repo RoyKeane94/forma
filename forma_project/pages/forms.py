@@ -1459,6 +1459,29 @@ def _specialism_model_choice_field(*, label: str, empty_label: str = 'Select spe
 
 PROOF_SPECIALISM_CUSTOM_VALUE = '__custom__'
 
+PROOF_PROFILE_SETUP_SECTION_ORDER = ('name', 'media', 'location', 'specialisms', 'contact')
+
+PROOF_PROFILE_SETUP_FIELD_SECTIONS: dict[str, tuple[str, str]] = {
+    'first_name': ('name', 'Your name'),
+    'last_name': ('name', 'Your name'),
+    'profession': ('name', 'Your name'),
+    'hero_media': ('media', 'Photo or video'),
+    'portrait': ('media', 'Photo or video'),
+    'intro_video': ('media', 'Photo or video'),
+    'primary_area': ('location', 'Where you train'),
+    'area_2': ('location', 'Where you train'),
+    'area_3': ('location', 'Where you train'),
+    'primary_gym': ('location', 'Where you train'),
+    'specialism_1': ('specialisms', 'Specialisms'),
+    'specialism_1_custom': ('specialisms', 'Specialisms'),
+    'specialism_2': ('specialisms', 'Specialisms'),
+    'specialism_2_custom': ('specialisms', 'Specialisms'),
+    'specialism_3': ('specialisms', 'Specialisms'),
+    'specialism_3_custom': ('specialisms', 'Specialisms'),
+    'contact_email': ('contact', 'Contact'),
+    'contact_phone': ('contact', 'Contact'),
+}
+
 
 def _proof_specialism_choice_options(*, optional: bool = False) -> list[tuple[str, str]]:
     rows = list(
@@ -1579,6 +1602,8 @@ class ProofProfileSetupForm(forms.Form):
         self.fields['specialism_1'].choices = _proof_specialism_choice_options()
         self.fields['specialism_2'].choices = _proof_specialism_choice_options(optional=True)
         self.fields['specialism_3'].choices = _proof_specialism_choice_options(optional=True)
+        # Server-side validation only — avoids browser tooltips on combobox selects.
+        self.fields['profession'].required = False
         if profile is not None:
             self._load_initial(profile)
 
@@ -1701,6 +1726,23 @@ class ProofProfileSetupForm(forms.Form):
                 seen_spec_keys.add(key)
         data['resolved_specialisms'] = resolved_specialisms
         return data
+
+    @property
+    def error_section_summaries(self) -> list[tuple[str, str]]:
+        """Sections with validation errors, in page order — for the save summary."""
+        found: dict[str, str] = {}
+        for field_name in self.errors:
+            if field_name == '__all__':
+                continue
+            section = PROOF_PROFILE_SETUP_FIELD_SECTIONS.get(field_name)
+            if section:
+                anchor, label = section
+                found[anchor] = label
+        return [
+            (anchor, found[anchor])
+            for anchor in PROOF_PROFILE_SETUP_SECTION_ORDER
+            if anchor in found
+        ]
 
 
 class StaffTrainerCreateForm(forms.Form):

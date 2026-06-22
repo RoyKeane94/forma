@@ -30,7 +30,7 @@
     </div>
     {% endif %}
 
-    <form method="post" enctype="multipart/form-data" class="profile-setup-form auth-anim-3">
+    <form method="post" enctype="multipart/form-data" class="profile-setup-form auth-anim-3" novalidate>
       {% csrf_token %}
 
       {% if form.non_field_errors %}
@@ -163,6 +163,16 @@
       </section>
 
       <div class="form-actions">
+        {% if form.errors %}
+        <p class="form-save-errors" id="form-save-errors" role="alert">
+          Before you can save, update
+          {% for anchor, label in form.error_section_summaries %}
+          <a href="#{{ anchor }}" class="form-save-errors__link">{{ label }}</a>{% if not forloop.last %}, {% endif %}
+          {% empty %}
+          {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}, {% endif %}{% endfor %}
+          {% endfor %}.
+        </p>
+        {% endif %}
         <button type="submit" class="btn">Save profile</button>
         <a href="{% url 'pages:my_account' %}" class="textlink">Back to account</a>
       </div>
@@ -183,6 +193,10 @@
     sel.addEventListener('change', sync);
     sync();
   });
+  var saveErrors = document.getElementById('form-save-errors');
+  if (saveErrors) {
+    saveErrors.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 })();
 </script>
 {% endblock %}
